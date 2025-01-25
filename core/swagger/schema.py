@@ -5,7 +5,7 @@ from core.swagger.utils import main_schema_view
 swagger_urlpatterns = [
     re_path("swagger-without-ui/", main_schema_view.without_ui(cache_timeout=0), name="schema-json"),  # noqa
     re_path(
-        r"^swagger/$",
+        r"^docs/$",
         main_schema_view.with_ui("swagger", cache_timeout=0),
         name="schema-swagger-ui",
     ),

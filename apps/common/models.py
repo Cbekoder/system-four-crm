@@ -17,6 +17,38 @@ class BaseModel(models.Model):
         super().save(force_insert, force_update, using, update_fields)
 
 
+CURRENCY_TYPE = (
+    ("USD", "USD🇺🇸"),
+    ("UZS", "UZS🇺🇿")
+)
+
+
+class BasePerson(BaseModel):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15)
+    extra_phone_number = models.CharField(max_length=15, blank=True, null=True)
+    birth_date = models.DateField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    balance = models.FloatField(default=0)
+    debt = models.FloatField(default=0)
+    landing = models.FloatField(default=0)
+    balance_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
+
+    class Meta:
+        abstract = True
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if update_fields and "updated_at" not in update_fields:
+            update_fields.append("updated_at")
+
+        super().save(force_insert, force_update, using, update_fields)
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+
 class VersionHistory(BaseModel):
     version = models.CharField(max_length=64)
     required = models.BooleanField(default=True)
