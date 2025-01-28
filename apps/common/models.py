@@ -4,6 +4,7 @@ from django.db import models
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
+    is_verified = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
@@ -22,6 +23,11 @@ CURRENCY_TYPE = (
     ("UZS", "UZS🇺🇿")
 )
 
+TRANSFER_TYPE = (
+    ("cash", "Naqd pul"),
+    ("transfer", "O'tkazma")
+)
+
 
 class BasePerson(BaseModel):
     first_name = models.CharField(max_length=100)
@@ -30,10 +36,10 @@ class BasePerson(BaseModel):
     extra_phone_number = models.CharField(max_length=15, blank=True, null=True)
     birth_date = models.DateField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    balance = models.FloatField(default=0)
-    debt = models.FloatField(default=0)
-    landing = models.FloatField(default=0)
-    balance_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
+    balance = models.FloatField(null=True, blank=True)
+    debt = models.FloatField(null=True, blank=True)
+    landing = models.FloatField(null=True, blank=True)
+    currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
 
     class Meta:
         abstract = True
@@ -48,6 +54,12 @@ class BasePerson(BaseModel):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+
+class Section(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 
 class VersionHistory(BaseModel):
     version = models.CharField(max_length=64)

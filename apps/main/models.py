@@ -1,13 +1,6 @@
 from django.db import models
-from apps.common.models import BaseModel
+from apps.common.models import BaseModel, Section
 from apps.users.models import User
-
-
-class Section(models.Model):
-    name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name
 
 
 class Expense(BaseModel):
