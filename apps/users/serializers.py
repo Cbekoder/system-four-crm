@@ -19,6 +19,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'role', 'section']
+        read_only_fields = ['role', 'section']
 
 
 class UserPostSerializer(serializers.ModelSerializer):
@@ -27,7 +28,7 @@ class UserPostSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'password', 'first_name', 'last_name', 'role', 'section', 'date_joined'
         ]
-        read_only_fields = ['date_joined']
+        read_only_fields = ['role', 'section', 'date_joined']
         extra_kwargs = {
             'password': {'write_only': True, 'required': False}
         }
@@ -38,7 +39,6 @@ class UserPostSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        validated_data.pop('status', None)
         password = validated_data.pop('password', None)
         user = User(**validated_data)
 
@@ -49,14 +49,8 @@ class UserPostSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        salary_or_kpi = validated_data.pop('salary_or_kpi', None)
         role = validated_data.get('role', instance.role)
 
-        if salary_or_kpi is not None:
-            if role == 'doctor':
-                instance.kpi = salary_or_kpi
-            else:
-                instance.salary = salary_or_kpi
 
         for attr, value in validated_data.items():
             if attr == 'password' and value:

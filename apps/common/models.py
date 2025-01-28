@@ -28,6 +28,13 @@ TRANSFER_TYPE = (
     ("transfer", "O'tkazma")
 )
 
+SECTION_CHOICES = (
+    ("logistic", "Logistika"),
+    ("fridge", "Muzlatgich"),
+    ("garden", "Bog'"),
+    ("factory", "Zavod")
+)
+
 
 class BasePerson(BaseModel):
     first_name = models.CharField(max_length=100)
@@ -54,12 +61,6 @@ class BasePerson(BaseModel):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
-
-class Section(models.Model):
-    name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name
 
 class VersionHistory(BaseModel):
     version = models.CharField(max_length=64)

@@ -153,10 +153,19 @@ class UserListCreateAPIView(ListCreateAPIView):
             return UserDetailSerializer
         return UserPostSerializer
 
+    def get_queryset(self):
+        return self.queryset.filter(section="logistic")
+
+    def perform_create(self, serializer):
+        serializer.save(section="logistic")
+
 
 class UserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserDetailSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(section="logistic")
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
