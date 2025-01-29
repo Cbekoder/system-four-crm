@@ -145,7 +145,6 @@ class TransitIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 # Admin user views
 class UserListCreateAPIView(ListCreateAPIView):
-    queryset = User.objects.all()
     permission_classes = [IsCEO]
 
     def get_serializer_class(self):
@@ -154,18 +153,19 @@ class UserListCreateAPIView(ListCreateAPIView):
         return UserPostSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(section="logistic")
+        queryset = User.objects.filter(section="logistic")
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(section="logistic")
 
 
 class UserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
     serializer_class = UserDetailSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(section="logistic")
+        queryset = User.objects.filter(section="logistic")
+        return queryset
 
     def get_serializer_class(self):
         if self.request.method == 'GET':

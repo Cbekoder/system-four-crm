@@ -2,13 +2,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-
+from apps.main.views import RedirectToDocs
 from core.swagger.schema import swagger_urlpatterns
 
 urlpatterns = [
+    path('', RedirectToDocs),
     path('admin/', admin.site.urls),
     path('auth/', include('apps.users.urls_auth')),
-    path('logistics/', include("apps.logistic.urls"))
+    path('logistics/', include("apps.logistic.urls")),
+    path('general/', include("apps.main.urls")),
+    path('mixed/', include("apps.main.urls_mix")),
 ]
 
 urlpatterns += swagger_urlpatterns

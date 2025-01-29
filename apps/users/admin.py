@@ -1,20 +1,17 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
-from apps.users.models import User
+from .models import User
 
 # unregister the default Group model
 admin.site.unregister(Group)
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    list_display = (
-        "id",
-        "username",
-        "first_name",
-        "last_name",
+class CustomUserAdmin(UserAdmin):
+    fieldsets = UserAdmin.fieldsets + (
+        ("Qo'shimcha maydonlar", {'fields': ('role', 'section')}),
     )
-    list_display_links = ("id", "username", "first_name", "last_name")
-    search_fields = ("id", "username", "first_name", "last_name")
-    list_filter = ("is_active",)
+    list_display = ('username', 'role', 'section', 'is_staff', 'is_active')
+    list_filter = ('role', 'section', 'is_staff', 'is_active')
+    search_fields = ('username', 'email', 'role')
     ordering = ("-id",)
