@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 from datetime import timedelta
 import environ
@@ -57,6 +58,7 @@ CUSTOM_APPS = [
     'apps.garden',
     'apps.factory',
     'apps.fridge',
+    'apps.main',
 ]
 
 THIRD_PARTY_APPS = [
@@ -169,6 +171,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=90),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

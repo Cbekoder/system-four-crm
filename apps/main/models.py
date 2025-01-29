@@ -6,6 +6,16 @@ from apps.common.utils import convert_currency
 from apps.users.models import User
 
 
+<<<<<<< HEAD
+=======
+class Section(models.Model):
+    name = models.CharField(max_length=100,null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+>>>>>>> 291ccae (updated)
 class Expense(BaseModel):
     reason = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
@@ -20,6 +30,7 @@ class Expense(BaseModel):
         ordering = ['-created_at']
 
     def __str__(self):
+<<<<<<< HEAD
         return self.reason
 
 
@@ -108,3 +119,6 @@ class MoneyCirculation(BaseModel):
 
     def __str__(self):
         return self.acquaintance.full_name if self.acquaintance else str(self.id)
+=======
+        return f"{self.amount} {self.reason} uchun"
+>>>>>>> 291ccae (updated)

@@ -23,6 +23,21 @@ class ElectricityBill(BaseModel):
     class Meta:
         verbose_name = "Elektr energiya to'lovi "
         verbose_name_plural = "Elektr energiyalar to'lovlari "
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.refrigerator
+
+class Expense(BaseModel):
+    refrigerator = models.ForeignKey(Refrigerator, on_delete=models.CASCADE)
+    description = models.TextField(null=True, blank=True)
+    amount = models.FloatField()
+
+
+    def __str__(self):
+        return self.refrigerator.name
+
+    class Meta:
+        verbose_name = "Xarajat "
+        verbose_name_plural = "Xarajatlar "
+        ordering = ['-created_at']
