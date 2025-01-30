@@ -8,15 +8,13 @@ from core.swagger.schema import swagger_urlpatterns
 urlpatterns = [
     path('', RedirectToDocs),
     path('admin/', admin.site.urls),
-<<<<<<< HEAD
     path('auth/', include('apps.users.urls_auth')),
     path('logistics/', include("apps.logistic.urls")),
     path('general/', include("apps.main.urls")),
     path('mixed/', include("apps.main.urls_mix")),
-=======
     path('api/v1/common/', include("apps.users.urls")),
     path('garden/', include("apps.garden.urls")),
->>>>>>> 291ccae (updated)
+    path('fridge/', include("apps.fridge.urls")),
 ]
 
 urlpatterns += swagger_urlpatterns

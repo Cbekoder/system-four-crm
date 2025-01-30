@@ -6,7 +6,7 @@ class IsCEOOrAdmin(BasePermission):
         if request.user.is_anonymous:
             return False
         return (request.user.role in ['ceo', 'admin', 'doctor',
-                                      'registrator'] or request.user.is_superuser) and request.user.status == "active"
+                                      'registrator'] or request.user.is_superuser) and request.user.is_active == "active"
 
 
 class IsCEO(BasePermission):

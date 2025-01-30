@@ -58,7 +58,6 @@ CUSTOM_APPS = [
     'apps.garden',
     'apps.factory',
     'apps.fridge',
-    'apps.main',
 ]
 
 THIRD_PARTY_APPS = [

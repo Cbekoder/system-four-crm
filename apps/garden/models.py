@@ -1,6 +1,7 @@
 from django.db import models
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE
-from apps.main.models import Expense, Section
+from apps.main.models import Expense, Section,Income
+from apps.common.utils import convert_currency
 
 class Gardener(BasePerson):
     class Meta:
@@ -24,6 +25,7 @@ class SalaryPayment(BaseModel):
         ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
+        self.amount = convert_currency(self.currency_type, "UZS", self.amount)
         # Agar balans yangilanishi kerak bo'lsa
         if self.gardener:
             # Agar bu yangi obyekt bo'lsa, yangi balansni qo'shish
@@ -43,10 +45,7 @@ class SalaryPayment(BaseModel):
     def __str__(self):
         return self.gardener.full_name
 
-class Income(BaseModel):
-    amount = models.FloatField()
-    description = models.TextField(null=True, blank=True)
-    currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
+class GardenIncome(Income):
 
     def __str__(self):
         return self.description[:50]
@@ -55,6 +54,12 @@ class Income(BaseModel):
         verbose_name = "Kirim "
         verbose_name_plural = "Kirimlar "
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.section:
+            garden_section, _ = Section.objects.get_or_create(name="Bog'")
+            self.section = garden_section
+        super().save(*args, **kwargs)
 
 
 
@@ -65,10 +70,10 @@ class GardenExpense(Expense):
         verbose_name_plural = "Chiqimlar "
         ordering = ['-created_at']
 
-    def save(self, *args, **kwargs):
-        if not self.section_id:
-            garden_section, _ = Section.objects.get_or_create(name="Bog'")
-            self.section = garden_section
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.section:
+    #         garden_section, _ = Section.objects.get_or_create(name="Bog'")
+    #         self.section = garden_section
+    #     super().save(*args, **kwargs)
 
 

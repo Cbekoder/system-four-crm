@@ -44,28 +44,27 @@ class BasePerson(BaseModel):
     extra_phone_number = models.CharField(max_length=15, blank=True, null=True)
     birth_date = models.DateField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    balance = models.FloatField(null=True, blank=True)
-    debt = models.FloatField(null=True, blank=True)
+    balance = models.FloatField(default=0, null=True, blank=True)
+    debt = models.FloatField(default=0, null=True, blank=True)
     landing = models.FloatField(null=True, blank=True)
     currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
 
     class Meta:
         abstract = True
 
-<<<<<<< HEAD
+
     # def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
     #     if update_fields and "updated_at" not in update_fields:
     #         update_fields.append("updated_at")
     #
     #     super().save(force_insert, force_update, using, update_fields)
-=======
+
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if update_fields and "updated_at" not in update_fields:
             update_fields.append("updated_at")
 
         super().save(force_insert, force_update, using, update_fields)
->>>>>>> 291ccae (updated)
 
     @property
     def full_name(self):

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from apps.common.models import SECTION_CHOICES
 
 class GardenerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,11 +13,32 @@ class IncomeSerializer(serializers.ModelSerializer):
         model = Income
         fields = '__all__'
 
+    def create(self, validated_data):
+        request = self.context['request']
+
+        # garden_section, _ = Section.objects.get_or_create(name="Bog'")
+
+        validated_data['section'] = SECTION_CHOICES[2][1]
+        validated_data['user'] = request.user
+
+        return super().create(validated_data)
+
 
 class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
         fields = '__all__'
+
+    def create(self, validated_data):
+        request = self.context['request']
+
+        # garden_section, _ = Section.objects.get_or_create(name="Bog'")
+        garden_section=SECTION_CHOICES[2][1]
+
+        validated_data['section'] = garden_section
+        validated_data['user'] = request.user
+
+        return super().create(validated_data)
 
 class SalaryPaymentSerializer(serializers.ModelSerializer):
     gardener = GardenerSerializer()

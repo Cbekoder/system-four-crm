@@ -1,5 +1,17 @@
 from django.contrib import admin
 from .models import *
 
+@admin.register(Section)
+class SectionAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name']
+    list_display_links = ['id', 'name']
 
-admin.site.register([Expense,Section])
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ['id','section', 'amount', 'currency_type', 'created_at']
+    list_display_links = ['id','section', 'amount']
+
+@admin.register(Income)
+class IncomeAdmin(admin.ModelAdmin):
+    list_display = ['id','section', 'amount', 'currency_type', 'created_at']
+    list_display_links = ['id', 'section','amount']
