@@ -1,14 +1,9 @@
-import requests
-url="https://cbu.uz/uz/arkhiv-kursov-valyut/json/"
+from django.core.cache import cache
 
-response = requests.get(url)
-data = response.json()
-data=data[0]
-usd_to_uzs_rate= float(data['Rate'])
 
 exchange_rates = {
     'USD': 1.0,
-    'UZS': usd_to_uzs_rate
+    'UZS': cache.get("currency_rate")
 }
 
 def convert_currency(base, target, amount):
