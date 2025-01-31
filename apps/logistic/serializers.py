@@ -45,15 +45,15 @@ class TrailerSerializer(serializers.ModelSerializer):
 class CarExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarExpense
-        fields = ['id', 'car', 'trailer', 'reason', 'description', 'amount', 'currency_type', 'is_verified', 'updated_at',
+        fields = ['id', 'car', 'trailer', 'reason', 'description', 'amount', 'currency_type', 'updated_at',
                   'created_at']
         read_only_fields = ['updated_at', 'created_at']
 
 
-class SalaryPaymentSerializer(serializers.ModelSerializer):
+class DriverSalaryPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalaryPayment
-        fields = ['id', 'driver', 'description', 'amount', 'currency_type', 'is_verified', 'updated_at', 'created_at']
+        fields = ['id', 'driver', 'description', 'amount', 'currency_type', 'updated_at', 'created_at']
         read_only_fields = ['updated_at', 'created_at']
 
 
@@ -86,7 +86,7 @@ class TransitGetSerializer(serializers.ModelSerializer):
 class TransitExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransitExpense
-        fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type', 'is_verified',
+        fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type',
                   'updated_at', 'created_at']
         read_only_fields = ['updated_at', 'created_at']
 
@@ -94,7 +94,7 @@ class TransitExpenseSerializer(serializers.ModelSerializer):
 class TransitIncomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransitIncome
-        fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type', 'is_verified',
+        fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type',
                   'updated_at', 'created_at']
         read_only_fields = ['updated_at', 'created_at']
         

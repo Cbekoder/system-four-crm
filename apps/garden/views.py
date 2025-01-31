@@ -1,7 +1,8 @@
 from rest_framework import status
 from rest_framework.generics import *
-from rest_framework.permissions import IsAuthenticated
 from apps.users.permissions import IsCEOOrAdmin, IsAdmin, IsCEO
+from apps.main.serializers import ExpenseSerializer, IncomeSerializer
+from apps.main.models import Income, Expense
 from .serializers import *
 
 
@@ -10,44 +11,67 @@ class GardenerListCreateView(ListCreateAPIView):
     serializer_class = GardenerSerializer
     permission_classes = [IsCEOOrAdmin]
 
-
 class GardenerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Gardener.objects.all()
-    serializer_class = GardenerSerializer
     permission_classes = [IsCEO]
 
-class IncomeListCreateView(ListCreateAPIView):
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return GardenerDetailSerializer
+        return GardenerSerializer
+
+
+class GardenIncomeListCreateView(ListCreateAPIView):
     queryset = Income.objects.all()
     serializer_class = IncomeSerializer
     permission_classes = [IsCEOOrAdmin]
 
-class IncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    def get_queryset(self):
+        queryset = Expense.objects.filter(section="garden")
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(section="garden", user=self.request.user)
+
+class GardenIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Income.objects.all()
     serializer_class = IncomeSerializer
     permission_classes = [IsCEOOrAdmin]
 
+    def get_queryset(self):
+        queryset = Expense.objects.filter(section="garden")
+        return queryset
 
-class ExpenseListCreateView(ListCreateAPIView):
-    queryset = Expense.objects.all()
+
+class GardenExpenseListCreateView(ListCreateAPIView):
     serializer_class = ExpenseSerializer
     permission_classes = [IsCEOOrAdmin]
 
-class ExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    queryset = Expense.objects.all()
+    def get_queryset(self):
+        queryset = Expense.objects.filter(section="garden")
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(section="garden")
+
+class GardenExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = ExpenseSerializer
     permission_classes = [IsCEOOrAdmin]
+
+    def get_queryset(self):
+        queryset = Expense.objects.filter(section="garden")
+        return queryset
+
 
 
 class SalaryPaymentListCreateView(ListCreateAPIView):
     queryset = SalaryPayment.objects.all()
-    serializer_class = SalaryPaymentSerializer
     permission_classes = [IsCEOOrAdmin]
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
-            return SalaryPaymentSerializer
-        else:
-            return SalaryPaymentGetSerializer
+            return GardenerSalaryPaymentGetSerializer
+        return GardenerSalaryPaymentSerializer
 
     # def perform_create(self, serializer):
     #     gardener_id = self.request.data.get('gardener')

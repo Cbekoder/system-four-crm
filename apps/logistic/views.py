@@ -5,7 +5,7 @@ from .models import (
 )
 from .serializers import (
     DriverSerializer, TenantSerializer, ContractorSerializer, CarSerializer, TrailerSerializer,
-    CarExpenseSerializer, SalaryPaymentSerializer, ContractSerializer, TransitGetSerializer,
+    CarExpenseSerializer, DriverSalaryPaymentSerializer, ContractSerializer, TransitGetSerializer,
     TransitPostSerializer, TransitDetailSerializer,
     TransitExpenseSerializer, TransitIncomeSerializer
 )
@@ -83,12 +83,12 @@ class CarExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 # Generic Views for SalaryPayment
 class SalaryPaymentListCreateView(ListCreateAPIView):
     queryset = SalaryPayment.objects.all()
-    serializer_class = SalaryPaymentSerializer
+    serializer_class = DriverSalaryPaymentSerializer
 
 
 class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = SalaryPayment.objects.all()
-    serializer_class = SalaryPaymentSerializer
+    serializer_class = DriverSalaryPaymentSerializer
 
 
 # Generic Views for Contract

@@ -1,6 +1,7 @@
 from django.db import models
+from rest_framework.exceptions import ValidationError
+
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE
-from apps.main.models import Expense, Section,Income
 from apps.common.utils import convert_currency
 
 class Gardener(BasePerson):
@@ -25,55 +26,36 @@ class SalaryPayment(BaseModel):
         ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
-        self.amount = convert_currency(self.currency_type, "UZS", self.amount)
-        # Agar balans yangilanishi kerak bo'lsa
-        if self.gardener:
-            # Agar bu yangi obyekt bo'lsa, yangi balansni qo'shish
-            if not self.pk:
-                self.gardener.balance += self.amount
-            # Agar bu mavjud obyekt bo'lsa, eski miqdorni chiqarib, yangi miqdorni qo'shish
+
+        if self.pk:
+            old_payment = SalaryPayment.objects.get(id=self.pk)
+            old_amount = old_payment.amount
+            if self.currency_type != old_payment.currency_type:
+                valid_currencies = ("USD", "UZS")
+                if old_payment.currency_type in valid_currencies and self.currency_type in valid_currencies:
+                    old_amount = convert_currency(old_payment.currency_type, self.currency_type, old_amount)
+            if self.amount != old_payment.amount:
+                self.gardener.balance -= old_amount
+            if self.gardener != old_payment.gardener:
+                raise ValidationError("It is not allowed to change gardener")
+
+        converted_amount = self.amount
+        if self.gardener.currency_type == self.currency_type:
+            valid_currencies = ("USD", "UZS")
+            if self.gardener.currency_type in valid_currencies and self.currency_type in valid_currencies:
+                converted_amount = convert_currency(self.currency_type, self.gardener.currency_type,
+                                                    self.amount)
             else:
-                old_payment = SalaryPayment.objects.get(id=self.pk)
-                self.gardener.balance += (self.amount - old_payment.amount)
+                raise ValidationError("Invalid currency type")
 
-            # Balansni saqlash
-            self.gardener.save()
+        self.gardener.balance += converted_amount
 
-        # Aslida obyektni saqlash
+        self.gardener.save()
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.gardener.full_name
 
-class GardenIncome(Income):
-
-    def __str__(self):
-        return self.description[:50]
-
-    class Meta:
-        verbose_name = "Kirim "
-        verbose_name_plural = "Kirimlar "
-        ordering = ['-created_at']
-
-    def save(self, *args, **kwargs):
-        if not self.section:
-            garden_section, _ = Section.objects.get_or_create(name="Bog'")
-            self.section = garden_section
-        super().save(*args, **kwargs)
-
-
-
-class GardenExpense(Expense):
-    class Meta:
-        proxy = False
-        verbose_name = "Chiqim "
-        verbose_name_plural = "Chiqimlar "
-        ordering = ['-created_at']
-
-    # def save(self, *args, **kwargs):
-    #     if not self.section:
-    #         garden_section, _ = Section.objects.get_or_create(name="Bog'")
-    #         self.section = garden_section
-    #     super().save(*args, **kwargs)
 
 

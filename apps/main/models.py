@@ -6,13 +6,6 @@ from apps.common.utils import convert_currency
 from apps.users.models import User
 
 
-class Section(models.Model):
-    name = models.CharField(max_length=100,null=True, blank=True)
-
-    def __str__(self):
-        return self.name
-
-
 class Expense(BaseModel):
     reason = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)

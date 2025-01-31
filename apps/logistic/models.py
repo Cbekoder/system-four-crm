@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE, TRANSFER_TYPE
 
 ###############
@@ -40,7 +40,7 @@ class Contractor(BasePerson):
 
 
 ###############
-##  Staff    ##
+##  Stuff    ##
 ###############
 
 class Car(BaseModel):
@@ -92,6 +92,11 @@ class CarExpense(BaseModel):
         verbose_name_plural = "Mashina harajatlari "
         ordering = ['-created_at']
 
+    # def save(self, *args, **kwargs):
+    #     with transaction.atomic():
+    #
+    #         super().save(*args, **kwargs)
+
     def __str__(self):
         if self.car and self.trailer:
             return self.car.state_number, self.trailer.state_number
@@ -132,7 +137,7 @@ class Contract(BaseModel):
     def __str__(self):
         return self.contract_id
 
-STATUS_CHOICES = (
+TRANSIT_STATUS_CHOICES = (
     ('new', 'Yangi'),
     ('left', 'Yuborilgan'),
     ('arrived', 'Qaytib kelgan'),
@@ -140,7 +145,7 @@ STATUS_CHOICES = (
     ('finished', 'Yakunlangan')
 )
 
-class Transit(BaseModel):
+class Transit(models.Model):
     car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True)
     driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True)
     leaving_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, related_name='leaving_transits')
@@ -150,7 +155,10 @@ class Transit(BaseModel):
     arrival_amount = models.FloatField(null=True, blank=True)
     arrival_date = models.DateTimeField(null=True, blank=True)
     driver_fee = models.FloatField(null=True, blank=True)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='new')
+    status = models.CharField(max_length=50, choices=TRANSIT_STATUS_CHOICES, default='new')
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
 
     class Meta:
         verbose_name = "Qatnov "

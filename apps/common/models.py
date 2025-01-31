@@ -1,23 +1,6 @@
 from django.db import models
 
 
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
-    is_verified = models.BooleanField(default=False)
-
-    class Meta:
-        abstract = True
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        # add updated_at field to update_fields if it is not present
-        # so that updated_at field will always be updated
-        if update_fields and "updated_at" not in update_fields:
-            update_fields.append("updated_at")
-
-        super().save(force_insert, force_update, using, update_fields)
-
-
 CURRENCY_TYPE = (
     ("USD", "USD🇺🇸"),
     ("UZS", "UZS🇺🇿")
@@ -35,6 +18,28 @@ SECTION_CHOICES = (
     ("factory", "Zavod"),
     ("general", "Umumiy")
 )
+
+STATUS_CHOICES = (
+    ('new', 'Yangi'),
+    ('verified', 'Tasdiqlangan'),
+    ('canceled', 'Bekor qilingan')
+)
+
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', verbose_name="Status")
+
+    class Meta:
+        abstract = True
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        # add updated_at field to update_fields if it is not present
+        # so that updated_at field will always be updated
+        if update_fields and "updated_at" not in update_fields:
+            update_fields.append("updated_at")
+
+        super().save(force_insert, force_update, using, update_fields)
 
 
 class BasePerson(BaseModel):

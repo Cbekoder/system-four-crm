@@ -9,10 +9,10 @@ urlpatterns = [
     path('', RedirectToDocs),
     path('admin/', admin.site.urls),
     path('auth/', include('apps.users.urls_auth')),
-    path('logistics/', include("apps.logistic.urls")),
+    path('logistic/', include("apps.logistic.urls")),
     path('general/', include("apps.main.urls")),
     path('mixed/', include("apps.main.urls_mix")),
-    path('api/v1/common/', include("apps.users.urls")),
+    path('user/', include("apps.users.urls")),
     path('garden/', include("apps.garden.urls")),
     path('fridge/', include("apps.fridge.urls")),
 ]
