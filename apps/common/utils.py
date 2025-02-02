@@ -6,7 +6,8 @@ redis = Redis.from_env()
 
 exchange_rates = {
     'USD': 1.0,
-    'UZS': redis.get("currency_rate")
+    # 'UZS': redis.get("currency_rate")
+    'UZS': 12990.20
 }
 
 def convert_currency(base, target, amount):
