@@ -16,13 +16,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'role', 'section']
-        read_only_fields = ['role', 'section']
+        fields = ['id', 'username', 'first_name', 'last_name', 'role', 'section', 'date_joined']
+        read_only_fields = ['role', 'section', 'date_joined']
 
 
 class UserPostSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = User
         fields = [

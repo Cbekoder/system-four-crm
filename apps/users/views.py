@@ -11,8 +11,21 @@ from drf_yasg import openapi
 from .permissions import IsCEO, IsAdmin
 from .models import User
 
-from .serializers import CustomTokenObtainPairSerializer
+from .serializers import CustomTokenObtainPairSerializer, UserDetailSerializer
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class GetMeView(APIView):
+    def get(self, request):
+        if self.request.user.is_authenticated:
+            user = self.request.user
+            serializer = UserDetailSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response({"detail": "Authentication credentials were not provided."},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+
