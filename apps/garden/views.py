@@ -52,7 +52,7 @@ class GardenExpenseListCreateView(ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(section="garden")
+        serializer.save(section="garden", user=self.request.user)
 
 class GardenExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = ExpenseSerializer
@@ -66,12 +66,13 @@ class GardenExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 class SalaryPaymentListCreateView(ListCreateAPIView):
     queryset = SalaryPayment.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    # permission_classes = [IsCEOOrAdmin]
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return GardenerSalaryPaymentGetSerializer
         return GardenerSalaryPaymentSerializer
+
 
     # def perform_create(self, serializer):
     #     gardener_id = self.request.data.get('gardener')

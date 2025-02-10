@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import *
-from apps.common.models import SECTION_CHOICES
+from apps.main.models import Expense
 
 
 class SalaryPaymentDetailSerializer(serializers.ModelSerializer):
@@ -35,4 +35,18 @@ class GardenerSalaryPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalaryPayment
         fields = '__all__'
+
+    def create(self, validated_data):
+        salary_payment = SalaryPayment.objects.create(**validated_data)
+
+        Expense.objects.create(
+            reason="Bog'bonning oylik maoshi",
+            description=validated_data.get("description", ""),
+            amount=validated_data["amount"],
+            currency_type=validated_data.get("currency_type", "UZS"),
+            section="garden",
+            user=self.context["request"].user if "request" in self.context else None
+        )
+
+        return salary_payment
 

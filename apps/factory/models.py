@@ -1,6 +1,7 @@
 from django.db import models
-from apps.common.models import BaseModel, BasePerson
-
+from apps.common.models import BaseModel, BasePerson,CURRENCY_TYPE
+from django.db.models import F
+from apps.main.models import Expense
 
 class Worker(BasePerson):
     class Meta:
@@ -41,11 +42,43 @@ class DailyWork(BaseModel):
         verbose_name_plural = "Kunlik ishlar "
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            prev = DailyWork.objects.get(pk=self.pk)
+
+            self.basket.quantity = F('quantity') - prev.quantity
+            self.basket.save(update_fields=['quantity'])
+            self.basket.refresh_from_db()
+
+            self.worker.balance = F('balance') - (prev.quantity * self.basket.per_worker_fee)
+            self.worker.save(update_fields=['balance'])
+            self.worker.balance = self.worker.balance + self.price
+
+        self.price = self.quantity * self.basket.per_worker_fee
+        super().save(*args, **kwargs)
+
+        self.basket.quantity = F('quantity') + self.quantity
+        self.basket.save(update_fields=['quantity'])
+        self.basket.refresh_from_db()
+
+        self.worker.balance = F('balance') + self.price
+        self.worker.save(update_fields=['balance'])
+        self.worker.refresh_from_db()
+
+    def delete(self, *args, **kwargs):
+        self.basket.quantity = F('quantity') - self.quantity
+        self.basket.save(update_fields=['quantity'])
+
+        self.worker.balance = F('balance') - self.price
+        self.worker.save(update_fields=['balance'])
+        super().delete(*args, **kwargs)
+
 
 class RawMaterial(BaseModel):
     name = models.CharField(max_length=100)
     weight = models.FloatField()
     price = models.FloatField()
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
     description = models.TextField(null=True, blank=True)
 
     class Meta:
@@ -72,6 +105,7 @@ class RawMaterialHistory(BaseModel):
     weight = models.FloatField(default=0)
     price = models.FloatField(default=0)
     description = models.TextField(null=True, blank=True)
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
 
     class Meta:
         verbose_name = "Xomashyo tarixi "
@@ -86,6 +120,7 @@ class Client(BasePerson):
     class Meta:
         verbose_name = "Mijoz "
         verbose_name_plural = "Mijozlar "
+
         ordering = ['-created_at']
 
     def __str__(self):
@@ -97,6 +132,8 @@ class Sale(BaseModel):
     description = models.TextField(null=True, blank=True)
     quantity = models.IntegerField(default=0)
     price = models.FloatField(default=0)
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
+    is_debt=models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Sotuv "
@@ -104,7 +141,24 @@ class Sale(BaseModel):
         ordering = ['-created_at']
 
     def __str__(self):
-        return self.basket
+        return self.basket.name
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            prev=Sale.objects.get(pk=self.pk)
+            self.basket.quantity = F('quantity') + prev.quantity
+            self.basket.save(update_fields=['quantity'])
+        self.price= self.quantity * self.basket.price
+        self.basket.quantity = F('quantity') - self.quantity
+        self.basket.save(update_fields=['quantity'])
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.basket.quantity = F('quantity') + self.quantity
+        self.basket.save(update_fields=['quantity'])
+        super().delete(*args, **kwargs)
+
+
 
 
 
