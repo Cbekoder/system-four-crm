@@ -3,6 +3,9 @@ from .serializers import *
 from apps.users.permissions import *
 from rest_framework.permissions import IsAuthenticated
 
+from apps.users.serializers import UserDetailSerializer, UserPostSerializer
+from ..users.models import User
+
 
 class RefrigatorListCreateView(ListCreateAPIView):
     serializer_class = RefrigeratorSerializer
@@ -49,3 +52,33 @@ class ElectricityBillListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(section="fridge", user=self.request.user)
+
+
+# Admin user views
+class FridgeUserListCreateAPIView(ListCreateAPIView):
+    permission_classes = [IsCEO]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserDetailSerializer
+        return UserPostSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.filter(section="fridge")
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(section="fridge")
+
+
+class FridgeUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    serializer_class = UserDetailSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.filter(section="fridge")
+        return queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserDetailSerializer
+        return UserPostSerializer

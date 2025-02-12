@@ -4,6 +4,8 @@ from apps.users.permissions import IsCEOOrAdmin, IsAdmin, IsCEO
 from apps.main.serializers import ExpenseSerializer, IncomeSerializer
 from apps.main.models import Income, Expense
 from .serializers import *
+from ..users.models import User
+from ..users.serializers import UserDetailSerializer, UserPostSerializer
 
 
 class GardenerListCreateView(ListCreateAPIView):
@@ -87,4 +89,31 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
     #     else:
     #         raise ValidationError({"detail": "Gardener ID is required."})
 
+# Admin user views
+class GardenUserListCreateAPIView(ListCreateAPIView):
+    permission_classes = [IsCEO]
 
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserDetailSerializer
+        return UserPostSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.filter(section="garden")
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(section="garden")
+
+
+class GardenUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    serializer_class = UserDetailSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.filter(section="garden")
+        return queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserDetailSerializer
+        return UserPostSerializer

@@ -10,14 +10,14 @@ from .views import (
     ContractListCreateView, ContractRetrieveUpdateDestroyView,
     TransitListCreateView, TransitRetrieveUpdateDestroyView,
     TransitExpenseListCreateView, TransitExpenseRetrieveUpdateDestroyView,
-    TransitIncomeListCreateView, TransitIncomeRetrieveUpdateDestroyView, UserListCreateAPIView,
-    UserRetrieveUpdateDestroyAPIView
+    TransitIncomeListCreateView, TransitIncomeRetrieveUpdateDestroyView, LogisticUserRetrieveUpdateDestroyAPIView,
+    LogisticUserListCreateAPIView
 )
 
 urlpatterns = [
     # Admin URLs
-    path('admins/', UserListCreateAPIView.as_view(), name='admin-list-create'),
-    path('admins/<int:pk>/', UserRetrieveUpdateDestroyAPIView.as_view(), name='admin-detail'),
+    path('admins/', LogisticUserListCreateAPIView.as_view(), name='logistic-admin-list-create'),
+    path('admins/<int:pk>/', LogisticUserRetrieveUpdateDestroyAPIView.as_view(), name='logistic-admin-detail'),
     
     # Driver URLs
     path('drivers/', DriverListCreateView.as_view(), name='driver-list-create'),

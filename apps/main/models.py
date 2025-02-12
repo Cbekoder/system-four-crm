@@ -1,5 +1,6 @@
 from django.db import models, transaction
 from rest_framework.exceptions import ValidationError
+from apps.common.services.logging import Telegram
 
 from apps.common.models import BaseModel, SECTION_CHOICES, BasePerson, CURRENCY_TYPE
 from apps.common.utils import convert_currency
@@ -18,6 +19,13 @@ class Expense(BaseModel):
         verbose_name = "Xarajat"
         verbose_name_plural = "Xarajatlar"
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            pass
+        super().save(*args, **kwargs)
+        message = f"ID: {self.id}\nSabab: {self.reason}\nIzoh: {self.description}\n\nSumma: {self.amount} {self.currency_type}"
+        Telegram.send_log(message)
 
     def __str__(self):
         return self.reason
@@ -108,3 +116,16 @@ class MoneyCirculation(BaseModel):
 
     def __str__(self):
         return self.acquaintance.full_name if self.acquaintance else str(self.id)
+
+
+class DailyRemainder(BaseModel):
+    amount = models.FloatField()
+
+    class Meta:
+        verbose_name = "Kunlik qoldiq "
+        verbose_name_plural = "Kunlik qoldiqlar "
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return str(self.created_at)
+

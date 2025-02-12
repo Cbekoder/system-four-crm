@@ -1,6 +1,6 @@
 from django.core.cache import cache
 import requests
-from .utils import redis
+# from .utils import redis
 
 
 def fetch_currency_rate():
@@ -8,8 +8,10 @@ def fetch_currency_rate():
 
     if response.status_code == 200:
         data = response.json()
-        new_rate = data.get("rates", {}).get("UZS")
-        if new_rate:
-            redis.set("currency_rate", new_rate)  # Cache for 24 hours
-            return f"Rate cached: {new_rate}"
+        UZS_rate = data.get("rates", {}).get("UZS")
+        RUB_rate = data.get("rates", {}).get("RUB")
+        if UZS_rate and RUB_rate:
+            cache.set("UZS_rate", UZS_rate)
+            cache.set("RUB_rate", RUB_rate)
+            return f"Rate cached: UZS: {UZS_rate}, RUB: {RUB_rate}"
     return "Failed to update rate"

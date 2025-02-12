@@ -1,13 +1,11 @@
-from upstash_redis import Redis
 from django.core.cache import cache
-
-redis = Redis.from_env()
 
 
 exchange_rates = {
     'USD': 1.0,
-    # 'UZS': redis.get("currency_rate")
-    'UZS': 12990.20
+    # 'UZS': cache.get("currency_rate")
+    'UZS': 12990.20,
+    'RUB': 96.89
 }
 
 def convert_currency(base, target, amount):

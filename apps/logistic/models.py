@@ -1,5 +1,9 @@
 from django.db import models, transaction
+from rest_framework.exceptions import ValidationError
+
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE, TRANSFER_TYPE
+from apps.common.utils import convert_currency
+
 
 ###############
 ## Just data ##
@@ -56,6 +60,20 @@ class Car(BaseModel):
     class Meta:
         verbose_name = "Mashina "
         verbose_name_plural = "Mashinalar "
+
+    def save(self, *args, **kwargs):
+        if self.tenant:
+            if not self.pk:
+                self.tenant.trucks_count -= 1
+                self.tenant.save(update_fields=["trucks_count"])
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.tenant:
+            if self.tenant.trucks_count and self.tenant.trucks_count > 0:
+                self.tenant.trucks_count -= 1
+                self.tenant.save(update_fields=["trucks_count"])
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return self.state_number
@@ -129,7 +147,6 @@ class Contract(BaseModel):
     contract_id = models.CharField(max_length=50)
     contractor = models.ForeignKey(Contractor, on_delete=models.SET_NULL, null=True)
 
-
     class Meta:
         verbose_name = "Shartnoma "
         verbose_name_plural = "Shartnomalar "
@@ -150,12 +167,16 @@ class Transit(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True)
     leaving_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, related_name='leaving_transits')
     leaving_amount = models.FloatField(null=True, blank=True)
+    leaving_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
     leaving_date = models.DateTimeField(null=True, blank=True)
     arrival_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, related_name='arrival_transits')
     arrival_amount = models.FloatField(null=True, blank=True)
+    arrival_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
     arrival_date = models.DateTimeField(null=True, blank=True)
     driver_fee = models.FloatField(null=True, blank=True)
+    fee_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
     status = models.CharField(max_length=50, choices=TRANSIT_STATUS_CHOICES, default='new')
+    remainder = models.FloatField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
@@ -163,6 +184,31 @@ class Transit(models.Model):
     class Meta:
         verbose_name = "Qatnov "
         verbose_name_plural = "Qatnovlar "
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                pass
+
+
+            if self.leaving_amount and self.arrival_amount:
+                if self.leaving_currency == self.arrival_currency:
+                    self.remainder = self.leaving_amount + self.arrival_amount
+                else:
+                    self.remainder = self.leaving_amount + convert_currency(self.arrival_currency, self.leaving_currency, self.arrival_amount)
+                self.remainder = self.leaving_amount
+            elif self.leaving_amount:
+                self.remainder = self.leaving_amount
+            elif self.arrival_amount:
+                self.remainder = self.arrival_amount
+
+            if self.status == "finished":
+                converted_driver_fee = self.driver_fee
+                if self.driver.currency_type != self.fee_currency:
+                    converted_driver_fee = convert_currency(self.driver.currency_type, self.fee_currency, self.driver_fee)
+                self.driver.balance += converted_driver_fee
+                self.driver.save(update_fields=["balance"])
+            super().save(*args, **kwargs)
 
     def __str__(self):
         if self.driver and self.car and self.leaving_date:
@@ -188,18 +234,40 @@ class TransitExpense(BaseModel):
             return f"{self.transit.id} | {self.reason}"
         return self.reason
 
+REASON_CHOICES = (
+    ('leaving', 'Ketish uchun'),
+    ('arrival', 'Qaytish uchun'),
+    ('other', 'Boshqa')
+)
+
 class TransitIncome(BaseModel):
     transit = models.ForeignKey(Transit, on_delete=models.SET_NULL, null=True, blank=False)
-    reason = models.CharField(max_length=255)
+    reason = models.CharField(max_length=255, choices=REASON_CHOICES)
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
-    transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPE, default="cash")
+    transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPE, default="transfer")
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
 
     class Meta:
         verbose_name = "Qatnov kirimi "
         verbose_name_plural = "Qatnov kirimlari "
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                pass
+
+            converted_amount = self.amount
+            if self.reason == "leaving":
+                pass
+            if self.transit.leaving_currency != self.currency_type:
+                self.transit.remainder -= convert_currency(self.currency_type, self.transit.leaving_currency, self.amount)
+
+            else:
+                raise ValidationError("Reason should be one of the following: 'leaving', 'arrival' or 'other'")
+
+            super().save(*args, **kwargs)
 
     def __str__(self):
         if self.transit:
@@ -208,8 +276,15 @@ class TransitIncome(BaseModel):
 
 
 
-
 class TirSelling(BaseModel):
     tir_number = models.CharField(max_length=40, unique=True)
     tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True, blank=False)
     contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "TIR savdosi "
+        verbose_name_plural = "TIR savdolari "
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.tir_number

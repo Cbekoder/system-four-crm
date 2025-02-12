@@ -70,7 +70,7 @@ class GeneralExpenseListCreateView(ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(sections="general", user=self.request.user)
+        serializer.save(section="general", user=self.request.user)
 
 
 class GeneralExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -91,7 +91,7 @@ class GeneralIncomeListCreateView(ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(sections="general", user=self.request.user)
+        serializer.save(section="general", user=self.request.user)
 
 
 class GeneralIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):

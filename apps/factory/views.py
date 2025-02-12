@@ -5,6 +5,8 @@ from apps.main.models import Expense, Income
 from rest_framework.filters import *
 from django_filters.rest_framework import DjangoFilterBackend
 from apps.main.serializers import ExpenseSerializer, IncomeSerializer
+from apps.users.serializers import UserDetailSerializer, UserPostSerializer
+from ..users.models import User
 
 
 class WorkerListCreateView(ListCreateAPIView):
@@ -129,6 +131,34 @@ class SaleRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsCEOOrAdmin]
 
 
+# Admin user views
+class FactoryUserListCreateAPIView(ListCreateAPIView):
+    permission_classes = [IsCEO]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserDetailSerializer
+        return UserPostSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.filter(section="factory")
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(section="factory")
+
+
+class FactoryUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    serializer_class = UserDetailSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.filter(section="factory")
+        return queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserDetailSerializer
+        return UserPostSerializer
 
 
 

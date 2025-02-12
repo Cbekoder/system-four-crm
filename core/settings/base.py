@@ -174,7 +174,10 @@ AUTH_PASSWORD_VALIDATORS = [
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': env.str("REDIS_URL"),
+        'LOCATION': env.str("CELERY_BROKER_URL"),
+        # 'OPTIONS': {
+        #     'ssl_cert_reqs': None  # Allow SSL without verification issues
+        # }
     }
 }
 

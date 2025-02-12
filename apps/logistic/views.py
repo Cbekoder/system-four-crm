@@ -1,3 +1,4 @@
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from .models import (
     Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment,
@@ -18,6 +19,16 @@ from apps.users.permissions import IsCEOOrAdmin, IsAdmin, IsCEO
 class DriverListCreateView(ListCreateAPIView):
     queryset = Driver.objects.all()
     serializer_class = DriverSerializer
+    filter_backends = [SearchFilter]
+    permission_classes = [IsCEOOrAdmin]
+    search_fields = ['id', 'first_name', 'last_name', 'phone_number', 'description']
+
+    # def get_permissions(self):
+    #     if self.request.method == 'GET':
+    #         permission_classes = [IsCEO | IsAdmin]
+    #     else:
+    #         permission_classes = [IsCEO | IsAdmin]
+    #     return [permission() for permission in permission_classes]
 
 
 class DriverRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -144,7 +155,7 @@ class TransitIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 # Admin user views
-class UserListCreateAPIView(ListCreateAPIView):
+class LogisticUserListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsCEO]
 
     def get_serializer_class(self):
@@ -160,7 +171,7 @@ class UserListCreateAPIView(ListCreateAPIView):
         serializer.save(section="logistic")
 
 
-class UserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+class LogisticUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = UserDetailSerializer
 
     def get_queryset(self):

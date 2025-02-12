@@ -53,7 +53,7 @@ class BasePerson(BaseModel):
     debt = models.FloatField(default=0, null=True, blank=True)
     landing = models.FloatField(null=True, blank=True)
     currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
-
+    status = None
     class Meta:
         abstract = True
 
