@@ -13,6 +13,8 @@ from apps.common.utils import convert_currency
 ##  People   ##
 ###############
 class Driver(BasePerson):
+    status = None
+
     class Meta:
         verbose_name = "Haydovchi"
         verbose_name_plural = "Haydovchi"

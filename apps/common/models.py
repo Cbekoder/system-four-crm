@@ -3,7 +3,8 @@ from django.db import models
 
 CURRENCY_TYPE = (
     ("USD", "USD🇺🇸"),
-    ("UZS", "UZS🇺🇿")
+    ("UZS", "UZS🇺🇿"),
+    ("RUB", "RUB🇷🇺")
 )
 
 TRANSFER_TYPE = (

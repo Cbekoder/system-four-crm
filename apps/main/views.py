@@ -104,7 +104,6 @@ class GeneralIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 
-
 ###################################################
 class MixedHistoryView(APIView):
     def get(self, request):
