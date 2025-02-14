@@ -1,7 +1,7 @@
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer, PrimaryKeyRelatedField
 from .models import *
-from apps.main.models import Expense
+from apps.main.models import Expense,Income
 from apps.main.serializers import ExpenseSerializer
 from apps.common.models import SECTION_CHOICES
 
@@ -89,3 +89,32 @@ class FridgeExpenseSerializer(ModelSerializer):
             return RefrigeratorSerializer(refrigerator).data
         except Refrigerator.DoesNotExist:
             return None
+
+class FridgeIncomeSerializer(ModelSerializer):
+    refrigerator = SerializerMethodField()
+    class Meta:
+        model = Income
+        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
+
+    def get_refrigerator(self, obj):
+        try:
+            reason, refrigerator_id = map(str, obj.reason.split("|"))
+            refrigerator = Refrigerator.objects.get(id=refrigerator_id)
+            return RefrigeratorSerializer(refrigerator).data
+        except Refrigerator.DoesNotExist:
+            return None
+
+class FridgeIncomePostSerializer(ModelSerializer):
+    refrigerator = PrimaryKeyRelatedField(
+        queryset=Refrigerator.objects.all(), write_only=True, required=True
+    )
+    class Meta:
+        model = Income
+        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
+        read_only_fields = ['updated_at', 'created_at', 'section']
+
+    def create(self, validated_data):
+        refrigerator = validated_data.pop('refrigerator')
+        validated_data['reason'] = f"income|{refrigerator.id}"
+        return super().create(validated_data)
+
