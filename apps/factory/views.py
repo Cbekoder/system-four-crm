@@ -7,12 +7,20 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.main.serializers import ExpenseSerializer, IncomeSerializer
 from apps.users.serializers import UserDetailSerializer, UserPostSerializer
 from ..users.models import User
+from django.utils.dateparse import parse_date
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class WorkerListCreateView(ListCreateAPIView):
     serializer_class = WorkerSerializer
     queryset = Worker.objects.all()
     permission_classes = [IsCEOOrAdmin]
+    filter_backends = [DjangoFilterBackend,SearchFilter, OrderingFilter]
+    search_fields=['first_name','last_name']
+    ordering_fields=['balance']
+
+
 
 
 class WorkerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -44,6 +52,47 @@ class DailyWorkListCreateView(ListCreateAPIView):
     search_fields = ['worker__first_name', 'worker__last_name', 'worker__phone_number']
     permission_classes = [IsCEOOrAdmin]
 
+    def get_queryset(self):
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            if not parse_date(start_date):
+                raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
+            self.queryset = self.queryset.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            if not parse_date(end_date):
+                raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
+            self.queryset = self.queryset.filter(created_at__date__lte=end_date)
+
+        return self.queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'search',
+                openapi.IN_QUERY,
+                description="Search by expense colums: id, worker first name,last name and phone number .",
+                type=openapi.TYPE_STRING
+            ),
+        ],
+        responses={200: DailyWorkGetSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return DailyWorkSerializer
@@ -64,6 +113,8 @@ class RawMaterialListCreateView(ListCreateAPIView):
     queryset = RawMaterial.objects.all()
     permission_classes = [IsCEOOrAdmin]
 
+
+
 class RawMaterialRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = RawMaterialSerializer
     queryset = RawMaterial.objects.all()
@@ -81,35 +132,159 @@ class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsCEOOrAdmin]
 
 
-class FridgeExpenseListCreateView(ListCreateAPIView):
+class FactoryExpenseListCreateView(ListCreateAPIView):
     serializer_class = ExpenseSerializer
     queryset = Expense.objects.all()
     permission_classes = [IsCEOOrAdmin]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    ordering_fields = ['created_at', 'price']
+
+
+
+    def perform_create(self, serializer):
+        serializer.save(section="factory", user=self.request.user)
+
 
     def get_queryset(self):
         queryset = Expense.objects.filter(section="factory")
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            if not parse_date(start_date):
+                raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
+            queryset = queryset.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            if not parse_date(end_date):
+                raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
+            queryset = queryset.filter(created_at__date__lte=end_date)
+
         return queryset
 
-    def perform_create(self, serializer):
-        serializer.save(section="factory", user=self.request.user)
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+        ],
+        responses={200: ExpenseSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
-class FridgeIncomeListCreateView(ListCreateAPIView):
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return DailyWorkSerializer
+        return DailyWorkGetSerializer
+
+
+class FactoryIncomeListCreateView(ListCreateAPIView):
     serializer_class = IncomeSerializer
     queryset = Income.objects.all()
     permission_classes = [IsCEOOrAdmin]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    ordering_fields = ['created_at', 'price']
 
     def get_queryset(self):
         queryset = Income.objects.filter(section="factory")
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            if not parse_date(start_date):
+                raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
+            queryset = queryset.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            if not parse_date(end_date):
+                raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
+            queryset = queryset.filter(created_at__date__lte=end_date)
+
         return queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+        ],
+        responses={200: IncomeSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(section="factory", user=self.request.user)
+
+
+class FactoryIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    serializer_class = IncomeSerializer
 
 
 class ClientListCreateView(ListCreateAPIView):
     serializer_class = ClientSerializer
     queryset = Client.objects.all()
     permission_classes = [IsCEOOrAdmin]
+    filter_backends = [DjangoFilterBackend,  SearchFilter]
+    search_fields = ['client__first_name', 'client__last_name', 'client__phone_number']
+
+    def get_queryset(self):
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            if not parse_date(start_date):
+                raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
+            self.queryset = self.queryset.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            if not parse_date(end_date):
+                raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
+            self.queryset = self.queryset.filter(created_at__date__lte=end_date)
+
+        return self.queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'search',
+                openapi.IN_QUERY,
+                description="Search by expense columns: id, client's first name,last name and phone number .",
+                type=openapi.TYPE_STRING
+            ),
+        ],
+        responses={200: ClientSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+
 
 
 class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -124,6 +299,48 @@ class SaleListCreateView(ListCreateAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['created_at', 'client']
     search_fields = ['client__first_name', 'client__last_name', 'client__phone_number']
+
+    def get_queryset(self):
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            if not parse_date(start_date):
+                raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
+            self.queryset = self.queryset.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            if not parse_date(end_date):
+                raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
+            self.queryset = self.queryset.filter(created_at__date__lte=end_date)
+
+        return self.queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'search',
+                openapi.IN_QUERY,
+                description="Search by expense columns: id, client's first name,last name and phone number .",
+                type=openapi.TYPE_STRING
+            ),
+        ],
+        responses={200: SaleSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+
 
 class SaleRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = SaleSerializer
