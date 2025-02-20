@@ -6,10 +6,10 @@ from core.swagger.generator import BothHttpAndHttpsSchemaGenerator
 
 main_schema_view = get_schema_view(
     openapi.Info(
-        title="Django Boilerplate API",
+        title="System Service CRM API",
         default_version="v1",
-        description="This Documentation shows list of api and will give chance to check them",
-        contact=openapi.Contact(email="info@gmail.com"),
+        description="Business automation system",
+        contact=openapi.Contact(email="cbekoder@gmail.com"),
     ),
     public=True,
     permission_classes=[permissions.AllowAny],

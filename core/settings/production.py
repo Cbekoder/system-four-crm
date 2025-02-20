@@ -3,6 +3,8 @@ from .base import *  # noqa
 
 DEBUG = False
 
+STATIC_ROOT = BASE_DIR / "static"
+
 # Database
 
 # DATABASES = {

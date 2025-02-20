@@ -2,6 +2,8 @@ from .base import *  # noqa
 
 DEBUG = True
 
+STATICFILES_DIRS = (BASE_DIR / "static",)
+
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
