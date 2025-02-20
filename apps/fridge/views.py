@@ -25,41 +25,31 @@ class RefrigatorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 class FridgeExpenseListCreateView(ListCreateAPIView):
     permission_classes = [IsCEOOrAdmin]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    ordering_fields = ['created_at', 'price']
 
     def get_serializer_class(self):
         if self.request.method == "GET":
             return FridgeExpenseSerializer
         return FridgeExpensePostSerializer
 
-    def get_queryset(self):
-        queryset = Expense.objects.filter(section='fridge', reason__startswith="expense|")
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(section="fridge", user=self.request.user)
-
-class FridgeExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    serializer_class = FridgeExpenseSerializer
-    queryset = Expense.objects.all()
-    permission_classes = [IsCEOOrAdmin]
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
-    ordering_fields = ['created_at','price']
 
     def get_queryset(self):
+        queryset = Expense.objects.filter(section='fridge')
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
         if start_date:
             if not parse_date(start_date):
                 raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
-            self.queryset = self.queryset.filter(created_at__date__gte=start_date)
+            queryset = queryset.filter(created_at__date__gte=start_date)
 
         if end_date:
             if not parse_date(end_date):
                 raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
-            self.queryset = self.queryset.filter(created_at__date__lte=end_date)
+            queryset = queryset.filter(created_at__date__lte=end_date)
 
-        return self.queryset
+        return queryset
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -78,6 +68,16 @@ class FridgeExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+
+    def perform_create(self, serializer):
+        serializer.save(section="fridge", user=self.request.user)
+
+class FridgeExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    serializer_class = FridgeExpenseSerializer
+    queryset = Expense.objects.all()
+    permission_classes = [IsCEOOrAdmin]
+
 
 class FridgeIncomeListCreateView(ListCreateAPIView):
     permission_classes = [IsCEOOrAdmin]
@@ -124,6 +124,12 @@ class FridgeIncomeListCreateView(ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(section="fridge", user=self.request.user)
 
+class FridgeIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = Income.objects.all()
+    serializer_class = FridgeIncomeSerializer
+    permission_classes = [IsCEOOrAdmin]
+
+
 class ElectricityBillListCreateView(ListCreateAPIView):
     permission_classes = [IsCEOOrAdmin]
 
@@ -168,6 +174,8 @@ class ElectricityBillListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(section="fridge", user=self.request.user)
+
+
 
 
 # Admin user views

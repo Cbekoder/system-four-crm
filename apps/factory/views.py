@@ -16,6 +16,9 @@ class WorkerListCreateView(ListCreateAPIView):
     serializer_class = WorkerSerializer
     queryset = Worker.objects.all()
     permission_classes = [IsCEOOrAdmin]
+    filter_backends = [DjangoFilterBackend,SearchFilter, OrderingFilter]
+    search_fields=['first_name','last_name']
+    ordering_fields=['balance']
 
 
 
@@ -129,7 +132,7 @@ class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsCEOOrAdmin]
 
 
-class FridgeExpenseListCreateView(ListCreateAPIView):
+class FactoryExpenseListCreateView(ListCreateAPIView):
     serializer_class = ExpenseSerializer
     queryset = Expense.objects.all()
     permission_classes = [IsCEOOrAdmin]
@@ -184,7 +187,7 @@ class FridgeExpenseListCreateView(ListCreateAPIView):
         return DailyWorkGetSerializer
 
 
-class FridgeIncomeListCreateView(ListCreateAPIView):
+class FactoryIncomeListCreateView(ListCreateAPIView):
     serializer_class = IncomeSerializer
     queryset = Income.objects.all()
     permission_classes = [IsCEOOrAdmin]
@@ -228,6 +231,10 @@ class FridgeIncomeListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(section="factory", user=self.request.user)
+
+
+class FactoryIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    serializer_class = IncomeSerializer
 
 
 class ClientListCreateView(ListCreateAPIView):
