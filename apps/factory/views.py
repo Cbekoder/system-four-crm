@@ -137,7 +137,8 @@ class FactoryExpenseListCreateView(ListCreateAPIView):
     queryset = Expense.objects.all()
     permission_classes = [IsCEOOrAdmin]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    ordering_fields = ['created_at', 'price']
+    ordering_fields = ['created_at', 'amount']
+    search_fields=['description','reason']
 
 
 
@@ -174,6 +175,12 @@ class FactoryExpenseListCreateView(ListCreateAPIView):
                 description="End date for filtering (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
             ),
+            openapi.Parameter(
+                'search',
+                openapi.IN_QUERY,
+                description="Search by expense colums: description and reason",
+                type=openapi.TYPE_STRING
+            ),
         ],
         responses={200: ExpenseSerializer(many=True)}
     )
@@ -181,10 +188,10 @@ class FactoryExpenseListCreateView(ListCreateAPIView):
         return super().get(request, *args, **kwargs)
 
 
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return DailyWorkSerializer
-        return DailyWorkGetSerializer
+class FactoryExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    serializer_class = ExpenseSerializer
+    queryset = Expense.objects.all()
+    permission_classes = [IsCEOOrAdmin]
 
 
 class FactoryIncomeListCreateView(ListCreateAPIView):
@@ -192,7 +199,8 @@ class FactoryIncomeListCreateView(ListCreateAPIView):
     queryset = Income.objects.all()
     permission_classes = [IsCEOOrAdmin]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    ordering_fields = ['created_at', 'price']
+    ordering_fields = ['created_at', 'amount']
+    search_fields = ['description','reason']
 
     def get_queryset(self):
         queryset = Income.objects.filter(section="factory")
@@ -223,6 +231,13 @@ class FactoryIncomeListCreateView(ListCreateAPIView):
                 description="End date for filtering (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
             ),
+            openapi.Parameter(
+                'search',
+                openapi.IN_QUERY,
+                description="Search by income colums: reason and reason",
+                type=openapi.TYPE_STRING
+            ),
+
         ],
         responses={200: IncomeSerializer(many=True)}
     )
@@ -235,6 +250,8 @@ class FactoryIncomeListCreateView(ListCreateAPIView):
 
 class FactoryIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = IncomeSerializer
+    queryset = Income.objects.all()
+    permission_classes = [IsCEOOrAdmin]
 
 
 class ClientListCreateView(ListCreateAPIView):

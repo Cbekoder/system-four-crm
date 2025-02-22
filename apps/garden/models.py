@@ -27,34 +27,39 @@ class SalaryPayment(BaseModel):
 
 
 
-    # def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):
+
+        if self.pk:
+            old_payment = SalaryPayment.objects.get(id=self.pk)
+            old_amount = old_payment.amount
+            if self.currency_type != old_payment.currency_type:
+                valid_currencies = ("USD", "UZS")
+                if old_payment.currency_type in valid_currencies and self.currency_type in valid_currencies:
+                    old_amount = convert_currency(old_payment.currency_type, self.currency_type, old_amount)
+            if self.amount != old_payment.amount:
+                self.gardener.balance -= old_amount
+            if self.gardener != old_payment.gardener:
+                raise ValidationError("It is not allowed to change gardener")
     #
-    #     if self.pk:
-    #         old_payment = SalaryPayment.objects.get(id=self.pk)
-    #         old_amount = old_payment.amount
-    #         if self.currency_type != old_payment.currency_type:
-    #             valid_currencies = ("USD", "UZS")
-    #             if old_payment.currency_type in valid_currencies and self.currency_type in valid_currencies:
-    #                 old_amount = convert_currency(old_payment.currency_type, self.currency_type, old_amount)
-    #         if self.amount != old_payment.amount:
-    #             self.gardener.balance -= old_amount
-    #         if self.gardener != old_payment.gardener:
-    #             raise ValidationError("It is not allowed to change gardener")
-    #
-    #     converted_amount = self.amount
-    #     if self.gardener.currency_type == self.currency_type:
-    #         valid_currencies = ("USD", "UZS")
-    #         if self.gardener.currency_type in valid_currencies and self.currency_type in valid_currencies:
-    #             converted_amount = convert_currency(self.currency_type, self.gardener.currency_type,
-    #                                                 self.amount)
-    #         else:
-    #             raise ValidationError("Invalid currency type")
-    #
-    #     self.gardener.balance += converted_amount
-    #
-    #     self.gardener.save()
-    #
-    #     super().save(*args, **kwargs)
+        converted_amount = self.amount
+        if self.gardener.currency_type == self.currency_type:
+            valid_currencies = ("USD", "UZS")
+            if self.gardener.currency_type in valid_currencies and self.currency_type in valid_currencies:
+                converted_amount = convert_currency(self.currency_type, self.gardener.currency_type,
+                                                    self.amount)
+            else:
+                raise ValidationError("Invalid currency type")
+
+        self.gardener.balance += converted_amount
+
+        self.gardener.save()
+
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.gardener.balance -= self.amount
+        self.gardener.save()
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return self.gardener.full_name

@@ -23,21 +23,21 @@ class DailyWorkSerializer(ModelSerializer):
         model = DailyWork
         fields = '__all__'
 
-    def create(self, validated_data):
-        request = self.context.get('request')
-
-        daily_work = DailyWork.objects.create(**validated_data)
-
-        Expense.objects.create(
-            reason="Korzinka | Kunlik ish haqi",
-            description=daily_work.description,
-            amount=daily_work.price,
-            currency_type="UZS",
-            section="factory",
-            user=request.user
-        )
-
-        return daily_work
+    # def create(self, validated_data):
+    #     request = self.context.get('request')
+    #
+    #     daily_work = DailyWork.objects.create(**validated_data)
+    #
+    #     Expense.objects.create(
+    #         reason="Korzinka | Kunlik ish haqi",
+    #         description=daily_work.description,
+    #         amount=daily_work.price,
+    #         currency_type="UZS",
+    #         section="factory",
+    #         user=request.user
+    #     )
+    #
+    #     return daily_work
 
 class DailyWorkGetSerializer(ModelSerializer):
     worker = WorkerSerializer()
@@ -58,21 +58,21 @@ class RawMaterialSerializer(ModelSerializer):
         model = RawMaterial
         fields = '__all__'
 
-    def create(self, validated_data):
-        request = self.context.get('request')
-
-        raw_material = RawMaterial.objects.create(**validated_data)
-
-        Expense.objects.create(
-            reason="Korzinka uchun xomashyo",
-            description=raw_material.description,
-            amount=raw_material.price,
-            currency_type=raw_material.currency_type,
-            section="factory",
-            user=request.user
-        )
-
-        return raw_material
+    # def create(self, validated_data):
+    #     request = self.context.get('request')
+    #
+    #     raw_material = RawMaterial.objects.create(**validated_data)
+    #
+    #     Expense.objects.create(
+    #         reason="Korzinka uchun xomashyo",
+    #         description=raw_material.description,
+    #         amount=raw_material.price,
+    #         currency_type=raw_material.currency_type,
+    #         section="factory",
+    #         user=request.user
+    #     )
+    #
+    #     return raw_material
 
 
 class ClientSerializer(ModelSerializer):
@@ -85,21 +85,22 @@ class SaleSerializer(ModelSerializer):
         model = Sale
         fields = '__all__'
 
-    def create(self, validated_data):
-        request = self.context.get('request')
+    # def create(self, validated_data):
+    #     request = self.context.get('request')
+    #
+    #     sale = Sale.objects.create(**validated_data)
+    #
+    #     Income.objects.create(
+    #         reason=f"Korzinka sotuvi | {sale.client.first_name} {sale.client.last_name}",
+    #         description=sale.description,
+    #         amount=sale.price,
+    #         currency_type=sale.currency_type,
+    #         section="factory",
+    #         user=request.user
+    #     )
+    #
+    #     return sale
 
-        sale = Sale.objects.create(**validated_data)
-
-        Income.objects.create(
-            reason="Sotuv",
-            description=sale.description,
-            amount=sale.price,
-            currency_type=sale.currency_type,
-            section="factory",
-            user=request.user
-        )
-
-        return sale
 
 class RawMaterialHistorySerializer(ModelSerializer):
     class Meta:

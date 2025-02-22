@@ -88,7 +88,7 @@ class GardenExpenseListCreateView(ListCreateAPIView):
     permission_classes = [IsCEOOrAdmin]
 
     def get_queryset(self):
-        queryset = Income.objects.filter(section="garden")
+        queryset = Expense.objects.filter(section="garden")
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
