@@ -202,6 +202,15 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
     #     else:
     #         raise ValidationError({"detail": "Gardener ID is required."})
 
+class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = SalaryPayment.objects.all()
+    serializer_class = GardenerSalaryPaymentSerializer
+    permission_classes = [IsCEOOrAdmin]
+
+
+
+
+
 # Admin user views
 class GardenUserListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsCEO]

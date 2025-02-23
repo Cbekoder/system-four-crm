@@ -28,13 +28,13 @@ class GardenerSalaryPaymentGetSerializer(serializers.ModelSerializer):
     gardener = GardenerSerializer()
     class Meta:
         model = SalaryPayment
-        fields = '__all__'
+        fields = ['gardener','description', 'amount', 'currency_type', 'updated_at', 'created_at']
 
 
 class GardenerSalaryPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalaryPayment
-        fields = '__all__'
+        fields = ['description', 'amount', 'currency_type', 'updated_at', 'created_at']
 
     # def create(self, validated_data):
         # salary_payment = SalaryPayment.objects.create(**validated_data)
