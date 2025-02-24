@@ -9,26 +9,26 @@ urlpatterns = [
 
     #Urls for Workers
     path('workers/', WorkerListCreateView.as_view()),
-    path('workers/<int:pk>', WorkerRetrieveUpdateDestroyView.as_view()),
+    path('workers/<int:pk>/', WorkerRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Baskets
     path('baskets/', BasketListCreateView.as_view()),
-    path('baskets/<int:pk>', BasketRetrieveUpdateDestroyView.as_view()),
+    path('baskets/<int:pk>/', BasketRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Daily Work
     path('daily-work/', DailyWorkListCreateView.as_view()),
 
     #Urls for Raw Material
     path('raw-materials/', RawMaterialListCreateView.as_view()),
-    path('raw-materials/<int:pk>', RawMaterialRetrieveUpdateDestroyView.as_view()),
+    path('raw-materials/<int:pk>/', RawMaterialRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Clients
     path('clients/', ClientListCreateView.as_view()),
-    path('clients/<int:pk>', ClientRetrieveUpdateDestroyView.as_view()),
+    path('clients/<int:pk>/', ClientRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Sales
     path('sales/', SaleListCreateView.as_view()),
-    path('sales/<int:pk>', SaleRetrieveUpdateDestroyView.as_view()),
+    path('sales/<int:pk>/', SaleRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Expenses
     path('expenses/', FactoryExpenseListCreateView.as_view()),
