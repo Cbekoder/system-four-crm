@@ -11,6 +11,10 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.conf.broker_connection_retry_on_startup = True
 app.autodiscover_tasks()
 
+@app.task(bind=True)
+def debug_task(self):
+    print(f'Request: {self.request!r}')
+
 app.conf.beat_schedule = {
     'update_currency_every_midnight': {
         'task': 'common.tasks.fetch_currency_rate',

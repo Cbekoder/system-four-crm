@@ -2,7 +2,7 @@ from .models import Income, Expense, MoneyCirculation
 
 
 
-def get_data(start_date, end_date):
+def get_remainder_data(start_date, end_date):
     incomes = list(Income.objects.all().values("created_at", "description", "amount", "currency_type"))
     expenses = list(Expense.objects.all().values("created_at", "description", "amount", "currency_type"))
     circulations = list(

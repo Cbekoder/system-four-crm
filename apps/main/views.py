@@ -10,7 +10,7 @@ from apps.users.permissions import IsCEO
 from .models import Acquaintance, MoneyCirculation, Expense, Income
 from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, MoneyCirculationSerializer, \
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer
-from .utils import get_data
+from .utils import get_remainder_data
 
 
 def RedirectToDocs(request):
@@ -263,7 +263,7 @@ class MixedHistoryView(APIView):
         end_date = self.request.query_params.get('end_date')
 
 
-        data = get_data(start_date, end_date)
+        data = get_remainder_data(start_date, end_date)
         response_data = {
             "income": MixedDataSerializer(data["sorted_income"], many=True).data,
             "outcome": MixedDataSerializer(data["sorted_outcome"], many=True).data
