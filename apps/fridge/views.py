@@ -88,6 +88,7 @@ class FridgeIncomeListCreateView(ListCreateAPIView):
         return FridgeIncomePostSerializer
 
     def get_queryset(self):
+        self.queryset = Income.objects.filter(section='fridge')
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
@@ -119,7 +120,6 @@ class FridgeIncomeListCreateView(ListCreateAPIView):
         responses={200: FridgeIncomeSerializer(many=True)}
     )
     def get(self, request, *args, **kwargs):
-        print(request.query_params)
         return super().get(request, *args, **kwargs)
 
     def perform_create(self, serializer):
@@ -140,7 +140,7 @@ class ElectricityBillListCreateView(ListCreateAPIView):
         return ElectricityBillPostSerializer
 
     def get_queryset(self):
-        # queryset = Expense.objects.filter(section='fridge', reason="electricity|1")
+        self.queryset = Expense.objects.filter(section='fridge', reason="electricity|1")
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
