@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     AcquaintanceListCreateView, AcquaintanceRetrieveUpdateDestroyView, GiveMoneyListCreateView,
     GetMoneyListCreateView, MoneyCirculationsRetrieveUpdateDestroyView, GeneralExpenseRetrieveUpdateDestroyView,
-    GeneralExpenseListCreateView, GeneralIncomeListCreateView, GeneralIncomeRetrieveUpdateDestroyView
+    GeneralExpenseListCreateView, GeneralIncomeListCreateView, GeneralIncomeRetrieveUpdateDestroyView,
+    DailyRemainderView
 )
 
 urlpatterns = [
@@ -18,4 +19,6 @@ urlpatterns = [
     
     path('incomes/', GeneralIncomeListCreateView.as_view(), name='general-incomes-list'),
     path('incomes/<int:pk>/', GeneralIncomeRetrieveUpdateDestroyView.as_view(), name='general-incomes-list'),
+
+    path('daily-remainder/', DailyRemainderView.as_view(), name='daily-remainder')
 ]

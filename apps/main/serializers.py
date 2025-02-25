@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Acquaintance, MoneyCirculation, Income, Expense
+from .models import Acquaintance, MoneyCirculation, Income, Expense, DailyRemainder
+
 
 class AcquaintanceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,6 +38,10 @@ class IncomeSerializer(serializers.ModelSerializer):
         read_only_fields = ['updated_at', 'created_at', 'user', 'section']
 
 
+class DailyRemainderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailyRemainder
+        fields = ['id', 'amount', 'created_at']
 
 
 ################################
