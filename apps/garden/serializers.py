@@ -36,7 +36,7 @@ class GardenerSalaryPaymentGetSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = SalaryPayment
-        fields = ['gardener','description', 'amount', 'currency_type', 'updated_at', 'created_at']
+        fields = ['id', 'gardener','description', 'amount', 'currency_type', 'updated_at', 'created_at']
 
 
 class GardenerSalaryPaymentSerializer(ModelSerializer):
@@ -44,7 +44,7 @@ class GardenerSalaryPaymentSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = SalaryPayment
-        fields = ['description', 'amount', 'currency_type', 'updated_at', 'created_at']
+        fields = ['gardener', 'description', 'amount', 'currency_type', 'updated_at', 'created_at']
 
     # def create(self, validated_data):
         # salary_payment = SalaryPayment.objects.create(**validated_data)
