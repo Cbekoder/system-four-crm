@@ -50,7 +50,6 @@ class IncomeSerializer(ModelSerializer):
 
 class DailyRemainderSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = DailyRemainder
         fields = ['id', 'amount', 'created_at']

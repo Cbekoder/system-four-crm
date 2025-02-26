@@ -15,7 +15,7 @@ class BasketSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Basket
-        fields = ["name", "size", "weight", "quantity", "price", "per_worker_fee", "updated_at", "created_at"]
+        fields = ["id", "name", "size", "weight", "quantity", "price", "per_worker_fee", "updated_at", "created_at"]
 
 class SupplierSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)

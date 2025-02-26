@@ -12,7 +12,8 @@ from apps.users.permissions import IsCEO
 from .models import Acquaintance, MoneyCirculation, Expense, Income, DailyRemainder
 from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, MoneyCirculationSerializer, \
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer
-from .utils import get_remainder_data
+from .utils import get_remainder_data, calculate_remainder
+from ..common.utils import convert_currency
 
 
 def RedirectToDocs(request):
@@ -253,7 +254,7 @@ class DailyRemainderView(ListAPIView):
         end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date() if end_date else timezone.now().date()
 
         queryset = DailyRemainder.objects.filter(created_at__range=[start_date, end_date])
-        return queryset
+        return DailyRemainder.objects.all()
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -292,7 +293,6 @@ class MixedHistoryView(APIView):
         responses={200: MoneyCirculationSerializer(many=True)}
     )
     def get(self, request):
-
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
@@ -301,10 +301,12 @@ class MixedHistoryView(APIView):
 
         if end_date:
             end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
-            remainder_value = DailyRemainder.objects.filter(created_at=end_date + timedelta(days=1)).last()
+            print((end_date + timedelta(days=1)))
+            print(DailyRemainder.objects.filter(created_at=(end_date + timedelta(days=1))))
+            remainder_value = DailyRemainder.objects.filter(created_at=end_date + timedelta(days=1)).last().amount
         else:
             end_date = timezone.now().date()
-            remainder_value = DailyRemainder.objects.filter(created_at=end_date)
+            remainder_value = DailyRemainder.objects.last().amount + calculate_remainder(end_date, request.user)
 
         data = get_remainder_data(start_date, end_date)
         response_data = {
@@ -312,8 +314,8 @@ class MixedHistoryView(APIView):
             "outcome": MixedDataSerializer(data["sorted_outcome"], many=True).data,
             "remainder": {
                 "UZS": remainder_value,
-                "RUB": 2324,
-                "USD": 2324,
+                "RUB": convert_currency("UZS", "RUB", remainder_value),
+                "USD": convert_currency("UZS", "USD", remainder_value),
             }
         }
 

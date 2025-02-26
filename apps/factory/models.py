@@ -35,7 +35,7 @@ class DailyWork(BaseModel):
     worker = models.ForeignKey(Worker, on_delete=models.CASCADE)
     basket = models.ForeignKey(Basket, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
-    price = models.FloatField(default=0)
+    amount = models.FloatField(default=0)
     description = models.TextField(null=True, blank=True)
 
     class Meta:
@@ -106,7 +106,7 @@ class Supplier(BaseModel):
 class RawMaterialHistory(BaseModel):
     supplier = models.CharField(max_length=100)
     weight = models.FloatField(default=0)
-    price = models.FloatField(default=0)
+    amount = models.FloatField(default=0)
     description = models.TextField(null=True, blank=True)
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
 
@@ -134,7 +134,7 @@ class Sale(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     quantity = models.IntegerField(default=0)
-    price = models.FloatField(default=0)
+    amount = models.FloatField(default=0)
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
     is_debt=models.BooleanField(default=False)
 
@@ -151,7 +151,7 @@ class Sale(BaseModel):
             prev=Sale.objects.get(pk=self.pk)
             self.basket.quantity = F('quantity') + prev.quantity
             self.basket.save(update_fields=['quantity'])
-        self.price= self.quantity * self.basket.price
+        self.amount= self.quantity * self.basket.price
         self.basket.quantity = F('quantity') - self.quantity
         self.basket.save(update_fields=['quantity'])
         super().save(*args, **kwargs)

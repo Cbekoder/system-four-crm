@@ -32,10 +32,10 @@ urlpatterns = [
 
     #Urls for Expenses
     path('expenses/', FactoryExpenseListCreateView.as_view()),
-    path('expenses/<int:pk>',FactoryExpenseRetrieveUpdateDestroyView.as_view()),
+    path('expenses/<int:pk>/',FactoryExpenseRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Income
     path('incomes/',FactoryIncomeListCreateView.as_view()),
-    path('incomes/<int:pk>',FactoryIncomeRetrieveUpdateDestroyView.as_view()),
+    path('incomes/<int:pk>/',FactoryIncomeRetrieveUpdateDestroyView.as_view()),
 
 ]

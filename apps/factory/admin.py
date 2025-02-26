@@ -14,10 +14,10 @@ class BasketAdmin(admin.ModelAdmin):
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'basket__name', 'client__first_name','quantity', 'price' ]
+    list_display = ['id', 'basket__name', 'client__first_name','quantity', 'amount' ]
     list_display_links = ['id', 'basket__name', 'client__first_name']
 
 @admin.register(DailyWork)
 class DailyWorkAdmin(admin.ModelAdmin):
-    list_display = ['id', 'worker', 'basket', 'quantity', 'price']
+    list_display = ['id', 'worker', 'basket', 'quantity', 'amount']
     list_display_links = ['id', 'worker', 'basket']
