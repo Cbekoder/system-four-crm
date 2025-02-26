@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE, TRANSFER_TYPE
 from apps.common.utils import convert_currency
+from apps.users.models import User
 
 
 ###############
@@ -58,6 +59,7 @@ class Car(BaseModel):
     tech_passport = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)
     tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True, blank=True)
+    creator = None
 
     class Meta:
         verbose_name = "Mashina "
@@ -106,6 +108,7 @@ class CarExpense(BaseModel):
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default='USD')
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="salary_payments_logistic")
 
     class Meta:
         verbose_name = "Mashina harajati "

@@ -80,7 +80,7 @@ class GiveMoneyListCreateView(ListCreateAPIView):
         return super().get(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        serializer.save(type='give')
+        serializer.save(type='give', creator=self.request.user)
 
 
 class GetMoneyListCreateView(ListCreateAPIView):
@@ -125,7 +125,7 @@ class GetMoneyListCreateView(ListCreateAPIView):
         return super().get(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        serializer.save(type='get')
+        serializer.save(type='get', creator=self.request.user)
 
 
 class MoneyCirculationsRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -296,11 +296,25 @@ class MixedHistoryView(APIView):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
+        start_date = timezone.datetime.strptime(start_date, "%Y-%m-%d").date() if start_date else (
+                timezone.now() - timedelta(days=7)).date()
+
+        if end_date:
+            end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
+            remainder_value = DailyRemainder.objects.filter(created_at=end_date + timedelta(days=1)).last()
+        else:
+            end_date = timezone.now().date()
+            remainder_value = DailyRemainder.objects.filter(created_at=end_date)
 
         data = get_remainder_data(start_date, end_date)
         response_data = {
             "income": MixedDataSerializer(data["sorted_income"], many=True).data,
-            "outcome": MixedDataSerializer(data["sorted_outcome"], many=True).data
+            "outcome": MixedDataSerializer(data["sorted_outcome"], many=True).data,
+            "remainder": {
+                "UZS": remainder_value,
+                "RUB": 2324,
+                "USD": 2324,
+            }
         }
 
         return Response(response_data)

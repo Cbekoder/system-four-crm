@@ -1,22 +1,28 @@
-from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer, DateTimeField
 from .models import *
 from apps.main.models import Expense
 
 
-class SalaryPaymentDetailSerializer(serializers.ModelSerializer):
+class SalaryPaymentDetailSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = SalaryPayment
         fields = ['description', 'amount', 'currency_type', 'updated_at', 'created_at']
 
-class GardenerSerializer(serializers.ModelSerializer):
+class GardenerSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Gardener
         fields = ['id', 'first_name', 'last_name', 'phone_number', 'extra_phone_number', 'birth_date', 'description',
                   'balance', 'currency_type', 'updated_at', 'created_at',]
         read_only_fields = ['balance', 'updated_at', 'created_at']
 
-class GardenerDetailSerializer(serializers.ModelSerializer):
+class GardenerDetailSerializer(ModelSerializer):
     salaries = SalaryPaymentDetailSerializer(source="salarypayment_set", many=True)
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Gardener
         fields = ['id', 'first_name', 'last_name', 'phone_number', 'extra_phone_number', 'birth_date', 'description',
@@ -24,14 +30,18 @@ class GardenerDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['balance', 'updated_at', 'created_at']
 
 
-class GardenerSalaryPaymentGetSerializer(serializers.ModelSerializer):
+class GardenerSalaryPaymentGetSerializer(ModelSerializer):
     gardener = GardenerSerializer()
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = SalaryPayment
         fields = ['gardener','description', 'amount', 'currency_type', 'updated_at', 'created_at']
 
 
-class GardenerSalaryPaymentSerializer(serializers.ModelSerializer):
+class GardenerSalaryPaymentSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = SalaryPayment
         fields = ['description', 'amount', 'currency_type', 'updated_at', 'created_at']

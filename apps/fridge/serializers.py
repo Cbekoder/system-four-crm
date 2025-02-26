@@ -1,5 +1,5 @@
 from rest_framework.fields import SerializerMethodField
-from rest_framework.serializers import ModelSerializer, PrimaryKeyRelatedField
+from rest_framework.serializers import ModelSerializer, PrimaryKeyRelatedField, DateTimeField
 from .models import *
 from apps.main.models import Expense,Income
 from apps.main.serializers import ExpenseSerializer
@@ -7,6 +7,8 @@ from apps.common.models import SECTION_CHOICES
 
 
 class RefrigeratorSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Refrigerator
         fields = '__all__'
@@ -15,6 +17,8 @@ class RefrigeratorSerializer(ModelSerializer):
 class RefrigeratorDetailSerializer(ModelSerializer):
     expenses = SerializerMethodField()
     electricity_bills = SerializerMethodField()
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Refrigerator
         fields = '__all__'
@@ -37,6 +41,8 @@ class ElectricityBillPostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
         queryset=Refrigerator.objects.all(), write_only=True, required=True
     )
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
         fields = '__all__'
@@ -49,6 +55,8 @@ class ElectricityBillPostSerializer(ModelSerializer):
 
 class ElectricityBillSerializer(ModelSerializer):
     refrigerator = SerializerMethodField()
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
         fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'updated_at', 'created_at']
@@ -66,6 +74,8 @@ class FridgeExpensePostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
         queryset=Refrigerator.objects.all(), write_only=True, required=True
     )
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
         fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
@@ -78,6 +88,8 @@ class FridgeExpensePostSerializer(ModelSerializer):
 
 class FridgeExpenseSerializer(ModelSerializer):
     refrigerator = SerializerMethodField()
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
         fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
@@ -92,6 +104,8 @@ class FridgeExpenseSerializer(ModelSerializer):
 
 class FridgeIncomeSerializer(ModelSerializer):
     refrigerator = SerializerMethodField()
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Income
         fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
@@ -108,6 +122,8 @@ class FridgeIncomePostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
         queryset=Refrigerator.objects.all(), write_only=True, required=True
     )
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Income
         fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']

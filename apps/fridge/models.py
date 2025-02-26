@@ -7,6 +7,7 @@ class Refrigerator(BaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     year = models.CharField(max_length=4)
+    creator = None
 
     class Meta:
         verbose_name = "Muzlatgich "

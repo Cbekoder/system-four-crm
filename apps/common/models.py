@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.users.models import User
 
 CURRENCY_TYPE = (
     ("USD", "USD🇺🇸"),
@@ -29,14 +30,13 @@ STATUS_CHOICES = (
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
+    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', verbose_name="Status")
 
     class Meta:
         abstract = True
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        # add updated_at field to update_fields if it is not present
-        # so that updated_at field will always be updated
         if update_fields and "updated_at" not in update_fields:
             update_fields.append("updated_at")
 
@@ -55,6 +55,7 @@ class BasePerson(BaseModel):
     landing = models.FloatField(null=True, blank=True)
     currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
     status = None
+    creator = None
     class Meta:
         abstract = True
 

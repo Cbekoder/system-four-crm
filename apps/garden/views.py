@@ -187,7 +187,8 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
     # def perform_create(self, serializer):
     #     gardener_id = self.request.data.get('gardener')
@@ -206,9 +207,6 @@ class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = SalaryPayment.objects.all()
     serializer_class = GardenerSalaryPaymentSerializer
     permission_classes = [IsCEOOrAdmin]
-
-
-
 
 
 # Admin user views

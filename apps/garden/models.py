@@ -3,6 +3,8 @@ from rest_framework.exceptions import ValidationError
 
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE
 from apps.common.utils import convert_currency
+from apps.users.models import User
+
 
 class Gardener(BasePerson):
     class Meta:
@@ -19,6 +21,7 @@ class SalaryPayment(BaseModel):
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="salary_payments_garden")
 
     class Meta:
         verbose_name = "Oylik maosh"

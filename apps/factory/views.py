@@ -21,8 +21,6 @@ class WorkerListCreateView(ListCreateAPIView):
     ordering_fields=['balance']
 
 
-
-
 class WorkerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = WorkerSerializer
     queryset = Worker.objects.all()
@@ -98,6 +96,9 @@ class DailyWorkListCreateView(ListCreateAPIView):
             return DailyWorkSerializer
         return DailyWorkGetSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
 class DailyWorkRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = DailyWorkSerializer
     queryset = DailyWork.objects.all()
@@ -125,6 +126,9 @@ class RawMaterialHistoryListCreateView(ListCreateAPIView):
     serializer_class = RawMaterialHistorySerializer
     queryset = RawMaterialHistory.objects.all()
     permission_classes = [IsCEOOrAdmin]
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
 class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = RawMaterialHistorySerializer
@@ -356,6 +360,9 @@ class SaleListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
 
 

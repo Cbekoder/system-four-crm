@@ -20,6 +20,7 @@ class Basket(BaseModel):
     quantity = models.IntegerField(default=0)
     price = models.FloatField()
     per_worker_fee = models.FloatField()
+    creator = None
 
     class Meta:
         verbose_name = "Savat "
@@ -80,6 +81,7 @@ class RawMaterial(BaseModel):
     price = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
     description = models.TextField(null=True, blank=True)
+    creator = None
 
     class Meta:
         verbose_name = "Xomashyo "
@@ -91,6 +93,7 @@ class RawMaterial(BaseModel):
 
 class Supplier(BaseModel):
     name = models.CharField(max_length=100)
+    creator = None
 
     class Meta:
         verbose_name = "Ta'minotchi "

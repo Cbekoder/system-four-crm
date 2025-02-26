@@ -142,6 +142,9 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
 
 class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = SalaryPayment.objects.all()
@@ -194,6 +197,9 @@ class ContractListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
 
 class ContractRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -250,6 +256,9 @@ class TransitListCreateView(ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
 
 class TransitRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Transit.objects.all()
@@ -299,6 +308,9 @@ class TransitExpenseListCreateView(ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
 
 class TransitExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = TransitExpense.objects.all()
@@ -343,6 +355,9 @@ class TransitIncomeListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
 
 class TransitIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):

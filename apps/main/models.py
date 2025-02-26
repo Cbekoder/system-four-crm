@@ -12,8 +12,9 @@ class Expense(BaseModel):
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="expenses_created")
     section = models.CharField(max_length=30, choices=SECTION_CHOICES, null=True, blank=True)
+    creator = None
 
     class Meta:
         verbose_name = "Xarajat"
@@ -38,6 +39,7 @@ class Income(BaseModel):
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     section = models.CharField(max_length=30, choices=SECTION_CHOICES, null=True, blank=True)
+    creator = None
 
     class Meta:
         verbose_name = "Kirim "
@@ -120,6 +122,7 @@ class MoneyCirculation(BaseModel):
 
 class DailyRemainder(BaseModel):
     amount = models.FloatField()
+    creator = None
 
     class Meta:
         verbose_name = "Kunlik qoldiq "

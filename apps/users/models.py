@@ -1,11 +1,18 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from apps.common.models import BaseModel, SECTION_CHOICES
 
 
 ROLE_CHOICES = (
     ('ceo', 'CEO'),
     ('admin', 'Admin'),
+)
+
+SECTION_CHOICES = (
+    ("logistic", "Logistika"),
+    ("fridge", "Muzlatgich"),
+    ("garden", "Bog'"),
+    ("factory", "Zavod"),
+    ("general", "Umumiy")
 )
 
 class User(AbstractUser):

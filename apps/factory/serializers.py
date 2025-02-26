@@ -1,24 +1,32 @@
-from rest_framework.serializers import ModelSerializer,ValidationError,CharField
+from rest_framework.serializers import ModelSerializer,ValidationError,CharField, DateTimeField
 from .models import *
 from apps.main.models import Expense, Income
 
 class WorkerSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Worker
         fields = ['id', 'first_name', 'last_name', 'phone_number', 'extra_phone_number', 'birth_date', 'description',
                   'balance', 'currency_type', 'updated_at', 'created_at']
 
 class BasketSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Basket
-        fields = '__all__'
+        fields = ["name", "size", "weight", "quantity", "price", "per_worker_fee", "updated_at", "created_at"]
 
 class SupplierSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Supplier
         fields = '__all__'
 
 class DailyWorkSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = DailyWork
         fields = '__all__'
@@ -41,6 +49,8 @@ class DailyWorkSerializer(ModelSerializer):
 
 class DailyWorkGetSerializer(ModelSerializer):
     worker = WorkerSerializer()
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = DailyWork
         fields = '__all__'
@@ -48,12 +58,16 @@ class DailyWorkGetSerializer(ModelSerializer):
 
 class WorkerGetSerializer(ModelSerializer):
     daily_work = DailyWorkSerializer(source="dailywork_set", many=True)
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Worker
         fields = '__all__'
 
 
 class RawMaterialSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = RawMaterial
         fields = '__all__'
@@ -76,11 +90,15 @@ class RawMaterialSerializer(ModelSerializer):
 
 
 class ClientSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Client
         fields = '__all__'
 
 class SaleSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Sale
         fields = '__all__'
@@ -103,6 +121,8 @@ class SaleSerializer(ModelSerializer):
 
 
 class RawMaterialHistorySerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = RawMaterialHistory
         fields = '__all__'
