@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from apps.common.models import BaseModel, BasePerson,CURRENCY_TYPE
 from django.db.models import F
 from apps.main.models import Expense
@@ -31,10 +31,8 @@ class Basket(BaseModel):
         return self.name
 
 
-class DailyWork(BaseModel):
+class UserDailyWork(BaseModel):
     worker = models.ForeignKey(Worker, on_delete=models.CASCADE)
-    basket = models.ForeignKey(Basket, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=0)
     amount = models.FloatField(default=0)
     description = models.TextField(null=True, blank=True)
 
@@ -43,36 +41,68 @@ class DailyWork(BaseModel):
         verbose_name_plural = "Kunlik ishlar "
         ordering = ['-created_at']
 
-    def save(self, *args, **kwargs):
-        if self.pk:
-            prev = DailyWork.objects.get(pk=self.pk)
-
-            self.basket.quantity = F('quantity') - prev.quantity
-            self.basket.save(update_fields=['quantity'])
-            self.basket.refresh_from_db()
-
-            self.worker.balance = F('balance') - (prev.quantity * self.basket.per_worker_fee)
-            self.worker.save(update_fields=['balance'])
-            self.worker.balance = self.worker.balance + self.price
-
-        self.price = self.quantity * self.basket.per_worker_fee
-        super().save(*args, **kwargs)
-
-        self.basket.quantity = F('quantity') + self.quantity
-        self.basket.save(update_fields=['quantity'])
-        self.basket.refresh_from_db()
-
-        self.worker.balance = F('balance') + self.price
-        self.worker.save(update_fields=['balance'])
-        self.worker.refresh_from_db()
 
     def delete(self, *args, **kwargs):
-        self.basket.quantity = F('quantity') - self.quantity
-        self.basket.save(update_fields=['quantity'])
+        with transaction.atomic():
+            related_basket_counts = UserBasketCount.objects.filter(user_daily_work=self)
 
-        self.worker.balance = F('balance') - self.price
-        self.worker.save(update_fields=['balance'])
-        super().delete(*args, **kwargs)
+            for basket_count in related_basket_counts:
+                basket_count.delete()
+
+            super().delete(*args, **kwargs)
+
+
+class UserBasketCount(models.Model):
+    user_daily_work = models.ForeignKey(UserDailyWork, on_delete=models.CASCADE)
+    basket = models.ForeignKey(Basket, on_delete=models.SET_NULL, related_name='basket_count')
+    quantity = models.IntegerField()
+
+    class Meta:
+        verbose_name = "Ishchi savat soni"
+        verbose_name_plural = "Ishchi savat sonlari "
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.user_daily_work.worker.full_name
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                prev = UserBasketCount.objects.get(pk=self.pk)
+
+                prev.basket.quantity = F('quantity') - prev.quantity
+                prev.basket.save(update_fields=['quantity'])
+                prev.basket.refresh_from_db()
+
+                prev.user_daily_work.amount = F('amount') - (prev.quantity * prev.basket.price)
+                prev.user_daily_work.save(update_fields=['amount'])
+
+                prev.user_daily_work.worker.balance = F('balance') - (prev.quantity * prev.basket.per_worker_fee)
+                prev.user_daily_work.worker.save(update_fields=['balance'])
+
+            super().save(*args, **kwargs)
+
+            self.basket.quantity = F('quantity') + self.quantity
+            self.basket.save(update_fields=['quantity'])
+
+            self.user_daily_work.worker.balance = F('balance') + self.quantity * self.basket.per_worker_fee
+            self.user_daily_work.worker.save(update_fields=['balance'])
+
+            self.user_daily_work.amount = F('amount') + (self.quantity * self.basket.price)
+            self.user_daily_work.save(update_fields=['amount'])
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            self.basket.quantity = F('quantity') - self.quantity
+            self.basket.save(update_fields=['quantity'])
+
+            self.user_daily_work.worker.balance = F('balance') - self.quantity * self.basket.per_worker_fee
+            self.user_daily_work.worker.save(update_fields=['balance'])
+
+            self.user_daily_work.amount = F('amount') - (self.quantity * self.basket.price)
+            self.user_daily_work.save(update_fields=['amount'])
+
+            super().delete(*args, **kwargs)
 
 
 class RawMaterial(BaseModel):

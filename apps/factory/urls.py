@@ -17,6 +17,7 @@ urlpatterns = [
 
     #Urls for Daily Work
     path('daily-work/', DailyWorkListCreateView.as_view()),
+    path('daily-work/<int:pk>/', DailyWorkRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Raw Material
     path('raw-materials/', RawMaterialListCreateView.as_view()),

@@ -1,65 +1,101 @@
-from rest_framework.serializers import ModelSerializer,ValidationError,CharField, DateTimeField
+from rest_framework.serializers import ModelSerializer, ValidationError, CharField, DateTimeField, \
+    PrimaryKeyRelatedField, SerializerMethodField
 from .models import *
 from apps.main.models import Expense, Income
+
 
 class WorkerSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = Worker
         fields = ['id', 'first_name', 'last_name', 'phone_number', 'extra_phone_number', 'birth_date', 'description',
                   'balance', 'currency_type', 'updated_at', 'created_at']
 
+class WorkerSimpleSerializer(ModelSerializer):
+    class Meta:
+        model = Worker
+        fields = ['id', 'first_name', 'last_name', 'phone_number', 'extra_phone_number', 'birth_date', 'description']
+
+
 class BasketSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = Basket
         fields = ["id", "name", "size", "weight", "quantity", "price", "per_worker_fee", "updated_at", "created_at"]
 
+class BasketSimpleSerializer(ModelSerializer):
+    class Meta:
+        model = Basket
+        fields = ["id", "name", "size", "weight", "quantity", "price", "per_worker_fee"]
+
+
 class SupplierSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = Supplier
         fields = '__all__'
 
-class DailyWorkSerializer(ModelSerializer):
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+##################################
+####### User Daily work ##########
+##################################
+
+class UserBasketCountCreateSerializer(ModelSerializer):
+    basket = PrimaryKeyRelatedField(queryset=Basket.objects.all())
+
     class Meta:
-        model = DailyWork
-        fields = '__all__'
+        model = UserBasketCount
+        fields = ['basket', 'quantity']
 
-    # def create(self, validated_data):
-    #     request = self.context.get('request')
-    #
-    #     daily_work = DailyWork.objects.create(**validated_data)
-    #
-    #     Expense.objects.create(
-    #         reason="Korzinka | Kunlik ish haqi",
-    #         description=daily_work.description,
-    #         amount=daily_work.price,
-    #         currency_type="UZS",
-    #         section="factory",
-    #         user=request.user
-    #     )
-    #
-    #     return daily_work
 
-class DailyWorkGetSerializer(ModelSerializer):
-    worker = WorkerSerializer()
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+class UserDailyWorkCreateSerializer(ModelSerializer):
+    worker = PrimaryKeyRelatedField(queryset=Worker.objects.all())
+    user_basket_counts = UserBasketCountCreateSerializer(many=True)
+
     class Meta:
-        model = DailyWork
-        fields = '__all__'
+        model = UserDailyWork
+        fields = ['worker', 'amount', 'description', 'user_basket_counts']
 
+    def create(self, validated_data):
+        user_basket_counts_data = validated_data.pop('user_basket_counts')
+
+        user_daily_work = UserDailyWork.objects.create(**validated_data)
+
+        for basket_count_data in user_basket_counts_data:
+            UserBasketCount.objects.create(
+                user_daily_work=user_daily_work,
+                **basket_count_data
+            )
+        return user_daily_work
+
+
+class UserBasketCountDetailSerializer(ModelSerializer):
+    basket = BasketSimpleSerializer()
+
+    class Meta:
+        model = UserBasketCount
+        fields = ['id', 'basket', 'quantity']
+
+class UserDailyWorkDetailSerializer(ModelSerializer):
+    worker = WorkerSimpleSerializer()
+    user_basket_counts = UserBasketCountDetailSerializer(many=True, source='userbasketcount_set')
+
+    class Meta:
+        model = UserDailyWork
+        fields = ['id', 'worker', 'amount', 'description', 'created_at', 'user_basket_counts']
+
+
+################################
 
 class WorkerGetSerializer(ModelSerializer):
-    daily_work = DailyWorkSerializer(source="dailywork_set", many=True)
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = Worker
         fields = '__all__'
@@ -68,6 +104,7 @@ class WorkerGetSerializer(ModelSerializer):
 class RawMaterialSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = RawMaterial
         fields = '__all__'
@@ -92,13 +129,16 @@ class RawMaterialSerializer(ModelSerializer):
 class ClientSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = Client
         fields = '__all__'
 
+
 class SaleSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = Sale
         fields = '__all__'
@@ -123,10 +163,7 @@ class SaleSerializer(ModelSerializer):
 class RawMaterialHistorySerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = RawMaterialHistory
         fields = '__all__'
-
-
-
-

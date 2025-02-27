@@ -43,8 +43,7 @@ class BasketRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 class DailyWorkListCreateView(ListCreateAPIView):
-    serializer_class = DailyWorkSerializer
-    queryset = DailyWork.objects.all()
+    queryset = UserDailyWork.objects.all()
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['created_at', 'worker']
     search_fields = ['worker__first_name', 'worker__last_name', 'worker__phone_number']
@@ -85,35 +84,33 @@ class DailyWorkListCreateView(ListCreateAPIView):
                 type=openapi.TYPE_STRING
             ),
         ],
-        responses={200: DailyWorkGetSerializer(many=True)}
+        responses={200: UserDailyWorkDetailSerializer(many=True)}
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-
     def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return DailyWorkSerializer
-        return DailyWorkGetSerializer
+        if self.request.method == 'GET':
+            return UserDailyWorkDetailSerializer
+        return UserDailyWorkCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
+
 class DailyWorkRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    serializer_class = DailyWorkSerializer
-    queryset = DailyWork.objects.all()
+    queryset = UserDailyWork.objects.all()
     permission_classes = [IsCEOOrAdmin]
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return DailyWorkSerializer
-        return DailyWorkGetSerializer
+        if self.request.method == 'GET':
+            return UserDailyWorkDetailSerializer
+        return UserDailyWorkCreateSerializer
 
 class RawMaterialListCreateView(ListCreateAPIView):
     serializer_class = RawMaterialSerializer
     queryset = RawMaterial.objects.all()
     permission_classes = [IsCEOOrAdmin]
-
 
 
 class RawMaterialRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
