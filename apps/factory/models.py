@@ -54,13 +54,12 @@ class UserDailyWork(BaseModel):
 
 class UserBasketCount(models.Model):
     user_daily_work = models.ForeignKey(UserDailyWork, on_delete=models.CASCADE)
-    basket = models.ForeignKey(Basket, on_delete=models.SET_NULL, related_name='basket_count')
+    basket = models.ForeignKey(Basket, on_delete=models.SET_NULL, null=True, blank=False, related_name='basket_count')
     quantity = models.IntegerField()
 
     class Meta:
         verbose_name = "Ishchi savat soni"
         verbose_name_plural = "Ishchi savat sonlari "
-        ordering = ['-created_at']
 
     def __str__(self):
         return self.user_daily_work.worker.full_name
