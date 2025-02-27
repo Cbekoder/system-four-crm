@@ -167,3 +167,36 @@ class RawMaterialHistorySerializer(ModelSerializer):
     class Meta:
         model = RawMaterialHistory
         fields = '__all__'
+
+
+class SalaryPaymentGetSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    worker=WorkerSerializer()
+
+    class Meta:
+        model = SalaryPayment
+        fields = ['id','amount','worker','amount','description','currency_type','created_at','updated_at']
+
+class SalaryPaymentPostSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
+    class Meta:
+        model = SalaryPayment
+        fields = ['id', 'amount', 'worker', 'amount', 'description', 'currency_type','created_at','updated_at']
+    def create(self, validated_data):
+        request = self.context.get('request')
+
+        salary_payment = SalaryPayment.objects.create(**validated_data)
+
+        Expense.objects.create(
+            reason="Ishchilarning oylik maoshi",
+            description=f"{salary_payment.description} | {salary_payment.id}",
+            amount=salary_payment.amount,
+            currency_type=salary_payment.currency_type,
+            section="factory",
+            user=request.user
+        )
+
+        return salary_payment

@@ -400,5 +400,68 @@ class FactoryUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
 
 
+class SalaryPaymentListCreateView(ListCreateAPIView):
+    queryset = SalaryPayment.objects.all()
+    permission_classes = [IsCEOOrAdmin]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    ordering_fields = ['created_at', 'worker__balance','amount']
+    searching_fields=['worker__first_name','worker__last_name','worker__phone_number']
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return SalaryPaymentGetSerializer
+        return SalaryPaymentPostSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+    def get_queryset(self):
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            if not parse_date(start_date):
+                raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
+            self.queryset = self.queryset.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            if not parse_date(end_date):
+                raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
+            self.queryset = self.queryset.filter(created_at__date__lte=end_date)
+
+        return self.queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'search',
+                openapi.IN_QUERY,
+                description="Search by salary payment columns: id, worker's first name,last name and phone number .",
+                type=openapi.TYPE_STRING
+            ),
+        ],
+        responses={200: SalaryPaymentGetSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
+class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    serializer_class = SalaryPaymentGetSerializer
+    queryset = SalaryPayment.objects.all()
+    permission_classes = [IsCEOOrAdmin]
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT' or self.request.method=='PATCH':
+            return SalaryPaymentPostSerializer
+        return SalaryPaymentGetSerializer

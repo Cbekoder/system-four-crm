@@ -39,4 +39,8 @@ urlpatterns = [
     path('incomes/',FactoryIncomeListCreateView.as_view()),
     path('incomes/<int:pk>/',FactoryIncomeRetrieveUpdateDestroyView.as_view()),
 
+    #Urls for Salary Payment
+    path('salary-payments/', SalaryPaymentListCreateView.as_view()),
+    path('salary-payments/<int:pk>', SalaryPaymentRetrieveUpdateDestroyView.as_view()),
+
 ]

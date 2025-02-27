@@ -1,7 +1,11 @@
 from django.db import models, transaction
 from apps.common.models import BaseModel, BasePerson,CURRENCY_TYPE
 from django.db.models import F
+
+from apps.common.utils import convert_currency
 from apps.main.models import Expense
+from apps.users.models import User
+
 
 class Worker(BasePerson):
     class Meta:
@@ -192,7 +196,46 @@ class Sale(BaseModel):
 
 
 
+class SalaryPayment(BaseModel):
+    worker = models.ForeignKey(Worker, on_delete=models.CASCADE)
+    amount = models.FloatField(default=0)
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
+    description = models.TextField(null=True, blank=True)
+    creator=models.ForeignKey(User, on_delete=models.CASCADE,related_name="salary_payments_factory")
 
 
+    def save(self, *args, **kwargs):
+
+        if self.pk:
+            prev=SalaryPayment.objects.get(pk=self.pk)
+            if prev.currency_type != self.worker.currency_type:
+                prev.amount = convert_currency(prev.currency_type, self.worker.currency_type, prev.amount)
+            self.worker.balance+=prev.amount
+
+        if self.worker.currency_type != self.currency_type:
+            amount = convert_currency(self.currency_type, self.worker.currency_type, self.amount)
+            self.worker.balance-=amount
+            self.worker.save()
+        else:
+            self.worker.balance -= self.amount
+            self.worker.save()
+
+        super().save(*args, **kwargs)
+
+
+    class Meta:
+        verbose_name = "Oylik maosh "
+        verbose_name_plural = "Oylik maosh "
+        ordering = ['-created_at']
+
+
+    def __str__(self):
+        return self.worker.first_name
+
+    def delete(self, *args, **kwargs):
+        self.worker.balance+=self.amount
+        self.worker.save(update_fields=['balance'])
+        Expense.objects.filter(description__contains=f"| {self.id}").delete()
+        super().delete(*args, **kwargs)
 
 
