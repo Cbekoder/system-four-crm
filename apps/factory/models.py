@@ -77,22 +77,27 @@ class UserBasketCount(models.Model):
                 prev.basket.save(update_fields=['quantity'])
                 prev.basket.refresh_from_db()
 
-                prev.user_daily_work.amount = F('amount') - (prev.quantity * prev.basket.price)
+                prev.user_daily_work.amount = F('amount') - float(prev.quantity * prev.basket.price)
                 prev.user_daily_work.save(update_fields=['amount'])
+                prev.user_daily_work.refresh_from_db()
 
-                prev.user_daily_work.worker.balance = F('balance') - (prev.quantity * prev.basket.per_worker_fee)
+                prev.user_daily_work.worker.balance = F('balance') - float(prev.quantity * prev.basket.per_worker_fee)
                 prev.user_daily_work.worker.save(update_fields=['balance'])
+                prev.user_daily_work.worker.refresh_from_db()
 
             super().save(*args, **kwargs)
 
             self.basket.quantity = F('quantity') + self.quantity
             self.basket.save(update_fields=['quantity'])
+            self.basket.refresh_from_db()
 
-            self.user_daily_work.worker.balance = F('balance') + self.quantity * self.basket.per_worker_fee
+            self.user_daily_work.worker.balance = F('balance') + float(self.quantity * self.basket.per_worker_fee)
             self.user_daily_work.worker.save(update_fields=['balance'])
+            self.user_daily_work.worker.refresh_from_db()
 
-            self.user_daily_work.amount = F('amount') + (self.quantity * self.basket.price)
+            self.user_daily_work.amount = F('amount') + float(self.quantity * self.basket.price)
             self.user_daily_work.save(update_fields=['amount'])
+            self.user_daily_work.refresh_from_db()
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():

@@ -62,16 +62,19 @@ class UserDailyWorkCreateSerializer(ModelSerializer):
         fields = ['worker', 'amount', 'description', 'user_basket_counts']
 
     def create(self, validated_data):
-        user_basket_counts_data = validated_data.pop('user_basket_counts')
+        with transaction.atomic():
+            user_basket_counts_data = validated_data.pop('user_basket_counts')
 
-        user_daily_work = UserDailyWork.objects.create(**validated_data)
+            user_daily_work = UserDailyWork.objects.create(**validated_data)
 
-        for basket_count_data in user_basket_counts_data:
-            UserBasketCount.objects.create(
-                user_daily_work=user_daily_work,
-                **basket_count_data
-            )
-        return user_daily_work
+            for basket_count_data in user_basket_counts_data:
+                UserBasketCount.objects.create(
+                    user_daily_work=user_daily_work,
+                    **basket_count_data
+                )
+
+            user_daily_work.user_basket_counts = UserBasketCount.objects.filter(user_daily_work=user_daily_work)
+            return user_daily_work
 
 
 class UserBasketCountDetailSerializer(ModelSerializer):
