@@ -77,7 +77,7 @@ class UserBasketCount(models.Model):
                 prev.basket.save(update_fields=['quantity'])
                 prev.basket.refresh_from_db()
 
-                prev.user_daily_work.amount = F('amount') - float(prev.quantity * prev.basket.price)
+                prev.user_daily_work.amount = F('amount') - float(prev.quantity * prev.basket.per_worker_fee)
                 prev.user_daily_work.save(update_fields=['amount'])
                 prev.user_daily_work.refresh_from_db()
 
@@ -95,7 +95,7 @@ class UserBasketCount(models.Model):
             self.user_daily_work.worker.save(update_fields=['balance'])
             self.user_daily_work.worker.refresh_from_db()
 
-            self.user_daily_work.amount = F('amount') + float(self.quantity * self.basket.price)
+            self.user_daily_work.amount = F('amount') + float(self.quantity * self.basket.per_worker_fee)
             self.user_daily_work.save(update_fields=['amount'])
             self.user_daily_work.refresh_from_db()
 
@@ -107,7 +107,7 @@ class UserBasketCount(models.Model):
             self.user_daily_work.worker.balance = F('balance') - self.quantity * self.basket.per_worker_fee
             self.user_daily_work.worker.save(update_fields=['balance'])
 
-            self.user_daily_work.amount = F('amount') - (self.quantity * self.basket.price)
+            self.user_daily_work.amount = F('amount') - (self.quantity * self.basket.per_worker_fee)
             self.user_daily_work.save(update_fields=['amount'])
 
             super().delete(*args, **kwargs)
