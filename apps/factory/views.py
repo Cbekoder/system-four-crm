@@ -1,4 +1,7 @@
+from rest_framework import status
 from rest_framework.generics import *
+from rest_framework.response import Response
+
 from .serializers import *
 from apps.users.permissions import *
 from apps.main.models import Expense, Income
@@ -310,29 +313,29 @@ class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Client.objects.all()
     permission_classes = [IsCEOOrAdmin]
 
-class SaleListCreateView(ListCreateAPIView):
-    serializer_class = SaleSerializer
-    queryset = Sale.objects.all()
-    permission_classes = [IsCEOOrAdmin]
-    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    ordering_fields = ['created_at', 'client']
-    search_fields = ['client__first_name', 'client__last_name', 'client__phone_number']
-
-    def get_queryset(self):
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
-
-        if start_date:
-            if not parse_date(start_date):
-                raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
-            self.queryset = self.queryset.filter(created_at__date__gte=start_date)
-
-        if end_date:
-            if not parse_date(end_date):
-                raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
-            self.queryset = self.queryset.filter(created_at__date__lte=end_date)
-
-        return self.queryset
+# class SaleListCreateView(ListCreateAPIView):
+#     serializer_class = SaleSerializer
+#     queryset = Sale.objects.all()
+#     permission_classes = [IsCEOOrAdmin]
+#     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+#     ordering_fields = ['created_at', 'client']
+#     search_fields = ['client__first_name', 'client__last_name', 'client__phone_number']
+#
+#     def get_queryset(self):
+#         start_date = self.request.query_params.get('start_date')
+#         end_date = self.request.query_params.get('end_date')
+#
+#         if start_date:
+#             if not parse_date(start_date):
+#                 raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
+#             self.queryset = self.queryset.filter(created_at__date__gte=start_date)
+#
+#         if end_date:
+#             if not parse_date(end_date):
+#                 raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
+#             self.queryset = self.queryset.filter(created_at__date__lte=end_date)
+#
+#         return self.queryset
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -363,10 +366,10 @@ class SaleListCreateView(ListCreateAPIView):
 
 
 
-class SaleRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    serializer_class = SaleSerializer
-    queryset = Sale.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+# class SaleRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+#     serializer_class = SaleSerializer
+#     queryset = Sale.objects.all()
+#     permission_classes = [IsCEOOrAdmin]
 
 
 # Admin user views
@@ -465,3 +468,28 @@ class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         if self.request.method == 'PUT' or self.request.method=='PATCH':
             return SalaryPaymentPostSerializer
         return SalaryPaymentGetSerializer
+
+
+class SaleListCreateView(ListCreateAPIView):
+    queryset = Sale.objects.all()
+    serializer_class = SaleSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+# Bitta sotuvni olish, yangilash va o‘chirish (GET, PUT, DELETE)
+class SaleRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = Sale.objects.all()
+    serializer_class = SaleSerializer
+
+# SaleItem uchun CRUD
+class SaleItemListCreateView(ListCreateAPIView):
+    queryset = SaleItem.objects.all()
+    serializer_class = SaleItemSerializer
+
+class SaleItemRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = SaleItem.objects.all()
+    serializer_class = SaleItemSerializer

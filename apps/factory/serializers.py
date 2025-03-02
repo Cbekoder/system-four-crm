@@ -16,7 +16,7 @@ class WorkerSerializer(ModelSerializer):
 class WorkerSimpleSerializer(ModelSerializer):
     class Meta:
         model = Worker
-        fields = ['id', 'first_name', 'last_name', 'phone_number', 'extra_phone_number', 'birth_date', 'description']
+        fields = ['id', 'first_name', 'last_name']
 
 
 class BasketSerializer(ModelSerializer):
@@ -138,13 +138,13 @@ class ClientSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class SaleSerializer(ModelSerializer):
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-
-    class Meta:
-        model = Sale
-        fields = '__all__'
+# class SaleSerializer(ModelSerializer):
+#     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+#     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+#
+#     class Meta:
+#         model = Sale
+#         fields = '__all__'
 
     # def create(self, validated_data):
     #     request = self.context.get('request')
@@ -162,6 +162,68 @@ class SaleSerializer(ModelSerializer):
     #
     #     return sale
 
+
+class SaleItemSerializer(ModelSerializer):
+    # basket = BasketSerializer(read_only=True)
+    # basket_id = PrimaryKeyRelatedField(
+    #     queryset=Basket.objects.all(), source='basket', write_only=True
+    # )
+
+    class Meta:
+        model = SaleItem
+        fields = ['id', 'basket', 'quantity', 'amount']
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+
+        sale_items_data = validated_data.pop('sale_items', [])
+        sale = Sale.objects.create(**validated_data)
+
+        for item_data in sale_items_data:
+            SaleItem.objects.create(sale=sale, **item_data)
+
+        # Daromadni yaratish
+        Income.objects.create(
+            reason=f"Korzinka sotuvi | {sale.client.first_name} {sale.client.last_name if sale.client else ''}",
+            description=sale.description,
+            amount=sale.amount,
+            currency_type=sale.currency_type,
+            section="factory",
+            user=request.user if request else None
+        )
+
+        return sale
+
+
+class SaleSerializer(ModelSerializer):
+    sale_items = SaleItemSerializer(many=True)
+
+    class Meta:
+        model = Sale
+        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'sale_items']
+
+    def create(self, validated_data):
+        sale_items_data = validated_data.pop('sale_items')
+        sale = Sale.objects.create(**validated_data)
+
+        for item_data in sale_items_data:
+            SaleItem.objects.create(sale=sale, **item_data)
+
+        return sale
+
+    def update(self, instance, validated_data):
+        sale_items_data = validated_data.pop('sale_items', [])
+
+        # Mavjud ma'lumotlarni yangilash
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Yangi sale_items qo'shish
+        for item_data in sale_items_data:
+            SaleItem.objects.create(sale=instance, **item_data)
+
+        return instance
 
 class RawMaterialHistorySerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -202,4 +264,4 @@ class SalaryPaymentPostSerializer(ModelSerializer):
             user=request.user
         )
 
-        return salary_payment
+        return salary_payment  

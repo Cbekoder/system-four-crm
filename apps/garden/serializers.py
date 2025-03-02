@@ -46,17 +46,17 @@ class GardenerSalaryPaymentSerializer(ModelSerializer):
         model = SalaryPayment
         fields = ['gardener', 'description', 'amount', 'currency_type', 'updated_at', 'created_at']
 
-    # def create(self, validated_data):
-        # salary_payment = SalaryPayment.objects.create(**validated_data)
-        #
-        # Expense.objects.create(
-        #     reason="Bog'bonning oylik maoshi",
-        #     description=validated_data.get("description", ""),
-        #     amount=validated_data["amount"],
-        #     currency_type=validated_data.get("currency_type", "UZS"),
-        #     section="garden",
-        #     user=self.context["request"].user if "request" in self.context else None
-        # )
-        #
-        # return salary_payment
+    def create(self, validated_data):
+        salary_payment = SalaryPayment.objects.create(**validated_data)
+
+        Expense.objects.create(
+            reason="Bog'bonning oylik maoshi",
+            description=validated_data.get("description", ""),
+            amount=validated_data["amount"],
+            currency_type=validated_data.get("currency_type", "UZS"),
+            section="garden",
+            user=self.context["request"].user if "request" in self.context else None
+        )
+
+        return salary_payment
 

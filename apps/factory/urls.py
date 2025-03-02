@@ -28,8 +28,11 @@ urlpatterns = [
     path('clients/<int:pk>/', ClientRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Sales
-    path('sales/', SaleListCreateView.as_view()),
-    path('sales/<int:pk>/', SaleRetrieveUpdateDestroyView.as_view()),
+    path('sales/', SaleListCreateView.as_view(), name='sale-list-create'),
+    path('sales/<int:pk>/', SaleRetrieveUpdateDestroyView.as_view(), name='sale-detail'),
+    path('sale-items/', SaleItemListCreateView.as_view(), name='saleitem-list-create'),
+    path('sale-items/<int:pk>/', SaleItemRetrieveUpdateDestroyView.as_view(), name='saleitem-detail'),
+
 
     #Urls for Expenses
     path('expenses/', FactoryExpenseListCreateView.as_view()),

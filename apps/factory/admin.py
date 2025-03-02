@@ -12,10 +12,10 @@ class BasketAdmin(admin.ModelAdmin):
     list_display_links = ['id', 'name']
 
 
-@admin.register(Sale)
+@admin.register(SaleItem)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'basket__name', 'client__first_name','quantity', 'amount' ]
-    list_display_links = ['id', 'basket__name', 'client__first_name']
+    list_display = ['id', 'basket__name', 'sale__client__first_name','quantity', 'amount' ]
+    list_display_links = ['id', 'basket__name', 'sale__client__first_name']
 
 class UserBasketCountInline(admin.TabularInline):
     model = UserBasketCount
