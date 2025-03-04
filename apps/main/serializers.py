@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer, DateTimeField, Serializer, CharField, FloatField
+from rest_framework import serializers
 from .models import Acquaintance, MoneyCirculation, Income, Expense, DailyRemainder
 
 
@@ -62,3 +63,17 @@ class MixedDataSerializer(Serializer):
     description = CharField()
     amount = FloatField()
     currency_type = CharField()
+
+class TransactionVerifyDetailSerializer(serializers.Serializer):
+    unique_id = serializers.CharField(max_length=50, read_only=True)
+    creator = serializers.CharField(max_length=100, read_only=True)
+    description = serializers.CharField(max_length=255, read_only=True)
+    amount = serializers.FloatField(read_only=True)
+    currency_type = serializers.CharField(max_length=10, read_only=True)
+    updated_at = serializers.DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    created_at = serializers.DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
+# POST uchun serializer
+class TransactionVerifyActionSerializer(serializers.Serializer):
+    unique_id = serializers.CharField(max_length=50, required=True)
+    action = serializers.ChoiceField(choices=['verify', 'cancel'], required=True)

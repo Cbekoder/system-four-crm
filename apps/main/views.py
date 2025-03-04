@@ -1,4 +1,6 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import redirect
+from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
@@ -6,13 +8,15 @@ from django.utils.dateparse import parse_date
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.utils import timezone
+from django.apps import apps
 from datetime import timedelta
 from rest_framework.response import Response
 from apps.users.permissions import IsCEO
 from .models import Acquaintance, MoneyCirculation, Expense, Income, DailyRemainder
 from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, MoneyCirculationSerializer, \
-    ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer
-from .utils import get_remainder_data, calculate_remainder
+    ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer, \
+    TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer
+from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction
 from ..common.utils import convert_currency
 
 
@@ -320,3 +324,37 @@ class MixedHistoryView(APIView):
         }
 
         return Response(response_data)
+
+class TransactionApprovalView(APIView):
+    permission_classes = [IsCEO]
+
+    def get(self, request, *args, **kwargs):
+
+        serializer = TransactionVerifyDetailSerializer(verification_transaction(), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        request_body=TransactionVerifyActionSerializer,  # POST so'rov tanasi serializerdan olinadi
+        responses={
+            200: openapi.Response("Muvaffaqiyatli javob", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "message": openapi.Schema(type=openapi.TYPE_STRING,
+                                              description="Tasdiqlash yoki bekor qilish xabari"),
+                }
+            )),
+            400: "Serializer xatoligi",
+            404: "Obyekt topilmadi",
+            500: "Server xatoligi",
+        },
+        operation_description="CEO tomonidan tranzaksiyani tasdiqlash yoki bekor qilish uchun POST so'rov."
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = TransactionVerifyActionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        unique_id = serializer.validated_data['unique_id']
+        action = serializer.validated_data['action']
+
+        return Response({"message": verify_transaction(unique_id, action)})

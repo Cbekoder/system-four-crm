@@ -85,6 +85,10 @@ class Car(BaseModel):
 class Trailer(BaseModel):
     model = models.CharField(max_length=100, null=True, blank=True)
     state_number = models.CharField(max_length=20, unique=True)
+    trailer_type = models.CharField(max_length=50, null=True, blank=True)
+    dimensions = models.CharField(max_length=50, null=True, blank=True)
+    capacity = models.FloatField(null=True, blank=True)
+    axle_count = models.PositiveSmallIntegerField(null=True, blank=True)
     year = models.CharField(max_length=4)
     color = models.CharField(max_length=20, null=True, blank=True)
     tech_passport = models.CharField(max_length=20, unique=True)
@@ -148,9 +152,21 @@ class SalaryPayment(BaseModel):
             return self.description
         return str(self.id)
 
+
+CONTRACT_STATUS = (
+    ('new', 'Yangi'),
+    ('waiting', 'Kutilmoqda'),
+    ('warning', 'Ogohlantirish'),
+    ('accepted', 'Qabul qilingan'),
+    ('given', 'Berib yuborilgan')
+)
+
 class Contract(BaseModel):
     contract_id = models.CharField(max_length=50)
     contractor = models.ForeignKey(Contractor, on_delete=models.SET_NULL, null=True)
+    tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True)
+    amount = models.FloatField(null=True)
+    status = models.CharField(max_length=20, choices=CONTRACT_STATUS, default='new', verbose_name="Status")
 
     class Meta:
         verbose_name = "Shartnoma "
@@ -158,6 +174,23 @@ class Contract(BaseModel):
 
     def __str__(self):
         return self.contract_id
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                pass
+
+            if self.contractor is None:
+                raise ValueError("Contractor majburiy ravishda kiritilishi kerak.")
+
+            super().save(*args, **kwargs)
+
+            self.contractor.landing += self.amount
+            self.contractor.save(update_fields=["landing"])
+
+            if self.tenant:
+                self.tenant.debt += self.amount
+
 
 TRANSIT_STATUS_CHOICES = (
     ('new', 'Yangi'),
@@ -169,6 +202,7 @@ TRANSIT_STATUS_CHOICES = (
 
 class Transit(models.Model):
     car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True)
+    trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True)
     driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True)
     leaving_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, related_name='leaving_transits')
     leaving_amount = models.FloatField(null=True, blank=True)

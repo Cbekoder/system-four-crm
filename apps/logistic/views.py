@@ -88,6 +88,10 @@ class TrailerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class CarExpenseListCreateView(ListCreateAPIView):
     queryset = CarExpense.objects.all()
     serializer_class = CarExpenseSerializer
+    permission_classes = [IsCEOOrAdmin]
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
 
 class CarExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):

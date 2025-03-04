@@ -21,7 +21,7 @@ class SalaryPayment(BaseModel):
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="salary_payments_garden")
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="garden_salary_payment_creator")
 
     class Meta:
         verbose_name = "Oylik maosh"

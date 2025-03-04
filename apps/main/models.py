@@ -1,3 +1,5 @@
+from argparse import REMAINDER
+
 from django.db import models, transaction
 from rest_framework.exceptions import ValidationError
 from apps.common.services.logging import Telegram
@@ -63,7 +65,7 @@ class Acquaintance(BasePerson):
         return self.full_name
 
 
-TYPE_CHOICES = (
+CIRCULATION_TYPE_CHOICES = (
     ('give', 'Berish'),
     ('get', 'Olish')
 )
@@ -73,7 +75,7 @@ class MoneyCirculation(BaseModel):
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=20, choices=CIRCULATION_TYPE_CHOICES)
 
     class Meta:
         verbose_name = "Pul oldi-berdi "
@@ -119,9 +121,15 @@ class MoneyCirculation(BaseModel):
     def __str__(self):
         return self.acquaintance.full_name if self.acquaintance else str(self.id)
 
+REMAINDER_TYPE_CHOICES = (
+    ('auto', 'Avtomatik'),
+    ('manual', 'Qo\'lda')
+)
 
 class DailyRemainder(BaseModel):
     amount = models.FloatField()
+    type = models.CharField(max_length=20, choices=REMAINDER_TYPE_CHOICES, default="manual")
+    status = None
     creator = None
 
     class Meta:

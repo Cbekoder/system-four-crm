@@ -261,6 +261,13 @@ class SalaryPayment(BaseModel):
     description = models.TextField(null=True, blank=True)
     creator=models.ForeignKey(User, on_delete=models.CASCADE,related_name="salary_payments_factory")
 
+    class Meta:
+        verbose_name = "Oylik maosh "
+        verbose_name_plural = "Oylik maosh "
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.worker.first_name
 
     def save(self, *args, **kwargs):
 
@@ -279,16 +286,6 @@ class SalaryPayment(BaseModel):
             self.worker.save()
 
         super().save(*args, **kwargs)
-
-
-    class Meta:
-        verbose_name = "Oylik maosh "
-        verbose_name_plural = "Oylik maosh "
-        ordering = ['-created_at']
-
-
-    def __str__(self):
-        return self.worker.first_name
 
     def delete(self, *args, **kwargs):
         if self.worker.currency_type != self.currency_type:
