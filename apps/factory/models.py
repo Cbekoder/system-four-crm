@@ -45,6 +45,10 @@ class UserDailyWork(BaseModel):
         verbose_name_plural = "Kunlik ishlar "
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():

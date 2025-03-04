@@ -50,21 +50,23 @@ class UserBasketCountCreateSerializer(ModelSerializer):
 
     class Meta:
         model = UserBasketCount
-        fields = ['basket', 'quantity']
+        fields = ['id', 'basket', 'quantity']
 
 
 class UserDailyWorkCreateSerializer(ModelSerializer):
     worker = PrimaryKeyRelatedField(queryset=Worker.objects.all())
     user_basket_counts = UserBasketCountCreateSerializer(many=True)
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
 
     class Meta:
         model = UserDailyWork
-        fields = ['worker', 'amount', 'description', 'user_basket_counts']
+        fields = ['id', 'worker', 'amount', 'description', 'user_basket_counts', 'updated_at', 'created_at']
+        read_only_fields = ['id', 'amount']
 
     def create(self, validated_data):
         with transaction.atomic():
             user_basket_counts_data = validated_data.pop('user_basket_counts')
-
             user_daily_work = UserDailyWork.objects.create(**validated_data)
 
             for basket_count_data in user_basket_counts_data:
@@ -75,6 +77,37 @@ class UserDailyWorkCreateSerializer(ModelSerializer):
 
             user_daily_work.user_basket_counts = UserBasketCount.objects.filter(user_daily_work=user_daily_work)
             return user_daily_work
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            instance.worker = validated_data.get('worker', instance.worker)
+            instance.description = validated_data.get('description', instance.description)
+            instance.save()
+
+            if 'user_basket_counts' in validated_data:
+                user_basket_counts_data = validated_data.pop('user_basket_counts')
+                existing_basket_counts = {bc.id: bc for bc in instance.userbasketcount_set.all()}
+                incoming_ids = {item.get('id') for item in user_basket_counts_data if 'id' in item}
+
+                for bc_id, bc_instance in existing_basket_counts.items():
+                    if bc_id not in incoming_ids:
+                        bc_instance.delete()
+
+                for basket_count_data in user_basket_counts_data:
+                    basket_count_id = basket_count_data.get('id', None)
+                    if basket_count_id and basket_count_id in existing_basket_counts:
+                        bc_instance = existing_basket_counts[basket_count_id]
+                        bc_instance.basket = basket_count_data.get('basket', bc_instance.basket)
+                        bc_instance.quantity = basket_count_data.get('quantity', bc_instance.quantity)
+                        bc_instance.save()
+                    else:
+                        UserBasketCount.objects.create(
+                            user_daily_work=instance,
+                            **basket_count_data
+                        )
+            instance.user_basket_counts = UserBasketCount.objects.filter(user_daily_work=instance)
+
+            return instance
 
 
 class UserBasketCountDetailSerializer(ModelSerializer):
@@ -87,10 +120,12 @@ class UserBasketCountDetailSerializer(ModelSerializer):
 class UserDailyWorkDetailSerializer(ModelSerializer):
     worker = WorkerSimpleSerializer()
     user_basket_counts = UserBasketCountDetailSerializer(many=True, source='userbasketcount_set')
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
 
     class Meta:
         model = UserDailyWork
-        fields = ['id', 'worker', 'amount', 'description', 'created_at', 'user_basket_counts']
+        fields = ['id', 'worker', 'amount', 'description', 'updated_at', 'created_at', 'user_basket_counts']
 
 
 ################################
@@ -250,6 +285,7 @@ class SalaryPaymentPostSerializer(ModelSerializer):
     class Meta:
         model = SalaryPayment
         fields = ['id', 'amount', 'worker', 'amount', 'description', 'currency_type','created_at','updated_at']
+
     def create(self, validated_data):
         request = self.context.get('request')
 
@@ -263,5 +299,4 @@ class SalaryPaymentPostSerializer(ModelSerializer):
             section="factory",
             user=request.user
         )
-
         return salary_payment  
