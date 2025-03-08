@@ -59,7 +59,8 @@ class ElectricityBillSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
-        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'updated_at', 'created_at']
+        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['status']
 
     def get_refrigerator(self, obj):
         try:
@@ -78,8 +79,8 @@ class FridgeExpensePostSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
-        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
-        read_only_fields = ['updated_at', 'created_at', 'section']
+        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['updated_at', 'created_at', 'status', 'section']
 
     def create(self, validated_data):
         refrigerator = validated_data.pop('refrigerator')
@@ -92,7 +93,8 @@ class FridgeExpenseSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
-        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
+        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'status', 'section', 'updated_at', 'created_at']
+        read_only_fields = ['status', 'section']
 
     def get_refrigerator(self, obj):
         try:
@@ -108,7 +110,8 @@ class FridgeIncomeSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Income
-        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
+        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['status', 'section']
 
     def get_refrigerator(self, obj):
         try:
@@ -126,8 +129,8 @@ class FridgeIncomePostSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Income
-        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'updated_at', 'created_at']
-        read_only_fields = ['updated_at', 'created_at', 'section']
+        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'status', 'section', 'updated_at', 'created_at']
+        read_only_fields = ['updated_at', 'created_at', 'status', 'section']
 
     def create(self, validated_data):
         refrigerator = validated_data.pop('refrigerator')

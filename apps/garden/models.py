@@ -15,6 +15,11 @@ class Gardener(BasePerson):
     def __str__(self):
         return self.full_name
 
+    def save(self, *args, **kwargs):
+        if self.creator.role == "CEO":
+            self.status = 'verified'
+        super().save(*args, **kwargs)
+
 
 class SalaryPayment(BaseModel):
     gardener = models.ForeignKey(Gardener, on_delete=models.CASCADE)
@@ -27,8 +32,6 @@ class SalaryPayment(BaseModel):
         verbose_name = "Oylik maosh"
         verbose_name_plural = "Oylik maoshlar "
         ordering = ['-created_at']
-
-
 
     def save(self, *args, **kwargs):
 
@@ -43,7 +46,7 @@ class SalaryPayment(BaseModel):
                 self.gardener.balance -= old_amount
             if self.gardener != old_payment.gardener:
                 raise ValidationError("It is not allowed to change gardener")
-    #
+
         converted_amount = self.amount
         if self.gardener.currency_type == self.currency_type:
             valid_currencies = ("USD", "UZS")
@@ -54,8 +57,10 @@ class SalaryPayment(BaseModel):
                 raise ValidationError("Invalid currency type")
 
         self.gardener.balance += converted_amount
-
         self.gardener.save()
+
+        if self.creator.role == "CEO":
+            self.status = 'verified'
 
         super().save(*args, **kwargs)
 

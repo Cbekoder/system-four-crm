@@ -25,10 +25,13 @@ class Expense(BaseModel):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            pass
-        super().save(*args, **kwargs)
-        message = f"ID: {self.id}\nSabab: {self.reason}\nIzoh: {self.description}\n\nSumma: {self.amount} {self.currency_type}"
-        Telegram.send_log(message)
+
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
+            super().save(*args, **kwargs)
+            message = f"ID: {self.id}\nSabab: {self.reason}\nIzoh: {self.description}\n\nSumma: {self.amount} {self.currency_type}"
+            Telegram.send_log(message)
 
     def __str__(self):
         return self.reason
@@ -50,6 +53,14 @@ class Income(BaseModel):
 
     def __str__(self):
         return self.reason
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
+            super().save(*args, **kwargs)
 
 
 class Acquaintance(BasePerson):
@@ -116,6 +127,10 @@ class MoneyCirculation(BaseModel):
             self.acquaintance.landing = round(self.acquaintance.landing, 2)
             self.acquaintance.debt = round(self.acquaintance.debt, 2)
             self.acquaintance.save()
+
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
             super().save(*args, **kwargs)
 
     def __str__(self):

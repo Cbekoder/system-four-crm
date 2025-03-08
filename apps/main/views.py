@@ -328,6 +328,13 @@ class MixedHistoryView(APIView):
 class TransactionApprovalView(APIView):
     permission_classes = [IsCEO]
 
+    @swagger_auto_schema(
+        operation_description="Adminlar tomonidan bajarilgan tranzaksiyalarni ro'yxat sifatida olish uchun GET so'rov.",
+        responses={
+            200: TransactionVerifyDetailSerializer(many=True),
+            400: "Xatolik yuz berdi",
+        },
+    )
     def get(self, request, *args, **kwargs):
 
         serializer = TransactionVerifyDetailSerializer(verification_transaction(), many=True)
@@ -356,5 +363,10 @@ class TransactionApprovalView(APIView):
 
         unique_id = serializer.validated_data['unique_id']
         action = serializer.validated_data['action']
+
+        if unique_id == "ALL":
+            for transaction in verification_transaction():
+                verify_transaction(transaction['unique_id'], action)
+            return Response({"message": "All transactions are successfully {}".format(action)})
 
         return Response({"message": verify_transaction(unique_id, action)})

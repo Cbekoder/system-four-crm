@@ -15,3 +15,8 @@ class Refrigerator(BaseModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.creator.role == "CEO":
+            self.status = 'verified'
+        super().save(*args, **kwargs)

@@ -101,6 +101,11 @@ class Trailer(BaseModel):
     def __str__(self):
         return self.state_number
 
+    def save(self, *args, **kwargs):
+        if self.creator.role == "CEO":
+            self.status = 'verified'
+        super().save(*args, **kwargs)
+
 ###############
 ##  Actions  ##
 ###############
@@ -133,6 +138,48 @@ class CarExpense(BaseModel):
             return self.trailer.state_number
         return str(self.id)
 
+    def save(self, *args, **kwargs):
+        if self.creator.role == "CEO":
+            self.status = 'verified'
+        # if self.pk:
+        #     old_expense = CarExpense.objects.get(id=self.pk)
+        #     old_amount = old_expense.amount
+        #     if self.currency_type != old_expense.currency_type:
+        #         valid_currencies = ("USD", "UZS")
+        #         if old_expense.currency_type in valid_currencies and self.currency_type in valid_currencies:
+        #             old_amount = convert_currency(old_expense.currency_type, self.currency_type, old_amount)
+        #     if self.amount != old_expense.amount:
+        #         if self.car:
+        #             self.car.landing += old_amount
+        #             self.car.save()
+        #         if self.trailer:
+        #             self.trailer.landing += old_amount
+        #             self.trailer.save()
+        #     if self.car != old_expense.car:
+        #         raise ValidationError("It is not allowed to change car")
+        #     if self.trailer != old_expense.trailer:
+        #         raise ValidationError("It is not allowed to change trailer")
+        # converted_amount = self.amount
+        # if self.car:
+        #     if self.car.currency_type == self.currency_type:
+        #         valid_currencies = ("USD", "UZS")
+        #         if self.car.currency_type in valid_currencies and self.currency_type in valid_currencies:
+        #             converted_amount = convert_currency(self.currency_type, self.car.currency_type, self.amount)
+        #         else:
+        #             raise ValidationError("Invalid currency type")
+        #     self.car.landing -= converted_amount
+        #     self.car.save()
+        # if self.trailer:
+        #     if self.trailer.currency_type == self.currency_type:
+        #         valid_currencies = ("USD", "UZS")
+        #         if self.trailer.currency_type in valid_currencies and self.currency_type in valid_currencies:
+        #             converted_amount = convert_currency(self.currency_type, self.trailer.currency_type, self.amount)
+        #         else:
+        #             raise ValidationError("Invalid currency type")
+        #     self.trailer.landing -= converted_amount
+        #     self.trailer.save()
+        super().save(*args, **kwargs)
+
 
 class SalaryPayment(BaseModel):
     driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True, blank=False)
@@ -151,6 +198,12 @@ class SalaryPayment(BaseModel):
         elif self.description:
             return self.description
         return str(self.id)
+
+    def save(self, *args, **kwargs):
+        if self.creator.role == "CEO":
+            self.status = 'verified'
+
+        super().save(*args, **kwargs)
 
 
 CONTRACT_STATUS = (
@@ -182,6 +235,9 @@ class Contract(BaseModel):
 
             if self.contractor is None:
                 raise ValueError("Contractor majburiy ravishda kiritilishi kerak.")
+
+            if self.creator.role == "CEO":
+                self.status = 'verified'
 
             super().save(*args, **kwargs)
 
@@ -247,6 +303,7 @@ class Transit(models.Model):
                     converted_driver_fee = convert_currency(self.driver.currency_type, self.fee_currency, self.driver_fee)
                 self.driver.balance += converted_driver_fee
                 self.driver.save(update_fields=["balance"])
+
             super().save(*args, **kwargs)
 
     def __str__(self):
@@ -306,6 +363,9 @@ class TransitIncome(BaseModel):
             else:
                 raise ValidationError("Reason should be one of the following: 'leaving', 'arrival' or 'other'")
 
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
             super().save(*args, **kwargs)
 
     def __str__(self):
@@ -327,3 +387,11 @@ class TirSelling(BaseModel):
 
     def __str__(self):
         return self.tir_number
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
+            super().save(*args, **kwargs)

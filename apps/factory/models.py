@@ -162,6 +162,26 @@ class RawMaterialHistory(BaseModel):
     def __str__(self):
         return self.supplier
 
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
+            super().save(*args, **kwargs)
+
+            # if self.currency_type != "UZS":
+            #     self.amount = convert_currency(self.currency_type, "UZS", self.amount)
+            #     self.currency_type = "UZS"
+            #     super().save(*args, **kwargs)
+            #
+            # raw_material = RawMaterial.objects.filter(name=self.supplier).first()
+            # if raw_material:
+            #     raw_material.weight = F('weight') + self.weight
+            #     raw_material.save(update_fields=['weight'])
+            # else:
+            #     raw_material = RawMaterial.objects.create(name=self.supplier, weight=self.weight, price=self.amount, currency_type=self.currency_type)
+            #     raw_material.save()
+
 
 class Client(BasePerson):
     class Meta:
@@ -177,6 +197,8 @@ class Sale(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     is_debt = models.BooleanField(default=False)
+    amount = models.FloatField(default=0)
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
 
     class Meta:
         verbose_name = "Sotuv"
@@ -184,33 +206,43 @@ class Sale(BaseModel):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Sotuv #{self.pk} | {self.client.name}"
+        return f"Sotuv #{self.pk} | {self.client.full_name}"
 
-    @property
-    def total_amount(self):
-        return sum(item.amount for item in self.sale_items.all())
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
+            super().save(*args, **kwargs)
+
 
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='sale_items')
     basket = models.ForeignKey(Basket, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
-    amount = models.FloatField(default=0)
 
     class Meta:
         verbose_name = "Sotuv mahsuloti"
         verbose_name_plural = "Sotuv mahsulotlari"
 
     def save(self, *args, **kwargs):
-        if self.pk:
-            prev = SaleItem.objects.get(pk=self.pk)
-            self.basket.quantity = F('quantity') + prev.quantity
+        with transaction.atomic():
+            if self.pk:
+                prev = SaleItem.objects.get(pk=self.pk)
+                prev.basket.quantity = F('quantity') + prev.quantity
+                prev.basket.save(update_fields=['quantity'])
+
+                prev.sale.amount = F('amount') - prev.sale.amount
+                prev.sale.save(update_fields=["amount"])
+
+            super().save(*args, **kwargs)
+
+            self.sale.amount = F('amount') + self.quantity * self.basket.price
+            self.sale.save(update_fields=['amount'])
+
+            self.basket.quantity = F('quantity') - self.quantity
             self.basket.save(update_fields=['quantity'])
 
-        self.amount = self.quantity * self.basket.price
-        self.basket.quantity = F('quantity') - self.quantity
-        self.basket.save(update_fields=['quantity'])
-
-        super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         self.basket.quantity = F('quantity') + self.quantity
@@ -276,6 +308,9 @@ class SalaryPayment(BaseModel):
             if prev.currency_type != self.worker.currency_type:
                 prev.amount = convert_currency(prev.currency_type, self.worker.currency_type, prev.amount)
             self.worker.balance+=prev.amount
+
+        if self.creator.role == "CEO":
+            self.status = 'verified'
 
         if self.worker.currency_type != self.currency_type:
             amount = convert_currency(self.currency_type, self.worker.currency_type, self.amount)

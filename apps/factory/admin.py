@@ -14,7 +14,7 @@ class BasketAdmin(admin.ModelAdmin):
 
 @admin.register(SaleItem)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'basket__name', 'sale__client__first_name','quantity', 'amount' ]
+    list_display = ['id', 'basket__name', 'sale__client__first_name','quantity' ]
     list_display_links = ['id', 'basket__name', 'sale__client__first_name']
 
 class UserBasketCountInline(admin.TabularInline):

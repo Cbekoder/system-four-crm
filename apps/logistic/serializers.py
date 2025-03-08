@@ -57,9 +57,9 @@ class CarExpenseSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = CarExpense
-        fields = ['id', 'car', 'trailer', 'reason', 'description', 'amount', 'currency_type', 'updated_at',
+        fields = ['id', 'car', 'trailer', 'reason', 'description', 'amount', 'status', 'currency_type', 'updated_at',
                   'created_at']
-        read_only_fields = ['updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
 
 
 class DriverSalaryPaymentSerializer(ModelSerializer):
@@ -67,8 +67,8 @@ class DriverSalaryPaymentSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = SalaryPayment
-        fields = ['id', 'driver', 'description', 'amount', 'currency_type', 'updated_at', 'created_at']
-        read_only_fields = ['updated_at', 'created_at']
+        fields = ['id', 'driver', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
 
 
 class ContractSerializer(ModelSerializer):
@@ -76,8 +76,8 @@ class ContractSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Contract
-        fields = ['id', 'contract_id', 'contractor', 'updated_at', 'created_at']
-        read_only_fields = ['updated_at', 'created_at']
+        fields = ['id', 'contract_id', 'contractor', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
 
 
 class TransitPostSerializer(ModelSerializer):
@@ -108,9 +108,9 @@ class TransitExpenseSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = TransitExpense
-        fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type',
+        fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type','status',
                   'updated_at', 'created_at']
-        read_only_fields = ['updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
 
 
 class TransitIncomeSerializer(ModelSerializer):
@@ -118,9 +118,9 @@ class TransitIncomeSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = TransitIncome
-        fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type',
+        fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type','status',
                   'updated_at', 'created_at']
-        read_only_fields = ['updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
         
 
 class TransitDetailSerializer(ModelSerializer):

@@ -31,8 +31,9 @@ def get_remainder_data(start_date, end_date):
     sorted_outcome = sorted(expenses + money_outcome, key=lambda x: x["created_at"], reverse=True)
     return {"sorted_income": sorted_income, "sorted_outcome": sorted_outcome}
 
+
 def calculate_remainder(date, user):
-    previous_remainder = DailyRemainder.objects.filter(type='auto').last().amount
+    remainder = 0
     incomes = [
         Sale.objects.filter(creator=user, created_at=date), 
         TransitIncome.objects.filter(creator=user, created_at=date), 
@@ -52,19 +53,18 @@ def calculate_remainder(date, user):
     for outcome in outcomes:
         for obj in outcome:
             if obj.currency_type == "UZS":
-                previous_remainder -= obj.amount
+                remainder -= obj.amount
             else:
-                previous_remainder -= convert_currency("UZS", obj.currency_type, obj.amount)
+                remainder -= convert_currency("UZS", obj.currency_type, obj.amount)
 
     for income in incomes:
         for obj in income:
             if obj.currency_type == "UZS":
-                previous_remainder += obj.amount
+                remainder += obj.amount
             else:
-                previous_remainder += convert_currency("UZS", obj.currency_type, obj.amount)
+                remainder += convert_currency("UZS", obj.currency_type, obj.amount)
 
-    return previous_remainder
-
+    return remainder
 
 
 def verification_transaction():

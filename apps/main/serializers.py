@@ -18,8 +18,8 @@ class MoneyCirculationSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = MoneyCirculation
-        fields = ['id', 'acquaintance', 'amount', 'description', 'currency_type', 'type', 'updated_at', 'created_at']
-        read_only_fields = ['type', 'updated_at', 'created_at']
+        fields = ['id', 'acquaintance', 'amount', 'description', 'currency_type', 'type', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['type','status',  'updated_at', 'created_at']
 
 
 class AcquaintanceDetailSerializer(ModelSerializer):
@@ -37,16 +37,16 @@ class ExpenseSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
-        fields = ['id', 'reason', 'description', 'amount', 'currency_type', 'updated_at', 'created_at', 'user', 'section']
-        read_only_fields = ['updated_at', 'created_at', 'user', 'section']
+        fields = ['id', 'reason', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at', 'user', 'section']
+        read_only_fields = ['updated_at', 'created_at', 'user', 'section', 'status']
 
 class IncomeSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Income
-        fields = ['id', 'reason', 'description', 'amount', 'currency_type', 'updated_at', 'created_at', 'user', 'section']
-        read_only_fields = ['updated_at', 'created_at', 'user', 'section']
+        fields = ['id', 'reason', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at', 'user', 'section']
+        read_only_fields = ['updated_at', 'created_at', 'user', 'section', 'status']
 
 
 class DailyRemainderSerializer(ModelSerializer):
@@ -75,5 +75,13 @@ class TransactionVerifyDetailSerializer(serializers.Serializer):
 
 # POST uchun serializer
 class TransactionVerifyActionSerializer(serializers.Serializer):
-    unique_id = serializers.CharField(max_length=50, required=True)
-    action = serializers.ChoiceField(choices=['verify', 'cancel'], required=True)
+    unique_id = serializers.CharField(
+        max_length=50,
+        required=True,
+        help_text="Tranzaksiya uchun unique ID (masalan, FA-BA-32) yoki 'ALL' barcha tranzaksiyalar uchun"
+    )
+    action = serializers.ChoiceField(
+        choices=['verify', 'cancel'],
+        required=True,
+        help_text="Amal: verify yoki cancel"
+    )
