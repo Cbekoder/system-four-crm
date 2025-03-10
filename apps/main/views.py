@@ -8,7 +8,6 @@ from django.utils.dateparse import parse_date
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.utils import timezone
-from django.apps import apps
 from datetime import timedelta
 from rest_framework.response import Response
 from apps.users.permissions import IsCEO
