@@ -1,5 +1,6 @@
+from datetime import datetime, time
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.utils import timezone
 from apps.common.utils import convert_currency
 from apps.factory.models import RawMaterialHistory, Sale, SalaryPayment as WorkerSalaryPayment
 # from apps.fridge.models import Something
@@ -33,21 +34,24 @@ def get_remainder_data(start_date, end_date):
 
 
 def calculate_remainder(date, user):
+    start_of_day = timezone.make_aware(datetime.combine(date, time.min))
+    end_of_day = timezone.make_aware(datetime.combine(date, time.max))
+
     remainder = 0
     incomes = [
-        Sale.objects.filter(creator=user, created_at=date), 
-        TransitIncome.objects.filter(creator=user, created_at=date), 
-        Income.objects.filter(user=user, created_at=date),
-        MoneyCirculation.objects.filter(creator=user, created_at=date, type='get')
+        Sale.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day)),
+        TransitIncome.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day)),
+        Income.objects.filter(user=user, created_at__range=(start_of_day, end_of_day)),
+        MoneyCirculation.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day), type='get')
     ]
     outcomes = [
-        RawMaterialHistory.objects.filter(creator=user, created_at=date),
-        CarExpense.objects.filter(creator=user, created_at=date),
-        GardenSalaryPayment.objects.filter(creator=user, created_at=date),
-        LogisticSalaryPayment.objects.filter(creator=user, created_at=date),
-        TransitExpense.objects.filter(creator=user, created_at=date),
-        Expense.objects.filter(user=user, created_at=date),
-        MoneyCirculation.objects.filter(creator=user, created_at=date, type='give'),
+        RawMaterialHistory.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day)),
+        CarExpense.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day)),
+        GardenSalaryPayment.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day)),
+        LogisticSalaryPayment.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day)),
+        TransitExpense.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day)),
+        Expense.objects.filter(user=user, created_at__range=(start_of_day, end_of_day)),
+        MoneyCirculation.objects.filter(creator=user, created_at__range=(start_of_day, end_of_day), type='give'),
     ]
 
     for outcome in outcomes:

@@ -26,12 +26,14 @@ class Expense(BaseModel):
     def save(self, *args, **kwargs):
         with transaction.atomic():
 
-            if self.creator.role == "CEO":
-                self.status = 'verified'
-
             super().save(*args, **kwargs)
-            message = f"ID: {self.id}\nSabab: {self.reason}\nIzoh: {self.description}\n\nSumma: {self.amount} {self.currency_type}"
-            Telegram.send_log(message)
+
+            if self.user.role == "CEO":
+                self.status = 'verified'
+                self.save(update_fields=['status'])
+
+            message = f"💸 Xarajat\n🔣 {self.section.title()}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➖ {self.amount} {self.currency_type}"
+            Telegram.send_log(message, app_button=True)
 
     def __str__(self):
         return self.reason
@@ -57,10 +59,14 @@ class Income(BaseModel):
     def save(self, *args, **kwargs):
         with transaction.atomic():
 
-            if self.creator.role == "CEO":
-                self.status = 'verified'
-
             super().save(*args, **kwargs)
+
+            if self.user.role == "CEO":
+                self.status = 'verified'
+                self.save(update_fields=['status'])
+
+            message = f"💸 Kirim\n🔣 {self.section.title()}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➖ {self.amount} {self.currency_type}"
+            Telegram.send_log(message, app_button=True)
 
 
 class Acquaintance(BasePerson):

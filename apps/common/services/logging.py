@@ -15,10 +15,11 @@ class TelegramLogging:
     def __init__(self):
         self.bot_token = env.str('TELEGRAM_BOT_TOKEN')
         self.chat_id = env.str("TELEGRAM_GROUP_ID")
+        self.app_url = env.str("APP_URL")
 
         self.telegram_service = TelegramService(bot_token=self.bot_token)
 
-    def send_log(self, message):
+    def send_log(self, message, app_button=False):
         # Send the exception details to the admin
         # extra = getattr(exception, "extra_kwargs", None)
 
@@ -30,7 +31,10 @@ class TelegramLogging:
             #     for key, value in extra.items():
             #         msg += f"{key}: {value}\n"
             # msg += f"\n<code>{tb_string[-4000 + len(msg):]}</code>"
-            self.telegram_service.send_message(self.chat_id, message)
+            if app_button:
+                self.telegram_service.send_message(self.chat_id, message, self.app_url)
+            else:
+                self.telegram_service.send_message(self.chat_id, message)
         except Exception as e:
             print(e)
 

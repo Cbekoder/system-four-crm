@@ -1,6 +1,9 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import *
+from rest_framework.response import Response
+
 from .serializers import *
 from apps.users.permissions import *
 from rest_framework.permissions import IsAuthenticated
@@ -23,6 +26,14 @@ class RefrigatorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Refrigerator.objects.all()
     permission_classes = [IsCEOOrAdmin]
 
+    def delete(self, request, *args, **kwargs):
+        if not request.user.role == 'CEO':
+            return Response(
+                {"detail": "Only CEO can delete this item."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().delete(request, *args, **kwargs)
+
 class FridgeExpenseListCreateView(ListCreateAPIView):
     permission_classes = [IsCEOOrAdmin]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -32,7 +43,6 @@ class FridgeExpenseListCreateView(ListCreateAPIView):
         if self.request.method == "GET":
             return FridgeExpenseSerializer
         return FridgeExpensePostSerializer
-
 
     def get_queryset(self):
         queryset = Expense.objects.filter(section='fridge')
@@ -68,7 +78,6 @@ class FridgeExpenseListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-
 
     def perform_create(self, serializer):
         serializer.save(section="fridge", user=self.request.user)

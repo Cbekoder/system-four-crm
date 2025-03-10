@@ -13,5 +13,5 @@ class Command(BaseCommand):
         fetch_currency_rate()
         last_remainder = DailyRemainder.objects.last()
         user = User.objects.filter(role="CEO").first()
-        DailyRemainder.objects.create(amount=(last_remainder.amount+calculate_remainder(timezone.now().date(), user)))
+        DailyRemainder.objects.create(amount=(last_remainder.amount+calculate_remainder(timezone.now().date(), user)), type='auto')
         self.stdout.write(self.style.SUCCESS('Daily tasks completed!'))
