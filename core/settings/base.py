@@ -52,8 +52,8 @@ DJANGO_APPS = [
 
 CUSTOM_APPS = [
     'apps.common',
-    'apps.users',
     'apps.main',
+    'apps.users',
     'apps.logistic',
     'apps.garden',
     'apps.factory',
