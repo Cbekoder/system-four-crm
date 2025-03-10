@@ -52,12 +52,12 @@ DJANGO_APPS = [
 
 CUSTOM_APPS = [
     'apps.common',
-    'apps.main',
     'apps.users',
     'apps.logistic',
     'apps.garden',
     'apps.factory',
     'apps.fridge',
+    'apps.main',
 ]
 
 THIRD_PARTY_APPS = [
