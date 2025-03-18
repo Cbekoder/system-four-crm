@@ -413,6 +413,3 @@ class SalaryPayment(BaseModel):
 
         Expense.objects.filter(description__contains=f"| {self.id}").delete()
         super().delete(*args, **kwargs)
-
-
-

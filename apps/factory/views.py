@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.generics import *
 from rest_framework.response import Response
-from django.db.models import Sum
+
 from .serializers import *
 from apps.users.permissions import *
 from apps.main.models import Expense, Income
@@ -13,8 +13,6 @@ from ..users.models import User
 from django.utils.dateparse import parse_date
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from django.utils import timezone
-from datetime import timedelta
 
 
 class WorkerListCreateView(ListCreateAPIView):
@@ -136,6 +134,7 @@ class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = RawMaterialHistorySerializer
     queryset = RawMaterialHistory.objects.all()
     permission_classes = [IsCEOOrAdmin]
+
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
@@ -492,6 +491,7 @@ class SaleListCreateView(ListCreateAPIView):
     queryset = Sale.objects.all()
     # serializer_class = SaleSerializer
 
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return SaleGetSerializer
@@ -503,12 +503,12 @@ class SaleListCreateView(ListCreateAPIView):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
+# Bitta sotuvni olish, yangilash va o‘chirish (GET, PUT, DELETE)
 class SaleRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
 
-
+# SaleItem uchun CRUD
 class SaleItemListCreateView(ListCreateAPIView):
     queryset = SaleItem.objects.all()
     serializer_class = SaleItemSerializer
@@ -516,70 +516,3 @@ class SaleItemListCreateView(ListCreateAPIView):
 class SaleItemRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = SaleItem.objects.all()
     serializer_class = SaleItemSerializer
-
-
-class FactorySummaryView(ListAPIView):
-    permission_classes = [IsCEOOrAdmin]
-
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'start_date', openapi.IN_QUERY,
-                description="Boshlang'ich sana (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING,
-                format=openapi.FORMAT_DATE
-            ),
-            openapi.Parameter(
-                'end_date', openapi.IN_QUERY,
-                description="Tugash sanasi (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING,
-                format=openapi.FORMAT_DATE
-            ),
-            openapi.Parameter(
-                'section', openapi.IN_QUERY,
-                description="Bo‘lim nomi",
-                type=openapi.TYPE_STRING,
-                required=True
-            ),
-        ]
-    )
-
-    def list(self, request, *args, **kwargs):
-
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-        section = 'factory'
-        if not end_date:
-            end_date = timezone.now().date()
-        if not start_date:
-            start_date = end_date - timedelta(days=30)
-
-        if not section:
-            return Response({"error": "section parametri kerak"}, status=400)
-
-        income_total = Income.objects.filter(
-            section=section,
-            created_at__range=[start_date, end_date]
-        ).aggregate(total=Sum('amount'))['total'] or 0
-
-        expense_total = Expense.objects.filter(
-            section=section,
-            created_at__range=[start_date, end_date]
-        ).aggregate(total=Sum('amount'))['total'] or 0
-
-        incomes=Income.objects.filter(section=section, created_at__range=[start_date, end_date])
-        expenses=Expense.objects.filter(section=section, created_at__range=[start_date, end_date])
-
-        return Response({
-            'start_date': start_date,
-            'end_date': end_date,
-            "section": section,
-            "income_total": income_total,
-            "expense_total": expense_total,
-            "incomes": IncomeSerializer(incomes, many=True).data,
-            "expenses": ExpenseSerializer(expenses, many=True).data,
-        })
-
-
-
-
