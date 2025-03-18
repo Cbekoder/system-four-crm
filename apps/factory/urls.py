@@ -23,6 +23,12 @@ urlpatterns = [
     path('raw-materials/', RawMaterialListCreateView.as_view()),
     path('raw-materials/<int:pk>/', RawMaterialRetrieveUpdateDestroyView.as_view()),
 
+    path('raw-material-usage/', RawMaterialUsageListCreateView.as_view()),
+    path('raw-materials-usage/<int:pk>/', RawMaterialUsageRetrieveUpdateDestroyView.as_view()),
+
+    path('raw-material-history/', RawMaterialHistoryListCreateView.as_view()),
+    path('raw-materials-history/<int:pk>/', RawMaterialHistoryRetrieveUpdateDestroyView.as_view()),
+
     #Urls for Clients
     path('clients/', ClientListCreateView.as_view()),
     path('clients/<int:pk>/', ClientRetrieveUpdateDestroyView.as_view()),
@@ -30,8 +36,8 @@ urlpatterns = [
     #Urls for Sales
     path('sales/', SaleListCreateView.as_view(), name='sale-list-create'),
     path('sales/<int:pk>/', SaleRetrieveUpdateDestroyView.as_view(), name='sale-detail'),
-    path('sale-items/', SaleItemListCreateView.as_view(), name='saleitem-list-create'),
-    path('sale-items/<int:pk>/', SaleItemRetrieveUpdateDestroyView.as_view(), name='saleitem-detail'),
+    # path('sale-items/', SaleItemListCreateView.as_view(), name='saleitem-list-create'),
+    # path('sale-items/<int:pk>/', SaleItemRetrieveUpdateDestroyView.as_view(), name='saleitem-detail'),
 
 
     #Urls for Expenses
@@ -45,5 +51,8 @@ urlpatterns = [
     #Urls for Salary Payment
     path('salary-payments/', SalaryPaymentListCreateView.as_view()),
     path('salary-payments/<int:pk>', SalaryPaymentRetrieveUpdateDestroyView.as_view()),
+
+    #Urls for Summary
+    path('summary/', FactorySummaryView.as_view()),
 
 ]

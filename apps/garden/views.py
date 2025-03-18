@@ -13,6 +13,17 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 
+
+class GardenListCreateView(ListCreateAPIView):
+    queryset = Garden.objects.all()
+    serializer_class = GardenSerializer
+    permission_classes = [IsCEOOrAdmin]
+
+class GardenRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = Garden.objects.all()
+    serializer_class = GardenSerializer
+    permission_classes = [IsCEOOrAdmin]
+
 class GardenerListCreateView(ListCreateAPIView):
     queryset = Gardener.objects.all()
     serializer_class = GardenerSerializer
@@ -121,6 +132,11 @@ class GardenExpenseListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return GardenExpensePostSerializer
+        return GardenExpenseSerializer
 
     def perform_create(self, serializer):
         serializer.save(section="garden", user=self.request.user)

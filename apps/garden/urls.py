@@ -6,6 +6,10 @@ urlpatterns = [
     path('admins/', GardenUserListCreateAPIView.as_view(), name='garden-admin-list-create'),
     path('admins/<int:pk>/', GardenUserRetrieveUpdateDestroyAPIView.as_view(), name='garden-admin-detail'),
 
+    #Urls for Gardens
+    path('gardens/', GardenListCreateView.as_view()),
+    path('gardens/<int:pk>/', GardenRetrieveUpdateDestroyView.as_view()),
+
     #Urls for Expenses
     path('expenses/', GardenExpenseListCreateView.as_view()),
     path('expenses/<int:pk>/', GardenExpenseRetrieveUpdateDestroyView.as_view()),

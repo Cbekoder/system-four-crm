@@ -6,6 +6,22 @@ from apps.common.utils import convert_currency
 from apps.users.models import User
 
 
+class Garden(BaseModel):
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    status = None
+    creator = None
+
+    class Meta:
+        verbose_name = "Bog' "
+        verbose_name_plural = "Bog'lar "
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
 class Gardener(BasePerson):
     class Meta:
         verbose_name = "Bog'bon "
