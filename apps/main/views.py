@@ -11,10 +11,12 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.response import Response
 from apps.users.permissions import IsCEO
-from .models import Acquaintance, MoneyCirculation, Expense, Income, DailyRemainder
+from .models import Acquaintance, MoneyCirculation, Expense, Income, DailyRemainder, TransactionToAdmin, \
+    TransactionToSection
 from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, MoneyCirculationSerializer, \
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer, \
-    TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer
+    TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer, TransactionToAdminSerializer, \
+    TransactionToAdminCreateSerializer, TransactionToSectionSerializer, TransactionToSectionCreateSerializer
 from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction
 from ..common.utils import convert_currency
 
@@ -243,6 +245,108 @@ class GeneralIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         queryset = Income.objects.filter(section="general")
         return queryset
+
+
+class TransactionToAdminListCreateView(ListCreateAPIView):
+    permission_classes = [IsCEO]
+
+    def get_queryset(self):
+        queryset = TransactionToAdmin.objects.all()
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            queryset = queryset.filter(created_at__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(created_at__date__lte=end_date)
+
+        return queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TransactionToAdminSerializer
+        return TransactionToAdminCreateSerializer
+
+
+class TransactionToAdminDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = TransactionToAdmin.objects.all()
+    permission_classes = [IsCEO]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TransactionToAdminSerializer
+        return TransactionToAdminCreateSerializer
+
+
+class TransactionToSectionListCreateView(ListCreateAPIView):
+    permission_classes = [IsCEO]
+
+    def get_queryset(self):
+        queryset = TransactionToSection.objects.all()
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            queryset = queryset.filter(created_at__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(created_at__date__lte=end_date)
+
+        return queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TransactionToSectionSerializer
+        return TransactionToSectionCreateSerializer
+
+
+class TransactionToSectionDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = TransactionToSection.objects.all()
+    permission_classes = [IsCEO]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TransactionToSectionSerializer
+        return TransactionToSectionCreateSerializer
 
 
 class DailyRemainderView(ListAPIView):

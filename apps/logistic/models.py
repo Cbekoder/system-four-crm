@@ -1,4 +1,5 @@
 from django.db import models, transaction
+from django.db.models import F
 from rest_framework.exceptions import ValidationError
 
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE, TRANSFER_TYPE
@@ -35,8 +36,13 @@ class Tenant(BasePerson):
         return self.full_name
 
 
-class Contractor(BasePerson):
-    balance = None
+class Contractor(BaseModel):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Shartnomachi firma nomi")
+    inn = models.CharField(max_length=30, verbose_name="INN")
+    phone_number = models.CharField(max_length=15, verbose_name="Telefon raqami")
+    extra_phone_number = models.CharField(max_length=15, blank=True, null=True, verbose_name="Qo'shimcha telefon raqami")
+    landing = models.FloatField(default=0, verbose_name="Qarzdorlik")
+    currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS", verbose_name="Valyuta turi")
 
     class Meta:
         verbose_name = "Shartnoma hamkori "
@@ -106,6 +112,26 @@ class Trailer(BaseModel):
             self.status = 'verified'
         super().save(*args, **kwargs)
 
+
+TIR_STATUS = (
+    ('new', 'Yangi'),
+    ('waiting', 'Kutilmoqda'),
+    ('warning', 'Ogohlantirish'),
+    ('accepted', 'Qabul qilingan'),
+    ('given', 'Berib yuborilgan')
+)
+
+
+class TIR(BaseModel):
+    number = models.CharField(max_length=30, verbose_name="TIR raqami")
+    get_date = models.DateField(verbose_name="Olish sanasi")
+    deadline = models.DateField(verbose_name="Muddati")
+    status = models.CharField(max_length=20, choices=TIR_STATUS, default='new', verbose_name="Status")
+
+    def __str__(self):
+        return str(self.number)
+
+
 ###############
 ##  Actions  ##
 ###############
@@ -139,46 +165,57 @@ class CarExpense(BaseModel):
         return str(self.id)
 
     def save(self, *args, **kwargs):
-        if self.creator.role == "CEO":
-            self.status = 'verified'
-        # if self.pk:
-        #     old_expense = CarExpense.objects.get(id=self.pk)
-        #     old_amount = old_expense.amount
-        #     if self.currency_type != old_expense.currency_type:
-        #         valid_currencies = ("USD", "UZS")
-        #         if old_expense.currency_type in valid_currencies and self.currency_type in valid_currencies:
-        #             old_amount = convert_currency(old_expense.currency_type, self.currency_type, old_amount)
-        #     if self.amount != old_expense.amount:
-        #         if self.car:
-        #             self.car.landing += old_amount
-        #             self.car.save()
-        #         if self.trailer:
-        #             self.trailer.landing += old_amount
-        #             self.trailer.save()
-        #     if self.car != old_expense.car:
-        #         raise ValidationError("It is not allowed to change car")
-        #     if self.trailer != old_expense.trailer:
-        #         raise ValidationError("It is not allowed to change trailer")
-        # converted_amount = self.amount
-        # if self.car:
-        #     if self.car.currency_type == self.currency_type:
-        #         valid_currencies = ("USD", "UZS")
-        #         if self.car.currency_type in valid_currencies and self.currency_type in valid_currencies:
-        #             converted_amount = convert_currency(self.currency_type, self.car.currency_type, self.amount)
-        #         else:
-        #             raise ValidationError("Invalid currency type")
-        #     self.car.landing -= converted_amount
-        #     self.car.save()
-        # if self.trailer:
-        #     if self.trailer.currency_type == self.currency_type:
-        #         valid_currencies = ("USD", "UZS")
-        #         if self.trailer.currency_type in valid_currencies and self.currency_type in valid_currencies:
-        #             converted_amount = convert_currency(self.currency_type, self.trailer.currency_type, self.amount)
-        #         else:
-        #             raise ValidationError("Invalid currency type")
-        #     self.trailer.landing -= converted_amount
-        #     self.trailer.save()
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+            if self.pk:
+                old_expense = CarExpense.objects.get(id=self.pk)
+
+                old_expense.creator.balance -= old_expense.amount
+                old_expense.creator.save()
+
+                User.objects.filter(id=old_expense.creator.id).update(balance=F('balance') - old_expense.amount)
+
+                # old_amount = old_expense.amount
+                # if self.currency_type != old_expense.currency_type:
+                #     valid_currencies = ("USD", "UZS")
+                #     if old_expense.currency_type in valid_currencies and self.currency_type in valid_currencies:
+                #         old_amount = convert_currency(old_expense.currency_type, self.currency_type, old_amount)
+                # if self.amount != old_expense.amount:
+                #     if self.car:
+                #         self.car.landing += old_amount
+                #         self.car.save()
+                #     if self.trailer:
+                #         self.trailer.landing += old_amount
+                #         self.trailer.save()
+            # if self.car != old_expense.car:
+            #     raise ValidationError("It is not allowed to change car")
+            # if self.trailer != old_expense.trailer:
+            #     raise ValidationError("It is not allowed to change trailer")
+            # converted_amount = self.amount
+            # if self.car:
+            #     if self.car.currency_type == self.currency_type:
+            #         valid_currencies = ("USD", "UZS")
+            #         if self.car.currency_type in valid_currencies and self.currency_type in valid_currencies:
+            #             converted_amount = convert_currency(self.currency_type, self.car.currency_type, self.amount)
+            #         else:
+            #             raise ValidationError("Invalid currency type")
+            #     self.car.landing -= converted_amount
+            #     self.car.save()
+            # if self.trailer:
+            #     if self.trailer.currency_type == self.currency_type:
+            #         valid_currencies = ("USD", "UZS")
+            #         if self.trailer.currency_type in valid_currencies and self.currency_type in valid_currencies:
+            #             converted_amount = convert_currency(self.currency_type, self.trailer.currency_type, self.amount)
+            #         else:
+            #             raise ValidationError("Invalid currency type")
+            #     self.trailer.landing -= converted_amount
+            #     self.trailer.save()
+            super().save(*args, **kwargs)
+
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') + self.amount)
+
+
 
 
 class SalaryPayment(BaseModel):
@@ -215,10 +252,13 @@ CONTRACT_STATUS = (
 )
 
 class Contract(BaseModel):
-    contract_id = models.CharField(max_length=50)
+    contract_id = models.CharField(max_length=50, verbose_name="Shartnoma raqami")
+    date = models.DateField(verbose_name="Shartnoma sanasi")
+    invoice_id = models.CharField(max_length=50, null=True, blank=True, verbose_name="Faktura raqami")
     contractor = models.ForeignKey(Contractor, on_delete=models.SET_NULL, null=True)
-    tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True)
+    tenant  = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True)
     amount = models.FloatField(null=True)
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
     status = models.CharField(max_length=20, choices=CONTRACT_STATUS, default='new', verbose_name="Status")
 
     class Meta:
@@ -246,6 +286,10 @@ class Contract(BaseModel):
 
             if self.tenant:
                 self.tenant.debt += self.amount
+
+class ContractTransaction(BaseModel):
+    contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True)
+    amount = models.FloatField()
 
 
 TRANSIT_STATUS_CHOICES = (

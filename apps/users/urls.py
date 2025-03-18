@@ -1,10 +1,7 @@
 from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-from .views import GetMeView
+from .views import GetMeView, AdminListView
 
 urlpatterns = [
-    path('get-me/', GetMeView.as_view(), name='get-me')
+    path('get-me/', GetMeView.as_view(), name='get-me'),
+    path('admins/', AdminListView.as_view(), name='admin-list'),
 ]

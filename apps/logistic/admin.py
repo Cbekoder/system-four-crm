@@ -19,8 +19,8 @@ class TenantAdmin(admin.ModelAdmin):
 
 @admin.register(Contractor)
 class ContractorAdmin(admin.ModelAdmin):
-    list_display = ("first_name", "last_name", "phone_number")
-    search_fields = ("first_name", "last_name", "phone_number")
+    list_display = ("name", "inn", "phone_number")
+    search_fields = ("name", "inn", "phone_number")
 
 
 @admin.register(Car)

@@ -16,6 +16,7 @@ SECTION_CHOICES = (
 )
 
 class User(AbstractUser):
+    balance = models.FloatField(default=0, verbose_name="Qoldiq")
     role = models.CharField(max_length=30, choices=ROLE_CHOICES, help_text="Role bo'lishi mumkin: 'ceo', 'admin'", default="admin")
     section = models.CharField(max_length=30, choices=SECTION_CHOICES, null=True, blank=True)
 

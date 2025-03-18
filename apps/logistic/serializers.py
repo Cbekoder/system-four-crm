@@ -28,7 +28,7 @@ class ContractorSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Contractor
-        fields = ['id', 'first_name', 'last_name', 'description', 'phone_number', 'extra_phone_number',
+        fields = ['id', 'name', 'inn', 'phone_number', 'extra_phone_number',
                   'landing', 'currency_type', 'updated_at', 'created_at']
         read_only_fields = ['landing', 'updated_at', 'created_at']
 

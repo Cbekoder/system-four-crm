@@ -1,6 +1,7 @@
 from rest_framework.serializers import ModelSerializer, DateTimeField, Serializer, CharField, FloatField
 from rest_framework import serializers
-from .models import Acquaintance, MoneyCirculation, Income, Expense, DailyRemainder
+from .models import Acquaintance, MoneyCirculation, Income, Expense, DailyRemainder, TransactionToAdmin, \
+    TransactionToSection
 
 
 class AcquaintanceSerializer(ModelSerializer):
@@ -49,6 +50,37 @@ class IncomeSerializer(ModelSerializer):
         read_only_fields = ['updated_at', 'created_at', 'user', 'section', 'status']
 
 
+class TransactionToAdminSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    class Meta:
+        model = TransactionToAdmin
+        fields = '__all__'
+        read_only_fields = ('creator',)
+
+
+class TransactionToAdminCreateSerializer(ModelSerializer):
+    class Meta:
+        model = TransactionToAdmin
+        fields = ('admin', 'amount', 'currency_type', 'description')
+
+
+class TransactionToSectionSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    class Meta:
+        model = TransactionToSection
+        fields = '__all__'
+        read_only_fields = ('creator',)
+
+
+class TransactionToSectionCreateSerializer(ModelSerializer):
+    class Meta:
+        model = TransactionToSection
+        fields = ('section', 'amount', 'currency_type', 'description')
+
+
+
 class DailyRemainderSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
@@ -67,6 +99,7 @@ class MixedDataSerializer(Serializer):
 class TransactionVerifyDetailSerializer(serializers.Serializer):
     unique_id = serializers.CharField(max_length=50, read_only=True)
     creator = serializers.CharField(max_length=100, read_only=True)
+    section = serializers.CharField(max_length=100, read_only=True)
     description = serializers.CharField(max_length=255, read_only=True)
     amount = serializers.FloatField(read_only=True)
     currency_type = serializers.CharField(max_length=10, read_only=True)

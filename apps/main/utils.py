@@ -81,9 +81,10 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator),
+            "section": "Korzinka seh",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
-            "currency_type": getattr(obj, 'currency_type', 'UZS'),
+            "currency_type": getattr(obj, 'curren cy_type', 'UZS'),
             "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
             "created_at": obj.created_at,
         })
@@ -94,6 +95,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator),
+            "section": "Korzinka seh",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -108,6 +110,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator),
+            "section": "Korzinka seh",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -126,6 +129,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator),
+            "section": "Bog'",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -142,6 +146,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator),
+            "section": "Logistika",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -156,6 +161,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator),
+            "section": "Logistika",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -171,6 +177,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator),
+            "section": "Logistika",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -185,6 +192,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator),
+            "section": "Logistika",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -200,6 +208,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.user),
+            "section": obj.section,
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -213,6 +222,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.user),
+            "section": obj.section,
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),

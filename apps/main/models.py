@@ -142,6 +142,42 @@ class MoneyCirculation(BaseModel):
     def __str__(self):
         return self.acquaintance.full_name if self.acquaintance else str(self.id)
 
+
+class TransactionToAdmin(BaseModel):
+    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    amount = models.FloatField()
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
+    description = models.TextField(null=True, blank=True)
+    status = None
+    creator = None
+
+    def __str__(self):
+        return self.admin.get_full_name() if self.admin else str(self.id)
+
+    class Meta:
+        verbose_name = "Admin hisobiga pul o'tkazish"
+        verbose_name_plural = "Admin hisobiga pul o'tkazishlar"
+        ordering = ["-created_at"]
+
+
+class TransactionToSection(BaseModel):
+    section = models.CharField(max_length=30, choices=SECTION_CHOICES)
+    amount = models.FloatField()
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
+    description = models.TextField(null=True, blank=True)
+    status = None
+    creator = None
+
+    def __str__(self):
+        return self.section
+
+    class Meta:
+        verbose_name = "Bo'lim hisobiga pul o'tkazish"
+        verbose_name_plural = "Bo'lim hisobiga pul o'tkazishlar"
+        ordering = ["-created_at"]
+
+
+
 REMAINDER_TYPE_CHOICES = (
     ('auto', 'Avtomatik'),
     ('manual', 'Qo\'lda')
@@ -150,6 +186,8 @@ REMAINDER_TYPE_CHOICES = (
 class DailyRemainder(BaseModel):
     amount = models.FloatField()
     type = models.CharField(max_length=20, choices=REMAINDER_TYPE_CHOICES, default="manual")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
     status = None
     creator = None
 

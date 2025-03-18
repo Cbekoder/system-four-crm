@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.filters import SearchFilter
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -28,4 +28,15 @@ class GetMeView(APIView):
         return Response({"detail": "Authentication credentials were not provided."},
                             status=status.HTTP_401_UNAUTHORIZED)
 
+
+
+class AdminListView(ListAPIView):
+    serializer_class = UserDetailSerializer
+    permission_classes = [IsCEO]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['role']
+    search_fields = ['first_name', 'last_name', 'email']
+
+    def get_queryset(self):
+        return User.objects.filter(role='admin')
 

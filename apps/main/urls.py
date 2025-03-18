@@ -3,7 +3,7 @@ from .views import (
     AcquaintanceListCreateView, AcquaintanceRetrieveUpdateDestroyView, GiveMoneyListCreateView,
     GetMoneyListCreateView, MoneyCirculationsRetrieveUpdateDestroyView, GeneralExpenseRetrieveUpdateDestroyView,
     GeneralExpenseListCreateView, GeneralIncomeListCreateView, GeneralIncomeRetrieveUpdateDestroyView,
-    DailyRemainderView
+    DailyRemainderView, TransactionToAdminListCreateView, TransactionToAdminDetailView
 )
 
 urlpatterns = [
@@ -19,6 +19,9 @@ urlpatterns = [
     
     path('incomes/', GeneralIncomeListCreateView.as_view(), name='general-incomes-list'),
     path('incomes/<int:pk>/', GeneralIncomeRetrieveUpdateDestroyView.as_view(), name='general-incomes-list'),
+
+    path('transactions-to-admin/', TransactionToAdminListCreateView.as_view(), name='transaction-admin-list'),
+    path('transactions-to-admin/<int:pk>/', TransactionToAdminDetailView.as_view(), name='transaction-admin-detail'),
 
     path('daily-remainder/', DailyRemainderView.as_view(), name='daily-remainder')
 ]
