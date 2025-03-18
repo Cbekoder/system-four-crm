@@ -13,7 +13,6 @@ class IsCEOOrAdmin(BasePermission):
             return True
 
         app_label = obj._meta.app_label
-        print(app_label)
         return request.user.role == "admin" and request.user.section == app_label
 
 class IsCEO(BasePermission):

@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer, DateTimeField
 from .models import Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment, Contract, Transit, \
-    TransitExpense, TransitIncome
+    TransitExpense, TransitIncome, TIR
 
 
 class DriverSerializer(ModelSerializer):
@@ -50,6 +50,13 @@ class TrailerSerializer(ModelSerializer):
         model = Trailer
         fields = ['id', 'model', 'state_number', 'year', 'color', 'tech_passport', 'car', 'updated_at', 'created_at']
         read_only_fields = ['updated_at', 'created_at']
+
+
+class TIRSerializer(ModelSerializer):
+    class Meta:
+        model = TIR
+        fields = ['id', 'number', 'get_date', 'deadline', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class CarExpenseSerializer(ModelSerializer):

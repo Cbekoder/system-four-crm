@@ -115,10 +115,10 @@ class Trailer(BaseModel):
 
 TIR_STATUS = (
     ('new', 'Yangi'),
-    ('waiting', 'Kutilmoqda'),
-    ('warning', 'Ogohlantirish'),
     ('accepted', 'Qabul qilingan'),
-    ('given', 'Berib yuborilgan')
+    ('given', 'Berib yuborilgan'),
+    ('waiting', 'Kutilmoqda'),
+    ('submitted', 'Topshirilgan'),
 )
 
 
@@ -130,6 +130,11 @@ class TIR(BaseModel):
 
     def __str__(self):
         return str(self.number)
+
+    class Meta:
+        verbose_name = "TIR "
+        verbose_name_plural = "TIRlar "
+        ordering = ["-created_at"]
 
 
 ###############
@@ -170,9 +175,6 @@ class CarExpense(BaseModel):
                 self.status = 'verified'
             if self.pk:
                 old_expense = CarExpense.objects.get(id=self.pk)
-
-                old_expense.creator.balance -= old_expense.amount
-                old_expense.creator.save()
 
                 User.objects.filter(id=old_expense.creator.id).update(balance=F('balance') - old_expense.amount)
 

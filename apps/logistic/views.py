@@ -1,3 +1,4 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.exceptions import ValidationError
@@ -6,13 +7,13 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .models import (
     Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment,
-    Contract, Transit, TransitExpense, TransitIncome
+    Contract, Transit, TransitExpense, TransitIncome, TIR, TIR_STATUS
 )
 from .serializers import (
     DriverSerializer, TenantSerializer, ContractorSerializer, CarSerializer, TrailerSerializer,
     CarExpenseSerializer, DriverSalaryPaymentSerializer, ContractSerializer, TransitGetSerializer,
     TransitPostSerializer, TransitDetailSerializer,
-    TransitExpenseSerializer, TransitIncomeSerializer
+    TransitExpenseSerializer, TransitIncomeSerializer, TIRSerializer
 )
 from apps.users.models import User
 from apps.users.serializers import UserDetailSerializer, UserPostSerializer
@@ -82,6 +83,44 @@ class TrailerListCreateView(ListCreateAPIView):
 class TrailerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Trailer.objects.all()
     serializer_class = TrailerSerializer
+
+
+class TIRListCreateView(ListCreateAPIView):
+    queryset = TIR.objects.all()
+    serializer_class = TIRSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('status',)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='status',
+                in_=openapi.IN_QUERY,
+                description='Filter by status',
+                type=openapi.TYPE_STRING,
+                required=False,
+                enum=[status[0] for status in TIR_STATUS],
+            ),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        queryset = TIR.objects.all()
+        status = self.request.query_params.get('status', None)
+        if status is not None:
+            queryset = queryset.filter(status=status)
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+
+class TIRDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = TIR.objects.all()
+    serializer_class = TIRSerializer
+    permission_classes = [IsCEOOrAdmin]
 
 
 # Generic Views for CarExpense
