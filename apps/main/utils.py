@@ -80,7 +80,7 @@ def verification_transaction():
         unique_id = f"FA-RM-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator.get_full_name())
+            "creator": str(obj.creator.get_full_name()),
             "section": "Korzinka seh",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
