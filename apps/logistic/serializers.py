@@ -1,6 +1,6 @@
-from rest_framework.serializers import ModelSerializer, DateTimeField
+from rest_framework.serializers import ModelSerializer, DateTimeField, PrimaryKeyRelatedField
 from .models import Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment, Contract, Transit, \
-    TransitExpense, TransitIncome, TIR
+    TransitExpense, TransitIncome, TIR, TIRRecord
 
 
 class DriverSerializer(ModelSerializer):
@@ -57,6 +57,39 @@ class TIRSerializer(ModelSerializer):
         model = TIR
         fields = ['id', 'number', 'get_date', 'deadline', 'status', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+
+
+class TIRRecordSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    tir = PrimaryKeyRelatedField(queryset=TIR.objects.all(), allow_null=False)
+    driver = PrimaryKeyRelatedField(queryset=Driver.objects.all(), allow_null=False)
+    car = PrimaryKeyRelatedField(queryset=Car.objects.all(), allow_null=False)
+    trailer = PrimaryKeyRelatedField(queryset=Trailer.objects.all(), allow_null=False)
+    class Meta:
+        model = TIRRecord
+        fields = ['id', 'tir', 'driver', 'car', 'trailer', 'received_date', 'submission_deadline', 'status', 'updated_at', 'created_at']
+        read_only_fields = ('creator', 'status')
+
+class TIRRecordDetailSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    tir = TIRSerializer()
+    driver = DriverSerializer()
+    car = CarSerializer()
+    trailer = TrailerSerializer()
+
+    class Meta:
+        model = TIRRecord
+        fields = ['id', 'tir', 'driver', 'car', 'trailer', 'received_date', 'submission_deadline', 'status', 'creator', 'updated_at', 'created_at']
+
+class  TIRRecordUpdateSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    class Meta:
+        model = TIRRecord
+        fields = ['id', 'tir', 'driver', 'car', 'trailer', 'received_date', 'submission_deadline', 'status', 'creator', 'updated_at', 'created_at']
+        read_only_fields = ('creator', 'status', 'updated_at', 'created_at')
 
 
 class CarExpenseSerializer(ModelSerializer):

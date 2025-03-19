@@ -7,13 +7,14 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .models import (
     Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment,
-    Contract, Transit, TransitExpense, TransitIncome, TIR, TIR_STATUS
+    Contract, Transit, TransitExpense, TransitIncome, TIR, TIR_STATUS, TIRRecord
 )
 from .serializers import (
     DriverSerializer, TenantSerializer, ContractorSerializer, CarSerializer, TrailerSerializer,
     CarExpenseSerializer, DriverSalaryPaymentSerializer, ContractSerializer, TransitGetSerializer,
     TransitPostSerializer, TransitDetailSerializer,
-    TransitExpenseSerializer, TransitIncomeSerializer, TIRSerializer
+    TransitExpenseSerializer, TransitIncomeSerializer, TIRSerializer, TIRRecordDetailSerializer, TIRRecordSerializer,
+    TIRRecordUpdateSerializer
 )
 from apps.users.models import User
 from apps.users.serializers import UserDetailSerializer, UserPostSerializer
@@ -121,6 +122,29 @@ class TIRDetailView(RetrieveUpdateDestroyAPIView):
     queryset = TIR.objects.all()
     serializer_class = TIRSerializer
     permission_classes = [IsCEOOrAdmin]
+
+
+class TIRRecordListCreateView(ListCreateAPIView):
+    permission_classes = [IsCEOOrAdmin]
+    queryset = TIRRecord.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TIRRecordDetailSerializer
+        return TIRRecordSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+
+class TIRRecordDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsCEOOrAdmin]
+    queryset = TIRRecord.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TIRRecordDetailSerializer
+        return TIRRecordUpdateSerializer
 
 
 # Generic Views for CarExpense

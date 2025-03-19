@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment, Contract,
-    Transit, TransitExpense, TransitIncome, TirSelling
+    Transit, TransitExpense, TransitIncome, TIRRecord
 )
 
 
@@ -77,7 +77,7 @@ class TransitIncomeAdmin(admin.ModelAdmin):
     list_filter = ("currency_type", "created_at")
 
 
-@admin.register(TirSelling)
+@admin.register(TIRRecord)
 class TirSellingAdmin(admin.ModelAdmin):
-    list_display = ("tir_number", "tenant", "contract", "created_at")
-    search_fields = ("tir_number", "tenant__first_name", "tenant__last_name")
+    list_display = ("tir", "driver", "car", "trailer", "created_at")
+    search_fields = ("tir", "driver__first_name", "driver__last_name", "car", "trailer")

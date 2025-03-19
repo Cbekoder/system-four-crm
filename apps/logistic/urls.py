@@ -11,7 +11,7 @@ from .views import (
     TransitListCreateView, TransitRetrieveUpdateDestroyView,
     TransitExpenseListCreateView, TransitExpenseRetrieveUpdateDestroyView,
     TransitIncomeListCreateView, TransitIncomeRetrieveUpdateDestroyView, LogisticUserRetrieveUpdateDestroyAPIView,
-    LogisticUserListCreateAPIView, TIRListCreateView, TIRDetailView
+    LogisticUserListCreateAPIView, TIRListCreateView, TIRDetailView, TIRRecordListCreateView, TIRRecordDetailView
 )
 
 urlpatterns = [
@@ -42,6 +42,10 @@ urlpatterns = [
     # TIR URLs
     path('tirs/', TIRListCreateView.as_view(), name='tir-list-create'),
     path('tirs/<int:pk>/', TIRDetailView.as_view(), name='tir-detail'),
+
+    # TIR Record URLs
+    path('tir-records/', TIRRecordListCreateView.as_view(), name='tir-record-list'),
+    path('tir-records/<int:pk>/', TIRRecordDetailView.as_view(), name='tir-record-detail'),
 
     # CarExpense URLs
     path('car-expenses/', CarExpenseListCreateView.as_view(), name='car-expense-list-create'),

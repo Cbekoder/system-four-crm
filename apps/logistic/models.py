@@ -141,6 +141,32 @@ class TIR(BaseModel):
 ##  Actions  ##
 ###############
 
+class TIRRecord(BaseModel):
+    tir = models.ForeignKey(TIR, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="TIR")
+    driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Haydovchi")
+    car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Mashina")
+    trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Tirkama")
+    received_date = models.DateField(verbose_name="TIRni olgan kun")
+    submission_deadline = models.DateField(verbose_name="Topshirish muddati")
+    is_returned = models.BooleanField(default='False', verbose_name="Holati")
+
+    class Meta:
+        verbose_name = "TIR yozuvi "
+        verbose_name_plural = "TIR yozuvlari "
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.tir.number
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
+            super().save(*args, **kwargs)
+
+
 class CarExpense(BaseModel):
     car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=True)
     trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True, blank=True)
@@ -418,26 +444,3 @@ class TransitIncome(BaseModel):
         if self.transit:
             return f"{self.transit.id} | {self.reason}"
         return self.reason
-
-
-
-class TirSelling(BaseModel):
-    tir_number = models.CharField(max_length=40, unique=True)
-    tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True, blank=False)
-    contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, blank=True)
-
-    class Meta:
-        verbose_name = "TIR savdosi "
-        verbose_name_plural = "TIR savdolari "
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return self.tir_number
-
-    def save(self, *args, **kwargs):
-        with transaction.atomic():
-
-            if self.creator.role == "CEO":
-                self.status = 'verified'
-
-            super().save(*args, **kwargs)
