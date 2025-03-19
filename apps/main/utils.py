@@ -80,7 +80,7 @@ def verification_transaction():
         unique_id = f"FA-RM-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator),
+            "creator": str(obj.creator.get_full_name())
             "section": "Korzinka seh",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
@@ -94,7 +94,7 @@ def verification_transaction():
         unique_id = f"FA-SP-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator),
+            "creator": str(obj.creator.get_full_name()),
             "section": "Korzinka seh",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
@@ -109,8 +109,6 @@ def verification_transaction():
         unique_id = f"FA-SL-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator),
-            "section": "Korzinka seh",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -128,7 +126,7 @@ def verification_transaction():
         unique_id = f"GA-SP-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator),
+            "creator": str(obj.creator.get_full_name()),
             "section": "Bog'",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
@@ -145,7 +143,7 @@ def verification_transaction():
         unique_id = f"LO-CE-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator),
+            "creator": str(obj.creator.get_full_name()),
             "section": "Logistika",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
@@ -160,7 +158,7 @@ def verification_transaction():
         unique_id = f"LO-SP-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator),
+            "creator": str(obj.creator.get_full_name()),
             "section": "Logistika",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
@@ -176,7 +174,7 @@ def verification_transaction():
         unique_id = f"LO-TE-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator),
+            "creator": str(obj.creator.get_full_name()),
             "section": "Logistika",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
@@ -191,7 +189,7 @@ def verification_transaction():
         unique_id = f"LO-TI-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.creator),
+            "creator": str(obj.creator.get_full_name()),
             "section": "Logistika",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
@@ -207,7 +205,7 @@ def verification_transaction():
         unique_id = f"MA-EX-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.user),
+            "creator":str(obj.user.get_full_name()),
             "section": obj.section,
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
@@ -221,7 +219,7 @@ def verification_transaction():
         unique_id = f"MA-IN-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
-            "creator": str(obj.user),
+            "creator":str(obj.user.get_full_name()),
             "section": obj.section,
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),

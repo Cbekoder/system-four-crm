@@ -17,6 +17,7 @@ class AcquaintanceSerializer(ModelSerializer):
 class MoneyCirculationSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    acquaintance = AcquaintanceSerializer(read_only=True)
     class Meta:
         model = MoneyCirculation
         fields = ['id', 'acquaintance', 'amount', 'description', 'currency_type', 'type', 'status', 'updated_at', 'created_at']
@@ -27,6 +28,7 @@ class AcquaintanceDetailSerializer(ModelSerializer):
     circulations = MoneyCirculationSerializer(source="moneycirculation_set", many=True)
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = Acquaintance
         fields = ['id', 'first_name', 'last_name', 'description', 'phone_number', 'extra_phone_number',

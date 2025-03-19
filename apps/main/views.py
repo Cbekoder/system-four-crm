@@ -330,8 +330,8 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    def perform_create(self, serializer):
-        serializer.save(creator=self.request.user)
+    # def perform_create(self, serializer):
+    #     serializer.save(creator=self.request.user)
 
     def get_serializer_class(self):
         if self.request.method == 'GET':

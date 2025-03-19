@@ -1,4 +1,5 @@
-from rest_framework.serializers import ModelSerializer, DateTimeField, PrimaryKeyRelatedField
+from rest_framework.serializers import ModelSerializer, DateTimeField, PrimaryKeyRelatedField, SerializerMethodField
+from django.utils import timezone
 from .models import Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment, Contract, Transit, \
     TransitExpense, TransitIncome, TIR, TIRRecord
 
@@ -78,18 +79,27 @@ class TIRRecordDetailSerializer(ModelSerializer):
     driver = DriverSerializer()
     car = CarSerializer()
     trailer = TrailerSerializer()
+    days_left = SerializerMethodField()
 
     class Meta:
         model = TIRRecord
-        fields = ['id', 'tir', 'driver', 'car', 'trailer', 'received_date', 'submission_deadline', 'status', 'creator', 'updated_at', 'created_at']
+        fields = ['id', 'tir', 'driver', 'car', 'trailer', 'received_date', 'submission_deadline', 'days_left', 'status', 'is_returned', 'creator', 'updated_at', 'created_at']
+
+    def get_days_left(self, obj):
+        if obj.is_returned:
+            return 0
+        if obj.submission_deadline:
+            today = timezone.now().date()
+            return max((obj.submission_deadline - today).days, 0)
+        return None
 
 class  TIRRecordUpdateSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = TIRRecord
-        fields = ['id', 'tir', 'driver', 'car', 'trailer', 'received_date', 'submission_deadline', 'status', 'creator', 'updated_at', 'created_at']
-        read_only_fields = ('creator', 'status', 'updated_at', 'created_at')
+        fields = ['id', 'tir', 'driver', 'car', 'trailer', 'received_date', 'submission_deadline', 'status', 'is_returned', 'creator', 'updated_at', 'created_at']
+        read_only_fields = ('creator', 'updated_at', 'created_at')
 
 
 class CarExpenseSerializer(ModelSerializer):
@@ -116,7 +126,7 @@ class ContractSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Contract
-        fields = ['id', 'contract_id', 'contractor', 'status', 'updated_at', 'created_at']
+        fields = ['id', 'number', 'contractor', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
 

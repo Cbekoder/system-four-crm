@@ -35,7 +35,7 @@ class AdminListView(ListAPIView):
     permission_classes = [IsCEO]
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['role']
-    search_fields = ['first_name', 'last_name', 'email']
+    search_fields =  ['first_name', 'last_name', 'email']
 
     def get_queryset(self):
         return User.objects.filter(role='admin')

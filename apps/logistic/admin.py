@@ -52,8 +52,8 @@ class SalaryPaymentAdmin(admin.ModelAdmin):
 
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
-    list_display = ("contract_id", "contractor")
-    search_fields = ("contract_id", "contractor__first_name", "contractor__last_name")
+    list_display = ("number", "contractor")
+    search_fields = ("number", "contractor__first_name", "contractor__last_name")
 
 
 @admin.register(Transit)
@@ -78,6 +78,6 @@ class TransitIncomeAdmin(admin.ModelAdmin):
 
 
 @admin.register(TIRRecord)
-class TirSellingAdmin(admin.ModelAdmin):
+class TirRecordAdmin(admin.ModelAdmin):
     list_display = ("tir", "driver", "car", "trailer", "created_at")
     search_fields = ("tir", "driver__first_name", "driver__last_name", "car", "trailer")

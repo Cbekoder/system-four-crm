@@ -280,10 +280,12 @@ CONTRACT_STATUS = (
 )
 
 class Contract(BaseModel):
-    contract_id = models.CharField(max_length=50, verbose_name="Shartnoma raqami")
+    number = models.CharField(max_length=50, verbose_name="Shartnoma raqami")
     date = models.DateField(verbose_name="Shartnoma sanasi")
     invoice_id = models.CharField(max_length=50, null=True, blank=True, verbose_name="Faktura raqami")
     contractor = models.ForeignKey(Contractor, on_delete=models.SET_NULL, null=True)
+    car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=True)
+    trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True, blank=True)
     tenant  = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True)
     amount = models.FloatField(null=True)
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
@@ -294,7 +296,7 @@ class Contract(BaseModel):
         verbose_name_plural = "Shartnomalar "
 
     def __str__(self):
-        return self.contract_id
+        return self.number
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -315,9 +317,12 @@ class Contract(BaseModel):
             if self.tenant:
                 self.tenant.debt += self.amount
 
-class ContractTransaction(BaseModel):
-    contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True)
+class ContractIncome(BaseModel):
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
     amount = models.FloatField()
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
+    bank_name = models.CharField(max_length=50, null=True, blank=True)
+
 
 
 TRANSIT_STATUS_CHOICES = (
