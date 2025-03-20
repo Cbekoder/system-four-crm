@@ -27,9 +27,10 @@ def fetch_currency_rate():
         if UZS_rate and RUB_rate:
             cache.set("UZS_rate", UZS_rate)
             cache.set("RUB_rate", RUB_rate)
-            Telegram.send_log(f"💸 Yangi valyutalar kursi: \n🇺🇸🔄🇺🇿 USD-UZS: {UZS_rate}, \n🇷🇺🔄🇺🇿 RUB-UZS: {convert_currency('RUB', 'UZS', 1)}")
+            print(cache.get("UZS_rate"))
+            Telegram.send_log(f"💸 Янги валюта курслари: \n🇺🇸🔄🇺🇿 USD-UZS: {UZS_rate}, \n🇷🇺🔄🇺🇿 RUB-UZS: {convert_currency('RUB', 'UZS', 1)}")
             return f"Rate cached: UZS: {UZS_rate}, RUB: {RUB_rate}"
-    return Telegram.send_log("Valyutalar kursini olishda muammo")
+    return Telegram.send_log("Валюталар курсини олишда муаммо.")
 
 
 
