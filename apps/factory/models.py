@@ -500,7 +500,6 @@ class SalaryPayment(BaseModel):
 
         Expense.objects.filter(description__contains=f"| {self.id}").delete()
 
-        User.objects.filter(id=self.creator.id).update(balance=F('balance') + self.amount)
-
         super().delete(*args, **kwargs)
 
+        User.objects.filter(id=self.creator.id).update(balance=F('balance') + self.amount)

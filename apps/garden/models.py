@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F
 from rest_framework.exceptions import ValidationError
 
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE
@@ -57,9 +58,12 @@ class SalaryPayment(BaseModel):
                 if old_payment.currency_type in valid_currencies and self.currency_type in valid_currencies:
                     old_amount = convert_currency(old_payment.currency_type, self.currency_type, old_amount)
             if self.amount != old_payment.amount:
-                self.gardener.balance -= old_amount
+                self.gardener.balance += old_amount
             if self.gardener != old_payment.gardener:
                 raise ValidationError("It is not allowed to change gardener")
+            old_expense = SalaryPayment.objects.get(id=self.pk)
+
+            User.objects.filter(id=old_expense.creator.id).update(balance=F('balance') + old_expense.amount)
 
         converted_amount = self.amount
         if self.gardener.currency_type == self.currency_type:
@@ -77,10 +81,12 @@ class SalaryPayment(BaseModel):
             self.status = 'verified'
 
         super().save(*args, **kwargs)
+        User.objects.filter(id=self.creator.id).update(balance=F('balance') - self.amount)
 
     def delete(self, *args, **kwargs):
         self.gardener.balance -= self.amount
         self.gardener.save()
+        User.objects.filter(id=self.creator.id).update(balance=F('balance') + self.amount)
         super().delete(*args, **kwargs)
 
     def __str__(self):
