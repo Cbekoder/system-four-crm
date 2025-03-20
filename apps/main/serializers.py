@@ -1,7 +1,10 @@
 from rest_framework.serializers import ModelSerializer, DateTimeField, Serializer, CharField, FloatField
 from rest_framework import serializers
+from tutorial.quickstart.serializers import UserSerializer
+
 from .models import Acquaintance, MoneyCirculation, Income, Expense, DailyRemainder, TransactionToAdmin, \
     TransactionToSection
+from apps.users.serializers import UserDetailSerializer
 
 
 class AcquaintanceSerializer(ModelSerializer):
@@ -55,16 +58,16 @@ class IncomeSerializer(ModelSerializer):
 class TransactionToAdminSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    admin = UserDetailSerializer()
     class Meta:
         model = TransactionToAdmin
         fields = '__all__'
-        read_only_fields = ('creator',)
 
 
 class TransactionToAdminCreateSerializer(ModelSerializer):
     class Meta:
         model = TransactionToAdmin
-        fields = ('admin', 'amount', 'currency_type', 'description')
+        fields = ('id', 'admin', 'amount', 'currency_type', 'description')
 
 
 class TransactionToSectionSerializer(ModelSerializer):
@@ -73,13 +76,12 @@ class TransactionToSectionSerializer(ModelSerializer):
     class Meta:
         model = TransactionToSection
         fields = '__all__'
-        read_only_fields = ('creator',)
 
 
 class TransactionToSectionCreateSerializer(ModelSerializer):
     class Meta:
         model = TransactionToSection
-        fields = ('section', 'amount', 'currency_type', 'description')
+        fields = ('id', 'section', 'amount', 'currency_type', 'description')
 
 
 

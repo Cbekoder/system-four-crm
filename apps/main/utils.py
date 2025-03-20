@@ -81,7 +81,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator.get_full_name()),
-            "section": "Korzinka seh",
+            "section": "Корзинка цех",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'curren cy_type', 'UZS'),
@@ -95,7 +95,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator.get_full_name()),
-            "section": "Korzinka seh",
+            "section": "Корзинка цех",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -109,6 +109,8 @@ def verification_transaction():
         unique_id = f"FA-SL-{obj.id}"
         transactions.append({
             "unique_id": unique_id,
+            "creator": str(obj.creator.get_full_name()),
+            "section": "Корзинка цех",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -127,7 +129,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator.get_full_name()),
-            "section": "Bog'",
+            "section": "Боғ",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -144,7 +146,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator.get_full_name()),
-            "section": "Logistika",
+            "section": "Логистика",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -159,7 +161,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator.get_full_name()),
-            "section": "Logistika",
+            "section": "Логистика",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -175,7 +177,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator.get_full_name()),
-            "section": "Logistika",
+            "section": "Логистика",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
@@ -190,7 +192,7 @@ def verification_transaction():
         transactions.append({
             "unique_id": unique_id,
             "creator": str(obj.creator.get_full_name()),
-            "section": "Logistika",
+            "section": "Логистика",
             "description": getattr(obj, 'description', 'No description'),
             "amount": float(getattr(obj, 'amount', 0.0)),
             "currency_type": getattr(obj, 'currency_type', 'UZS'),
