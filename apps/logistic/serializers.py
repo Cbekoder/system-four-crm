@@ -58,7 +58,7 @@ class TIRSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = TIR
-        fields = ['id', 'number', 'get_date', 'deadline', 'status', 'created_at', 'updated_at']
+        fields = ['id', 'serial_number', 'get_date', 'deadline', 'status', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
 
