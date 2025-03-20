@@ -123,13 +123,13 @@ TIR_STATUS = (
 
 
 class TIR(BaseModel):
-    number = models.CharField(max_length=30, verbose_name="TIR raqami")
+    serial_number = models.CharField(max_length=30, verbose_name="TIR raqami")
     get_date = models.DateField(verbose_name="Olish sanasi")
     deadline = models.DateField(verbose_name="Muddati")
     status = models.CharField(max_length=20, choices=TIR_STATUS, default='new', verbose_name="Status")
 
     def __str__(self):
-        return str(self.number)
+        return str(self.serial_number)
 
     class Meta:
         verbose_name = "TIR "
@@ -156,7 +156,7 @@ class TIRRecord(BaseModel):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.tir.number
+        return self.tir.serial_number if self.tir else str(self.id)
 
     def save(self, *args, **kwargs):
         with transaction.atomic():

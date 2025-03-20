@@ -233,6 +233,110 @@ class Client(BasePerson):
     def __str__(self):
         return self.full_name
 
+
+# class Sale(BaseModel):
+#     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
+#     description = models.TextField(null=True, blank=True)
+#     is_debt = models.BooleanField(default=False)
+#
+#     class Meta:
+#         verbose_name = "Sotuv"
+#         verbose_name_plural = "Sotuvlar"
+#         ordering = ['-created_at']
+#
+#     def __str__(self):
+#         return f"Sotuv #{self.pk} | {self.client.name if self.client else 'Noma’lum'}"
+#
+#     @property
+#     def total_amount(self):
+#         return sum(item.amount for item in self.sale_items.all())
+#
+#     def save(self, *args, **kwargs):
+#         with transaction.atomic():
+#             prev_items_dict = {}
+#             if self.pk:
+#                 prev_items_dict = {
+#                     item.basket_id: item.quantity for item in self.sale_items.all()
+#                 }
+#
+#             super().save(*args, **kwargs)
+#
+#             new_items = self.sale_items.all()
+#             for item in new_items:
+#                 prev_quantity = prev_items_dict.get(item.basket_id, 0)
+#                 quantity_diff = item.quantity - prev_quantity
+#
+#                 item.basket.quantity = F('quantity') - quantity_diff
+#                 item.basket.save(update_fields=['quantity'])
+#
+#             for basket_id, old_quantity in prev_items_dict.items():
+#                 if basket_id not in [item.basket_id for item in new_items]:
+#                     basket = Basket.objects.get(id=basket_id)
+#                     basket.quantity = F('quantity') + old_quantity
+#                     basket.save(update_fields=['quantity'])
+#
+#             if self.is_debt and self.client:
+#                 self.client.debt = F('debt') + self.total_amount
+#                 self.client.save(update_fields=['debt'])
+#
+#     def delete(self, *args, **kwargs):
+#         with transaction.atomic():
+#             for item in self.sale_items.all():
+#                 item.basket.quantity = F('quantity') + item.quantity
+#                 item.basket.save(update_fields=['quantity'])
+#
+#             if self.is_debt and self.client:
+#                 self.client.debt = F('debt') - self.total_amount
+#                 self.client.save(update_fields=['debt'])
+#
+#             super().delete(*args, **kwargs)
+#
+#
+# class SaleItem(models.Model):
+#     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='sale_items')
+#     basket = models.ForeignKey(Basket, on_delete=models.CASCADE)
+#     quantity = models.IntegerField(default=0)
+#     amount = models.FloatField(default=0)
+#
+#     class Meta:
+#         verbose_name = "Sotuv mahsuloti"
+#         verbose_name_plural = "Sotuv mahsulotlari"
+#
+#     def save(self, *args, **kwargs):
+#         with transaction.atomic():
+#             if self.pk:
+#                 prev = SaleItem.objects.get(pk=self.pk)
+#                 prev_quantity = prev.quantity
+#
+#                 # Eski mahsulotni qaytarish
+#                 prev.basket.quantity = F('quantity') + prev_quantity
+#                 prev.basket.save(update_fields=['quantity'])
+#                 prev.basket.refresh_from_db()
+#             else:
+#                 prev_quantity = 0
+#
+#             if not self.amount:
+#                 self.amount = self.quantity * self.basket.price
+#
+#             # Yangi mahsulot miqdorini hisoblash
+#             quantity_diff = self.quantity - prev_quantity
+#             self.basket.quantity = F('quantity') - quantity_diff
+#             self.basket.save(update_fields=['quantity'])
+#             self.basket.refresh_from_db()
+#
+#             super().save(*args, **kwargs)
+#
+#     def delete(self, *args, **kwargs):
+#         with transaction.atomic():
+#             self.basket.quantity = F('quantity') + self.quantity
+#             self.basket.save(update_fields=['quantity'])
+#
+#             super().delete(*args, **kwargs)
+#
+#     def __str__(self):
+#         return f"{self.sale.client.name if self.sale.client else 'Noma’lum'} - {self.basket.name}"
+
+
 class Sale(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -244,7 +348,7 @@ class Sale(BaseModel):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Sotuv #{self.pk} | {self.client.name}"
+        return f"Sotuv #{self.pk} | {self.client.name if self.client else 'Noma’lum'}"
 
     @property
     def total_amount(self):
@@ -252,48 +356,21 @@ class Sale(BaseModel):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            if self.pk:  # Agar `PATCH` bo‘lsa, eski `sale_items` larni olish
-                prev_items = list(self.sale_items.all())
-                prev_items_dict = {item.basket_id: item.quantity for item in prev_items}
-            else:
-                prev_items = []
+            if self.pk:
+                existing_items = {item.id: item for item in self.sale_items.all()}
+                new_items_data = {item['id']: item for item in kwargs.pop('sale_items', []) if 'id' in item}
 
-            super().save(*args, **kwargs)  # `Sale` ni saqlash
 
-            # Yangi `sale_items` larni olish
-            new_items = self.sale_items.all()
+                items_to_delete = [item for item_id, item in existing_items.items() if item_id not in new_items_data]
+                for item in items_to_delete:
+                    item.delete()
 
-            # Basket miqdorini yangilash
-            for item in new_items:
-                prev_quantity = prev_items_dict.get(item.basket_id, 0)
-                quantity_diff = item.quantity - prev_quantity
-                item.basket.quantity = F('quantity') - quantity_diff
-                item.basket.save(update_fields=['quantity'])
-
-            # Eskisini o‘chirish
-            for old_item in prev_items:
-                if old_item.basket_id not in [item.basket_id for item in new_items]:
-                    old_item.basket.quantity = F('quantity') + old_item.quantity
-                    old_item.basket.save(update_fields=['quantity'])
-                    old_item.delete()
-
-            # `Client` ning `debt` maydonini yangilash
-            if self.is_debt and self.client:
-                self.client.debt = F('debt') + self.total_amount
-                self.client.save(update_fields=['debt'])
+            super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():
-            # `Basket`dagi mahsulot miqdorini qaytarish
             for item in self.sale_items.all():
-                item.basket.quantity = F('quantity') + item.quantity
-                item.basket.save(update_fields=['quantity'])
-
-            # Agar `is_debt=True` bo‘lsa, clientning `debt` miqdorini kamaytirish
-            if self.is_debt and self.client:
-                self.client.debt = F('debt') - self.total_amount
-                self.client.save(update_fields=['debt'])
-
+                item.delete()
             super().delete(*args, **kwargs)
 
 
@@ -311,14 +388,18 @@ class SaleItem(models.Model):
         with transaction.atomic():
             if self.pk:
                 prev = SaleItem.objects.get(pk=self.pk)
-                prev.basket.quantity = F('quantity') + prev.quantity
+                prev_quantity = prev.quantity
+                prev.basket.quantity = F('quantity') + prev_quantity
                 prev.basket.save(update_fields=['quantity'])
                 prev.basket.refresh_from_db()
+            else:
+                prev_quantity = 0
 
             if not self.amount:
                 self.amount = self.quantity * self.basket.price
 
-            self.basket.quantity = F('quantity') - self.quantity
+            quantity_diff = self.quantity - prev_quantity
+            self.basket.quantity = F('quantity') - quantity_diff
             self.basket.save(update_fields=['quantity'])
             self.basket.refresh_from_db()
 
@@ -328,11 +409,11 @@ class SaleItem(models.Model):
         with transaction.atomic():
             self.basket.quantity = F('quantity') + self.quantity
             self.basket.save(update_fields=['quantity'])
-
             super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"{self.sale.client.name if self.sale.client else 'Noma’lum'} - {self.basket.name}"
+
 
 
 # class Sale(BaseModel):
@@ -391,6 +472,9 @@ class SalaryPayment(BaseModel):
             if prev.currency_type != self.worker.currency_type:
                 prev.amount = convert_currency(prev.currency_type, self.worker.currency_type, prev.amount)
             self.worker.balance+=prev.amount
+            old_expense = SalaryPayment.objects.get(id=self.pk)
+
+            User.objects.filter(id=old_expense.creator.id).update(balance=F('balance') + old_expense.amount)
 
         if self.worker.currency_type != self.currency_type:
             amount = convert_currency(self.currency_type, self.worker.currency_type, self.amount)
@@ -402,8 +486,11 @@ class SalaryPayment(BaseModel):
 
         super().save(*args, **kwargs)
 
+        User.objects.filter(id=self.creator.id).update(balance=F('balance') - self.amount)
+
     def delete(self, *args, **kwargs):
         if self.worker.currency_type != self.currency_type:
+
             amount = convert_currency(self.currency_type, self.worker.currency_type, self.amount)
             self.worker.balance += amount
             self.worker.save()
@@ -412,4 +499,8 @@ class SalaryPayment(BaseModel):
             self.worker.save()
 
         Expense.objects.filter(description__contains=f"| {self.id}").delete()
+
+        User.objects.filter(id=self.creator.id).update(balance=F('balance') + self.amount)
+
         super().delete(*args, **kwargs)
+

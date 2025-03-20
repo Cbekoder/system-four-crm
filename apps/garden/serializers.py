@@ -71,17 +71,23 @@ class GardenerSalaryPaymentSerializer(ModelSerializer):
 
 class GardenExpensePostSerializer(ModelSerializer):
     garden = PrimaryKeyRelatedField(
-        queryset=Garden.objects.all(), write_only=True, required=True
+        queryset=Garden.objects.all(), write_only=True, required=False, allow_null=True
     )
+
     class Meta:
         model = Expense
-        fields = ['description', 'amount', 'currency_type','garden', 'status', 'updated_at', 'created_at']
+        fields = ['description', 'amount', 'currency_type', 'garden', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
     def create(self, validated_data):
-        garden = validated_data.pop('garden')
-        validated_data['reason'] = f"{garden.id}"
+        garden = validated_data.pop('garden', None)
+        if garden:
+            validated_data['reason'] = f"{garden.name} uchun xarajat | {garden.id}"
+        else:
+            validated_data['reason'] = "Umumiy xarajat"
+
         return super().create(validated_data)
+
 
 class GardenExpenseSerializer(ModelSerializer):
     garden = SerializerMethodField()
@@ -93,7 +99,7 @@ class GardenExpenseSerializer(ModelSerializer):
     def get_garden(self, obj):
         try:
             garden_id = int(list(obj.reason.split("|"))[1])
-            garden = Garden.objects.get(id=1)
+            garden = Garden.objects.get(id=garden_id)
             return GardenSerializer(garden).data
         except Garden.DoesNotExist:
             return None
