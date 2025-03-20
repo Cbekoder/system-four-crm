@@ -32,8 +32,6 @@ class Gardener(BasePerson):
         return self.full_name
 
     def save(self, *args, **kwargs):
-        if self.creator.role == "CEO":
-            self.status = 'verified'
         super().save(*args, **kwargs)
 
 
