@@ -50,7 +50,7 @@ urlpatterns = [
 
     #Urls for Salary Payment
     path('salary-payments/', SalaryPaymentListCreateView.as_view()),
-    path('salary-payments/<int:pk>', SalaryPaymentRetrieveUpdateDestroyView.as_view()),
+    path('salary-payments/<int:pk>/', SalaryPaymentRetrieveUpdateDestroyView.as_view()),
 
     #Urls for Summary
     # path('summary/', FactorySummaryView.as_view()),
