@@ -23,8 +23,8 @@ urlpatterns = [
     path('raw-materials/', RawMaterialListCreateView.as_view()),
     path('raw-materials/<int:pk>/', RawMaterialRetrieveUpdateDestroyView.as_view()),
 
-    path('raw-material-usage/', RawMaterialUsageListCreateView.as_view()),
-    path('raw-materials-usage/<int:pk>/', RawMaterialUsageRetrieveUpdateDestroyView.as_view()),
+    # path('raw-material-usage/', RawMaterialUsageListCreateView.as_view()),
+    # path('raw-materials-usage/<int:pk>/', RawMaterialUsageRetrieveUpdateDestroyView.as_view()),
 
     path('raw-material-history/', RawMaterialHistoryListCreateView.as_view()),
     path('raw-materials-history/<int:pk>/', RawMaterialHistoryRetrieveUpdateDestroyView.as_view()),

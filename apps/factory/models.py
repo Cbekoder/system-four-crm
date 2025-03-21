@@ -39,6 +39,7 @@ class UserDailyWork(BaseModel):
     worker = models.ForeignKey(Worker, on_delete=models.CASCADE)
     amount = models.FloatField(default=0)
     description = models.TextField(null=True, blank=True)
+    date=models.DateField(auto_now=True)
 
     class Meta:
         verbose_name = "Kunlik ish"
@@ -74,6 +75,8 @@ class UserBasketCount(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            raw_material = RawMaterial.objects.all().last()
+            print(raw_material)
             if self.pk:
                 prev = UserBasketCount.objects.get(pk=self.pk)
 
@@ -89,6 +92,10 @@ class UserBasketCount(models.Model):
                 prev.user_daily_work.worker.save(update_fields=['balance'])
                 prev.user_daily_work.worker.refresh_from_db()
 
+                raw_material.weight+=((prev.basket.weight)/1000)*prev.quantity
+                raw_material.save(update_fields=['weight'])
+
+
             super().save(*args, **kwargs)
 
             self.basket.quantity = F('quantity') + self.quantity
@@ -103,6 +110,10 @@ class UserBasketCount(models.Model):
             self.user_daily_work.save(update_fields=['amount'])
             self.user_daily_work.refresh_from_db()
 
+            raw_material.weight-=((self.basket.weight)/1000)*self.quantity
+            raw_material.save(update_fields=['weight'])
+
+
     def delete(self, *args, **kwargs):
         with transaction.atomic():
             self.basket.quantity = F('quantity') - self.quantity
@@ -113,10 +124,12 @@ class UserBasketCount(models.Model):
 
             self.user_daily_work.amount = F('amount') - (self.quantity * self.basket.per_worker_fee)
             self.user_daily_work.save(update_fields=['amount'])
+            raw_material = RawMaterial.objects.all().last()
+
+            raw_material.weight += ((self.basket.weight) / 1000) * self.quantity
+            raw_material.save(update_fields=['weight'])
 
             super().delete(*args, **kwargs)
-
-
 
 
 class RawMaterial(BaseModel):
@@ -154,6 +167,7 @@ class RawMaterialHistory(BaseModel):
     amount = models.FloatField(default=0)
     description = models.TextField(null=True, blank=True)
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
+    date=models.DateField(auto_now=True)
 
     class Meta:
         verbose_name = "Xomashyo tarixi "
@@ -341,6 +355,7 @@ class Sale(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     is_debt = models.BooleanField(default=False)
+    date=models.DateField(auto_now=True)
 
     class Meta:
         verbose_name = "Sotuv"
@@ -364,8 +379,14 @@ class Sale(BaseModel):
                 items_to_delete = [item for item_id, item in existing_items.items() if item_id not in new_items_data]
                 for item in items_to_delete:
                     item.delete()
-
             super().save(*args, **kwargs)
+            self.refresh_from_db()
+            if self.is_debt and self.client:
+                self.client.debt = F('debt') + self.total_amount
+                self.client.save(update_fields=['debt'])
+            print(self.total_amount)
+
+
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():

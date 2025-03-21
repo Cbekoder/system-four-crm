@@ -143,18 +143,18 @@ class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
-class RawMaterialUsageListCreateView(ListCreateAPIView):
-    serializer_class = RawMaterialUsageSerializer
-    queryset = RawMaterialUsage.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+# class RawMaterialUsageListCreateView(ListCreateAPIView):
+#     serializer_class = RawMaterialUsageSerializer
+#     queryset = RawMaterialUsage.objects.all()
+#     permission_classes = [IsCEOOrAdmin]
 
     # def perform_create(self, serializer):
     #     serializer.save(creator=self.request.user)
 
-class RawMaterialUsageRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    serializer_class = RawMaterialUsageSerializer
-    queryset = RawMaterialUsage.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+# class RawMaterialUsageRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+#     serializer_class = RawMaterialUsageSerializer
+#     queryset = RawMaterialUsage.objects.all()
+#     permission_classes = [IsCEOOrAdmin]
 
 
 class FactoryExpenseListCreateView(ListCreateAPIView):

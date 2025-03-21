@@ -61,8 +61,8 @@ class UserDailyWorkCreateSerializer(ModelSerializer):
 
     class Meta:
         model = UserDailyWork
-        fields = ['id', 'worker', 'amount', 'description', 'status', 'user_basket_counts', 'updated_at', 'created_at']
-        read_only_fields = ['id', 'amount', 'status']
+        fields = ['id', 'worker', 'amount', 'description',  'user_basket_counts','date', 'updated_at', 'created_at']
+        read_only_fields = ['id', 'amount']
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -125,7 +125,7 @@ class UserDailyWorkDetailSerializer(ModelSerializer):
 
     class Meta:
         model = UserDailyWork
-        fields = ['id', 'worker', 'amount', 'description', 'status', 'updated_at', 'created_at', 'user_basket_counts']
+        fields = ['id', 'worker', 'amount', 'description', 'date', 'updated_at', 'created_at', 'user_basket_counts']
 
 
 ################################
@@ -235,7 +235,7 @@ class SaleSerializer(ModelSerializer):
 
     class Meta:
         model = Sale
-        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'status', 'sale_items']
+        fields = ['id', 'client', 'description', 'is_debt', 'total_amount','date' ,'sale_items']
 
     def create(self, validated_data):
         sale_items_data = validated_data.pop('sale_items')
@@ -269,7 +269,7 @@ class SaleGetSerializer(ModelSerializer):
 
     class Meta:
         model = Sale
-        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'status', 'sale_items','created_at', 'updated_at']
+        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'date', 'sale_items','created_at', 'updated_at']
 
     def get_client(self, obj):
         if obj.client:
@@ -286,7 +286,7 @@ class RawMaterialHistorySerializer(ModelSerializer):
 
     class Meta:
         model = RawMaterialHistory
-        fields = '__all__'
+        fields = ['supplier', 'raw_material','date' ,'amount', 'weight', 'currency_type', 'created_at', 'updated_at']
 
 
 class SalaryPaymentGetSerializer(ModelSerializer):
@@ -296,7 +296,7 @@ class SalaryPaymentGetSerializer(ModelSerializer):
 
     class Meta:
         model = SalaryPayment
-        fields = ['id', 'amount', 'worker', 'amount', 'description', 'currency_type', 'status', 'created_at', 'updated_at']
+        fields = ['id', 'amount', 'worker', 'amount', 'description', 'currency_type', 'created_at', 'updated_at']
 
 class SalaryPaymentPostSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -304,8 +304,7 @@ class SalaryPaymentPostSerializer(ModelSerializer):
 
     class Meta:
         model = SalaryPayment
-        fields = ['id',  'amount',  'worker',  'amount',  'description',  'currency_type', 'status', 'created_at', 'updated_at']
-        read_only_fields = ['status']
+        fields = ['id',  'amount',  'worker',  'amount',  'description',  'currency_type', 'created_at', 'updated_at']
 
     # def create(self, validated_data):
     #     request = self.context.get('request')
