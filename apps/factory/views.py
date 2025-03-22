@@ -1,3 +1,7 @@
+from datetime import timedelta
+
+from django.db.models import Sum
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import *
 from rest_framework.response import Response
@@ -139,18 +143,18 @@ class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
-class RawMaterialUsageListCreateView(ListCreateAPIView):
-    serializer_class = RawMaterialUsageSerializer
-    queryset = RawMaterialUsage.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+# class RawMaterialUsageListCreateView(ListCreateAPIView):
+#     serializer_class = RawMaterialUsageSerializer
+#     queryset = RawMaterialUsage.objects.all()
+#     permission_classes = [IsCEOOrAdmin]
 
     # def perform_create(self, serializer):
     #     serializer.save(creator=self.request.user)
 
-class RawMaterialUsageRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    serializer_class = RawMaterialUsageSerializer
-    queryset = RawMaterialUsage.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+# class RawMaterialUsageRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+#     serializer_class = RawMaterialUsageSerializer
+#     queryset = RawMaterialUsage.objects.all()
+#     permission_classes = [IsCEOOrAdmin]
 
 
 class FactoryExpenseListCreateView(ListCreateAPIView):
@@ -516,3 +520,69 @@ class SaleItemListCreateView(ListCreateAPIView):
 class SaleItemRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = SaleItem.objects.all()
     serializer_class = SaleItemSerializer
+
+
+class FactorySummaryView(ListAPIView):
+    permission_classes = [IsCEOOrAdmin]
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Boshlang'ich sana (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="Tugash sanasi (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'section', openapi.IN_QUERY,
+                description="Bo‘lim nomi",
+                type=openapi.TYPE_STRING,
+                required=True
+            ),
+        ]
+    )
+
+    def list(self, request, *args, **kwargs):
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        section = 'factory'
+        if not end_date:
+            end_date = timezone.now().date()
+        if not start_date:
+            start_date = end_date - timedelta(days=30)
+
+        if not section:
+            return Response({"error": "section parametri kerak"}, status=400)
+
+        income_total = Income.objects.filter(
+            section=section,
+            created_at__range=[start_date, end_date]
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        expense_total = Expense.objects.filter(
+            section=section,
+            created_at__range=[start_date, end_date]
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        incomes=Income.objects.filter(section=section, created_at__range=[start_date, end_date])
+        expenses=Expense.objects.filter(section=section, created_at__range=[start_date, end_date])
+
+        return Response({
+            'start_date': start_date,
+            'end_date': end_date,
+            "remainder": income_total - expense_total,
+            "section": section,
+            "income_total": income_total,
+            "expense_total": expense_total,
+            "incomes": IncomeSerializer(incomes, many=True).data,
+            "expenses": ExpenseSerializer(expenses, many=True).data,
+        })
+
+

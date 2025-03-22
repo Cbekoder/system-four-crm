@@ -139,7 +139,7 @@ class GardenExpenseListCreateView(ListCreateAPIView):
         return GardenExpenseSerializer
 
     def perform_create(self, serializer):
-        serializer.save(section="garden", user=self.request.user)
+        serializer.save(section="garden",user=self.request.user)
 
 class GardenExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = ExpenseSerializer
