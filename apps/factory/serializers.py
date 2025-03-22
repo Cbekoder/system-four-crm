@@ -170,7 +170,7 @@ class ClientSerializer(ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ['first_name','last_name','phone_number','debt','currency_type']
+        fields = ['id', 'first_name','last_name','phone_number','debt','currency_type']
 
 
 # class SaleSerializer(ModelSerializer):
