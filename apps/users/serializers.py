@@ -30,7 +30,7 @@ class UserPostSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'password', 'first_name', 'last_name', 'role', 'section', 'date_joined'
         ]
-        read_only_fields = ['role', 'section', 'date_joined']
+        read_only_fields = ['date_joined']
         extra_kwargs = {
             'password': {'write_only': True, 'required': False}
         }
