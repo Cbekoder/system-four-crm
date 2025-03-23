@@ -2,12 +2,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import *
-from apps.users.permissions import IsCEOOrAdmin, IsAdmin, IsCEO
+from apps.users.permissions import IsGardenAdmin, IsCEO
 from apps.main.serializers import ExpenseSerializer, IncomeSerializer
 from apps.main.models import Income, Expense
 from .serializers import *
-from ..users.models import User
-from ..users.serializers import UserDetailSerializer, UserPostSerializer
 from django.utils.dateparse import parse_date
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -17,17 +15,17 @@ from drf_yasg import openapi
 class GardenListCreateView(ListCreateAPIView):
     queryset = Garden.objects.all()
     serializer_class = GardenSerializer
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsGardenAdmin, IsCEO]
 
 class GardenRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Garden.objects.all()
     serializer_class = GardenSerializer
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsGardenAdmin, IsCEO]
 
 class GardenerListCreateView(ListCreateAPIView):
     queryset = Gardener.objects.all()
     serializer_class = GardenerSerializer
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsGardenAdmin, IsCEO]
 
 class GardenerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Gardener.objects.all()
@@ -42,7 +40,7 @@ class GardenerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class GardenIncomeListCreateView(ListCreateAPIView):
     queryset = Income.objects.all()
     serializer_class = IncomeSerializer
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsGardenAdmin, IsCEO]
 
 
     def get_queryset(self):
@@ -87,7 +85,7 @@ class GardenIncomeListCreateView(ListCreateAPIView):
 class GardenIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Income.objects.all()
     serializer_class = IncomeSerializer
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsGardenAdmin, IsCEO]
 
     def get_queryset(self):
         queryset = Income.objects.filter(section="garden")
@@ -96,7 +94,7 @@ class GardenIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 class GardenExpenseListCreateView(ListCreateAPIView):
     serializer_class = ExpenseSerializer
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsGardenAdmin, IsCEO]
 
     def get_queryset(self):
         queryset = Expense.objects.filter(section="garden")
@@ -143,7 +141,7 @@ class GardenExpenseListCreateView(ListCreateAPIView):
 
 class GardenExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = ExpenseSerializer
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsGardenAdmin, IsCEO]
 
     def get_queryset(self):
         queryset = Expense.objects.filter(section="garden")
@@ -153,7 +151,7 @@ class GardenExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 class SalaryPaymentListCreateView(ListCreateAPIView):
     queryset = SalaryPayment.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsGardenAdmin, IsCEO]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['created_at', 'gardener__balance']
     search_fields = ['gardener__first_name', 'gardener__last_name', 'gardener__phone_number']
@@ -222,34 +220,4 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
 class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = SalaryPayment.objects.all()
     serializer_class = GardenerSalaryPaymentSerializer
-    permission_classes = [IsCEOOrAdmin]
-
-
-# Admin user views
-class GardenUserListCreateAPIView(ListCreateAPIView):
-    permission_classes = [IsCEO]
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return UserDetailSerializer
-        return UserPostSerializer
-
-    def get_queryset(self):
-        queryset = User.objects.filter(section="garden")
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(section="garden")
-
-
-class GardenUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
-    serializer_class = UserDetailSerializer
-
-    def get_queryset(self):
-        queryset = User.objects.filter(section="garden")
-        return queryset
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return UserDetailSerializer
-        return UserPostSerializer
+    permission_classes = [IsGardenAdmin, IsCEO]

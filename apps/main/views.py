@@ -10,14 +10,15 @@ from drf_yasg import openapi
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.response import Response
-from apps.users.permissions import IsCEO
+from apps.users.permissions import IsCEO, IsAdmin
 from .models import Acquaintance, MoneyCirculation, Expense, Income, DailyRemainder, TransactionToAdmin, \
-    TransactionToSection
+    TransactionToSection, CurrencyRate
 from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, MoneyCirculationSerializer, \
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer, \
     TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer, TransactionToAdminSerializer, \
-    TransactionToAdminCreateSerializer, TransactionToSectionSerializer, TransactionToSectionCreateSerializer
-from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction
+    TransactionToAdminCreateSerializer, TransactionToSectionSerializer, TransactionToSectionCreateSerializer, \
+    CurrencyRateSerializer
+from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction, get_summary
 from ..common.utils import convert_currency
 
 
@@ -31,6 +32,12 @@ class AcquaintanceListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(landing=0, debt=0)
+
+
+class CurrencyRateListCreateView(ListCreateAPIView):
+    permission_classes = [IsAdmin]
+    queryset = CurrencyRate.objects.all()
+    serializer_class = CurrencyRateSerializer
 
 
 class AcquaintanceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -405,14 +412,13 @@ class MixedHistoryView(APIView):
 
         if end_date:
             end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
-            print((end_date + timedelta(days=1)))
-            print(DailyRemainder.objects.filter(created_at=(end_date + timedelta(days=1))))
-            remainder_value = DailyRemainder.objects.filter(created_at=end_date + timedelta(days=1)).last().amount
+            remainder = DailyRemainder.objects.filter(created_at=(end_date + timedelta(days=1)))
+            remainder_value = remainder.last().amount if remainder.exists() else 0
         else:
             end_date = timezone.now().date()
-            remainder_value = DailyRemainder.objects.last().amount + calculate_remainder(end_date, request.user)
+            remainder_value = request.user.balance
 
-        data = get_remainder_data(start_date, end_date)
+        data = get_summary(start_date, end_date, [request.user])
         response_data = {
             "income": MixedDataSerializer(data["sorted_income"], many=True).data,
             "outcome": MixedDataSerializer(data["sorted_outcome"], many=True).data,

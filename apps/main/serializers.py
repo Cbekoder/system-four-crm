@@ -3,9 +3,13 @@ from rest_framework import serializers
 from tutorial.quickstart.serializers import UserSerializer
 
 from .models import Acquaintance, MoneyCirculation, Income, Expense, DailyRemainder, TransactionToAdmin, \
-    TransactionToSection
+    TransactionToSection, CurrencyRate
 from apps.users.serializers import UserDetailSerializer
 
+class CurrencyRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CurrencyRate
+        fields = '__all__'
 
 class AcquaintanceSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)

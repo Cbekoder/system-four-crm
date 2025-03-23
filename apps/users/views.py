@@ -11,7 +11,7 @@ from drf_yasg import openapi
 from .permissions import IsCEO, IsAdmin
 from .models import User
 
-from .serializers import CustomTokenObtainPairSerializer, UserDetailSerializer
+from .serializers import CustomTokenObtainPairSerializer, UserDetailSerializer, UserPostSerializer
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -30,13 +30,33 @@ class GetMeView(APIView):
 
 
 
-class AdminListView(ListAPIView):
-    serializer_class = UserDetailSerializer
+# Admin views
+class AdminListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsCEO]
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['role']
+    filterset_fields = ['role', 'section']
     search_fields =  ['first_name', 'last_name', 'email']
 
     def get_queryset(self):
         return User.objects.filter(role='admin')
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserDetailSerializer
+        return UserPostSerializer
+
+
+
+class AdminRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    serializer_class = UserDetailSerializer
+    permission_classes = [IsCEO]
+
+    def get_queryset(self):
+        queryset = User.objects.all()
+        return queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserDetailSerializer
+        return UserPostSerializer
 

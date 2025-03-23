@@ -5,26 +5,22 @@ from rest_framework.generics import *
 from rest_framework.response import Response
 
 from .serializers import *
-from apps.users.permissions import *
-from rest_framework.permissions import IsAuthenticated
+from apps.users.permissions import IsFridgeAdmin, IsCEO
 from django.utils.dateparse import parse_date
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-
-from apps.users.serializers import UserDetailSerializer, UserPostSerializer
-from ..users.models import User
 
 
 class RefrigatorListCreateView(ListCreateAPIView):
     serializer_class = RefrigeratorSerializer
     queryset = Refrigerator.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFridgeAdmin, IsCEO]
 
 
 class RefrigatorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = RefrigeratorSerializer
     queryset = Refrigerator.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFridgeAdmin, IsCEO]
 
     def delete(self, request, *args, **kwargs):
         if not request.user.role == 'CEO':
@@ -35,7 +31,7 @@ class RefrigatorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
 
 class FridgeExpenseListCreateView(ListCreateAPIView):
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFridgeAdmin, IsCEO]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     ordering_fields = ['created_at', 'price']
 
@@ -85,11 +81,11 @@ class FridgeExpenseListCreateView(ListCreateAPIView):
 class FridgeExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = FridgeExpenseSerializer
     queryset = Expense.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFridgeAdmin, IsCEO]
 
 
 class FridgeIncomeListCreateView(ListCreateAPIView):
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFridgeAdmin, IsCEO]
 
     def get_serializer_class(self):
         if self.request.method == "GET":
@@ -137,11 +133,11 @@ class FridgeIncomeListCreateView(ListCreateAPIView):
 class FridgeIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Income.objects.all()
     serializer_class = FridgeIncomeSerializer
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFridgeAdmin, IsCEO]
 
 
 class ElectricityBillListCreateView(ListCreateAPIView):
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFridgeAdmin, IsCEO]
 
     def get_serializer_class(self):
         if self.request.method == "GET":
@@ -186,34 +182,3 @@ class ElectricityBillListCreateView(ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(section="fridge", user=self.request.user)
 
-
-
-
-# Admin user views
-class FridgeUserListCreateAPIView(ListCreateAPIView):
-    permission_classes = [IsCEO]
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return UserDetailSerializer
-        return UserPostSerializer
-
-    def get_queryset(self):
-        queryset = User.objects.filter(section="fridge")
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(section="fridge")
-
-
-class FridgeUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
-    serializer_class = UserDetailSerializer
-
-    def get_queryset(self):
-        queryset = User.objects.filter(section="fridge")
-        return queryset
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return UserDetailSerializer
-        return UserPostSerializer

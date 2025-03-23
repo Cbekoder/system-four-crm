@@ -1,12 +1,31 @@
-from argparse import REMAINDER
-
+from django.core.cache import cache
 from django.db import models, transaction
+from django.db.models import F
 from rest_framework.exceptions import ValidationError
 from apps.common.services.logging import Telegram
-
 from apps.common.models import BaseModel, SECTION_CHOICES, BasePerson, CURRENCY_TYPE
 from apps.common.utils import convert_currency
 from apps.users.models import User
+
+class CurrencyRate(BaseModel):
+    usd = models.FloatField()
+    rub = models.FloatField()
+
+    def __str__(self):
+        return str(self.created_at)
+
+    class Meta:
+        verbose_name = "Valyutalar kursi "
+        verbose_name_plural = "Valyutalar kurslari "
+
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+
+            cache.set("UZS_rate", self.usd)
+            cache.set("RUB_rate", round(self.usd / self.rub, 2))
+            print(cache.get("RUB_rate"))
 
 
 class Expense(BaseModel):
@@ -159,6 +178,18 @@ class TransactionToAdmin(BaseModel):
         verbose_name_plural = "Admin hisobiga pul o'tkazishlar"
         ordering = ["-created_at"]
 
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                prev = TransactionToAdmin.objects.get(id=self.pk)
+                converted_amount = convert_currency(prev.currency_type, "UZS", prev.amount)
+                User.objects.filter(id=prev.creator.id).update(balance=F('balance') + converted_amount)
+
+            super().save(*args, **kwargs)
+
+            converted_amount = convert_currency(self.currency_type, "UZS", self.amount)
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') - converted_amount)
+
 
 class TransactionToSection(BaseModel):
     section = models.CharField(max_length=30, choices=SECTION_CHOICES)
@@ -175,6 +206,18 @@ class TransactionToSection(BaseModel):
         verbose_name = "Bo'lim hisobiga pul o'tkazish"
         verbose_name_plural = "Bo'lim hisobiga pul o'tkazishlar"
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                prev = TransactionToSection.objects.get(id=self.pk)
+                converted_amount = convert_currency(prev.currency_type, "UZS", prev.amount)
+                User.objects.filter(id=prev.creator.id).update(balance=F('balance') + converted_amount)
+
+            super().save(*args, **kwargs)
+
+            converted_amount = convert_currency(self.currency_type, "UZS", self.amount)
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') - converted_amount)
 
 
 

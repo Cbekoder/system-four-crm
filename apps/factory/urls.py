@@ -3,10 +3,6 @@ from .views import *
 
 
 urlpatterns = [
-    # Admin URLs
-    path('admins/', FactoryUserListCreateAPIView.as_view(), name='factory-admin-list-create'),
-    path('admins/<int:pk>/', FactoryUserRetrieveUpdateDestroyAPIView.as_view(), name='factory-admin-detail'),
-
     #Urls for Workers
     path('workers/', WorkerListCreateView.as_view()),
     path('workers/<int:pk>/', WorkerRetrieveUpdateDestroyView.as_view()),

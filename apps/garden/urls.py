@@ -2,10 +2,6 @@ from rest_framework.urls import path
 from .views import *
 
 urlpatterns = [
-    # Admin URLs
-    path('admins/', GardenUserListCreateAPIView.as_view(), name='garden-admin-list-create'),
-    path('admins/<int:pk>/', GardenUserRetrieveUpdateDestroyAPIView.as_view(), name='garden-admin-detail'),
-
     #Urls for Gardens
     path('gardens/', GardenListCreateView.as_view()),
     path('gardens/<int:pk>/', GardenRetrieveUpdateDestroyView.as_view()),

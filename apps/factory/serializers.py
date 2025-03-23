@@ -39,7 +39,7 @@ class SupplierSerializer(ModelSerializer):
 
     class Meta:
         model = Supplier
-        fields = ['name', 'phone_number']
+        fields = ['id', 'name', 'phone_number']
 
 ##################################
 ####### User Daily work ##########
@@ -136,7 +136,7 @@ class WorkerGetSerializer(ModelSerializer):
 
     class Meta:
         model = Worker
-        fields = ['first_name', 'phone_number', 'debt', 'currency_type', 'created_at', 'updated_at']
+        fields = ['id', 'first_name', 'last_name', 'phone_number', 'debt', 'currency_type', 'created_at', 'updated_at']
 
 
 class RawMaterialSerializer(ModelSerializer):
@@ -145,7 +145,7 @@ class RawMaterialSerializer(ModelSerializer):
 
     class Meta:
         model = RawMaterial
-        fields = ['name', 'description', 'weight']
+        fields = ['id', 'name', 'description', 'weight']
 
     # def create(self, validated_data):
     #     request = self.context.get('request')
@@ -286,7 +286,7 @@ class RawMaterialHistorySerializer(ModelSerializer):
 
     class Meta:
         model = RawMaterialHistory
-        fields = ['supplier', 'raw_material','date' ,'amount', 'weight', 'currency_type', 'created_at', 'updated_at']
+        fields = ['id', 'supplier', 'raw_material','date' ,'amount', 'weight', 'currency_type', 'created_at', 'updated_at']
 
 
 class SalaryPaymentGetSerializer(ModelSerializer):

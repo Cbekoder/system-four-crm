@@ -7,13 +7,11 @@ from rest_framework.generics import *
 from rest_framework.response import Response
 
 from .serializers import *
-from apps.users.permissions import *
+from apps.users.permissions import IsFactoryAdmin, IsCEO
 from apps.main.models import Expense, Income
 from rest_framework.filters import *
 from django_filters.rest_framework import DjangoFilterBackend
 from apps.main.serializers import ExpenseSerializer, IncomeSerializer
-from apps.users.serializers import UserDetailSerializer, UserPostSerializer
-from ..users.models import User
 from django.utils.dateparse import parse_date
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -22,7 +20,7 @@ from drf_yasg import openapi
 class WorkerListCreateView(ListCreateAPIView):
     serializer_class = WorkerSerializer
     queryset = Worker.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
     filter_backends = [DjangoFilterBackend,SearchFilter, OrderingFilter]
     search_fields=['first_name','last_name']
     ordering_fields=['balance']
@@ -31,7 +29,7 @@ class WorkerListCreateView(ListCreateAPIView):
 class WorkerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = WorkerSerializer
     queryset = Worker.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -41,12 +39,12 @@ class WorkerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class BasketListCreateView(ListCreateAPIView):
     serializer_class = BasketSerializer
     queryset = Basket.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
 class BasketRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = BasketSerializer
     queryset = Basket.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
 
 class DailyWorkListCreateView(ListCreateAPIView):
@@ -54,7 +52,7 @@ class DailyWorkListCreateView(ListCreateAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['created_at', 'worker']
     search_fields = ['worker__first_name', 'worker__last_name', 'worker__phone_number']
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
@@ -107,7 +105,7 @@ class DailyWorkListCreateView(ListCreateAPIView):
 
 class DailyWorkRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = UserDailyWork.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -117,19 +115,19 @@ class DailyWorkRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class RawMaterialListCreateView(ListCreateAPIView):
     serializer_class = RawMaterialSerializer
     queryset = RawMaterial.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
 
 class RawMaterialRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = RawMaterialSerializer
     queryset = RawMaterial.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
 
 class RawMaterialHistoryListCreateView(ListCreateAPIView):
     serializer_class = RawMaterialHistorySerializer
     queryset = RawMaterialHistory.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
@@ -137,7 +135,7 @@ class RawMaterialHistoryListCreateView(ListCreateAPIView):
 class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = RawMaterialHistorySerializer
     queryset = RawMaterialHistory.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
 
     def perform_create(self, serializer):
@@ -146,7 +144,7 @@ class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 # class RawMaterialUsageListCreateView(ListCreateAPIView):
 #     serializer_class = RawMaterialUsageSerializer
 #     queryset = RawMaterialUsage.objects.all()
-#     permission_classes = [IsCEOOrAdmin]
+#     permission_classes = [IsFactoryAdmin, IsCEO]
 
     # def perform_create(self, serializer):
     #     serializer.save(creator=self.request.user)
@@ -154,13 +152,13 @@ class RawMaterialHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 # class RawMaterialUsageRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 #     serializer_class = RawMaterialUsageSerializer
 #     queryset = RawMaterialUsage.objects.all()
-#     permission_classes = [IsCEOOrAdmin]
+#     permission_classes = [IsFactoryAdmin, IsCEO]
 
 
 class FactoryExpenseListCreateView(ListCreateAPIView):
     serializer_class = ExpenseSerializer
     queryset = Expense.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['created_at', 'amount']
     search_fields=['description','reason']
@@ -216,13 +214,13 @@ class FactoryExpenseListCreateView(ListCreateAPIView):
 class FactoryExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = ExpenseSerializer
     queryset = Expense.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
 
 class FactoryIncomeListCreateView(ListCreateAPIView):
     serializer_class = IncomeSerializer
     queryset = Income.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['created_at', 'amount']
     search_fields = ['description','reason']
@@ -276,13 +274,13 @@ class FactoryIncomeListCreateView(ListCreateAPIView):
 class FactoryIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = IncomeSerializer
     queryset = Income.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
 
 class ClientListCreateView(ListCreateAPIView):
     serializer_class = ClientSerializer
     queryset = Client.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
     filter_backends = [DjangoFilterBackend,  SearchFilter]
     search_fields = ['client__first_name', 'client__last_name', 'client__phone_number']
 
@@ -332,12 +330,12 @@ class ClientListCreateView(ListCreateAPIView):
 class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = ClientSerializer
     queryset = Client.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
 # class SaleListCreateView(ListCreateAPIView):
 #     serializer_class = SaleSerializer
 #     queryset = Sale.objects.all()
-#     permission_classes = [IsCEOOrAdmin]
+#     permission_classes = [IsFactoryAdmin, IsCEO]
 #     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
 #     ordering_fields = ['created_at', 'client']
 #     search_fields = ['client__first_name', 'client__last_name', 'client__phone_number']
@@ -390,43 +388,13 @@ class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 # class SaleRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 #     serializer_class = SaleSerializer
 #     queryset = Sale.objects.all()
-#     permission_classes = [IsCEOOrAdmin]
-
-
-# Admin user views
-class FactoryUserListCreateAPIView(ListCreateAPIView):
-    permission_classes = [IsCEO]
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return UserDetailSerializer
-        return UserPostSerializer
-
-    def get_queryset(self):
-        queryset = User.objects.filter(section="factory")
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(section="factory")
-
-
-class FactoryUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
-    serializer_class = UserDetailSerializer
-
-    def get_queryset(self):
-        queryset = User.objects.filter(section="factory")
-        return queryset
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return UserDetailSerializer
-        return UserPostSerializer
+#     permission_classes = [IsFactoryAdmin, IsCEO]
 
 
 
 class SalaryPaymentListCreateView(ListCreateAPIView):
     queryset = SalaryPayment.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['created_at', 'worker__balance','amount']
     searching_fields=['worker__first_name','worker__last_name','worker__phone_number']
@@ -483,7 +451,7 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
 class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = SalaryPaymentGetSerializer
     queryset = SalaryPayment.objects.all()
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
     def get_serializer_class(self):
         if self.request.method == 'PUT' or self.request.method=='PATCH':
@@ -523,7 +491,7 @@ class SaleItemRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 class FactorySummaryView(ListAPIView):
-    permission_classes = [IsCEOOrAdmin]
+    permission_classes = [IsFactoryAdmin, IsCEO]
 
     @swagger_auto_schema(
         manual_parameters=[

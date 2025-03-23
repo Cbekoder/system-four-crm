@@ -150,6 +150,7 @@ class RawMaterial(BaseModel):
 
 class Supplier(BaseModel):
     name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
     creator = None
 
     class Meta:

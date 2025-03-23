@@ -11,8 +11,7 @@ SECTION_CHOICES = (
     ("logistic", "Logistika"),
     ("fridge", "Muzlatgich"),
     ("garden", "Bog'"),
-    ("factory", "Zavod"),
-    ("general", "Umumiy")
+    ("factory", "Zavod")
 )
 
 class User(AbstractUser):

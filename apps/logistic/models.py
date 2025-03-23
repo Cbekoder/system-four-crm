@@ -14,17 +14,28 @@ from apps.users.models import User
 ###############
 ##  People   ##
 ###############
+
+# Driver model
 class Driver(BasePerson):
-    status = None
+    middle_name = models.CharField(max_length=100, null=True, blank=True)
+    licence = models.CharField(max_length=30, null=True, blank=True)
+    passport = models.CharField(max_length=30, null=True, blank=True)
+    given_place = models.CharField(max_length=100, null=True, blank=True)
+    given_date = models.DateField(null=True, blank=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
+
+    landing = None
+    debt = None
 
     class Meta:
-        verbose_name = "Haydovchi"
-        verbose_name_plural = "Haydovchi"
+        verbose_name = "Haydovchi "
+        verbose_name_plural = "Haydovchilar "
 
     def __str__(self):
         return self.full_name
 
 
+# Tenant model
 class Tenant(BasePerson):
     trucks_count = models.PositiveSmallIntegerField(default=0)
 
@@ -49,7 +60,7 @@ class Contractor(BaseModel):
         verbose_name_plural = "Shartnoma hamkorlari "
 
     def __str__(self):
-        return self.full_name
+        return self.name
 
 
 ###############
@@ -137,17 +148,55 @@ class TIR(BaseModel):
         ordering = ["-created_at"]
 
 
+
+class Company(BaseModel):
+    name = models.CharField(max_length=100, verbose_name="Kompaniya nomi")
+    director = models.CharField(max_length=100, null=True, blank=True, verbose_name="Boshliq F.I.O")
+    inn = models.CharField(max_length=30, verbose_name="INN", null=True, blank=True)
+    xp = models.CharField(max_length=30, verbose_name="XP", null=True, blank=True)
+    mfo = models.CharField(max_length=30, verbose_name="MFO", null=True, blank=True)
+    phone_number = models.CharField(max_length=15, verbose_name="Telefon raqami")
+    email = models.CharField(max_length=100, verbose_name="Email", null=True, blank=True)
+    creator = None
+    status = None
+
+    class Meta:
+        verbose_name = "Kompaniya "
+        verbose_name_plural = "Kompaniyalar "
+
+    def __str__(self):
+        return self.name
+
+
 ###############
 ##  Actions  ##
 ###############
 
+
+class Waybill(BaseModel):
+    departure_date = models.DateField()
+    arrival_date = models.DateField(null=True, blank=True)
+    driver_1 = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True, blank=True, related_name="driver_1")
+    driver_2 = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True, blank=True, related_name="driver_2")
+    car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=True)
+    trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True, blank=True)
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
+
+
+    def __str__(self):
+        return str(self.created_at)
+
+    class Meta:
+        verbose_name = "Putyovka "
+        verbose_name_plural = "Putyovkalar "
+        ordering = ['-created_at']
+
+
 class TIRRecord(BaseModel):
-    tir = models.ForeignKey(TIR, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="TIR")
-    driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Haydovchi")
-    car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Mashina")
-    trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Tirkama")
-    received_date = models.DateField(verbose_name="TIRni olgan kun")
-    submission_deadline = models.DateField(verbose_name="Topshirish muddati")
+    tir = models.OneToOneField(TIR, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="TIR")
+    waybill = models.OneToOneField(Waybill, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Putyovka ")
+    tir_get_date = models.DateField(verbose_name="TIRni olgan kun")
+    tir_deadline = models.DateField(verbose_name="Topshirish muddati")
     is_returned = models.BooleanField(default='False', verbose_name="Holati")
 
     class Meta:
@@ -165,6 +214,86 @@ class TIRRecord(BaseModel):
                 self.status = 'verified'
 
             super().save(*args, **kwargs)
+
+
+
+CONTRACT_STATUS = (
+    ('new', 'Yangi'),
+    ('waiting', 'Kutilmoqda'),
+    ('warning', 'Ogohlantirish'),
+    ('accepted', 'Qabul qilingan'),
+    ('given', 'Berib yuborilgan')
+)
+
+class ContractRecord(BaseModel):
+    contract_number = models.CharField(max_length=50, verbose_name="Shartnoma raqami")
+    date = models.DateField(verbose_name="Shartnoma sanasi")
+    invoice_number = models.CharField(max_length=50, null=True, blank=True, verbose_name="Faktura raqami")
+    contractor = models.ForeignKey(Contractor, on_delete=models.SET_NULL, null=True)
+    description = models.TextField(null=True, blank=True)
+    amount = models.FloatField(null=True)
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
+    remaining = models.FloatField(null=True)
+
+    status = models.CharField(max_length=20, choices=CONTRACT_STATUS, default='new', verbose_name="Status")
+
+    class Meta:
+        verbose_name = "Shartnoma "
+        verbose_name_plural = "Shartnomalar "
+
+    def __str__(self):
+        return self.contract_number
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                pass
+
+            if self.contractor is None:
+                raise ValueError("Contractor majburiy ravishda kiritilishi kerak.")
+
+            if self.creator.role == "CEO":
+                self.status = 'verified'
+
+            super().save(*args, **kwargs)
+
+            self.contractor.landing += self.amount
+            self.contractor.save(update_fields=["landing"])
+
+            # if self.tenant:
+            #     self.tenant.debt += self.amount
+
+
+class ContractCars(BaseModel):
+    contract = models.ForeignKey(ContractRecord, on_delete=models.CASCADE)
+    car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=True)
+    trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True, blank=True)
+    status = None
+    creator = None
+
+    class Meta:
+        verbose_name = "Shartnoma putyovkasi "
+        verbose_name_plural = "Shartnoma putyovkalari "
+
+    def __str__(self):
+        return self.contract.contract_number
+
+
+class ContractIncome(BaseModel):
+    contract = models.ForeignKey(ContractRecord, on_delete=models.CASCADE)
+    amount = models.FloatField()
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
+    date = models.DateField()
+    bank_name = models.CharField(max_length=50, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Shartnoma to'lovi "
+        verbose_name_plural = "Shartnoma to'lovlari "
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.contract.contract_number
+
 
 
 class CarExpense(BaseModel):
@@ -197,12 +326,10 @@ class CarExpense(BaseModel):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            if self.creator.role == "CEO":
-                self.status = 'verified'
             if self.pk:
-                old_expense = CarExpense.objects.get(id=self.pk)
-
-                User.objects.filter(id=old_expense.creator.id).update(balance=F('balance') - old_expense.amount)
+                prev = CarExpense.objects.get(id=self.pk)
+                converted_amount = convert_currency(prev.currency_type, "UZS", prev.amount)
+                User.objects.filter(id=prev.creator.id).update(balance=F('balance') + converted_amount)
 
                 # old_amount = old_expense.amount
                 # if self.currency_type != old_expense.currency_type:
@@ -239,11 +366,12 @@ class CarExpense(BaseModel):
             #             raise ValidationError("Invalid currency type")
             #     self.trailer.landing -= converted_amount
             #     self.trailer.save()
+            if self.creator.role == "CEO":
+                self.status = 'verified'
             super().save(*args, **kwargs)
 
-            User.objects.filter(id=self.creator.id).update(balance=F('balance') + self.amount)
-
-
+            converted_amount = convert_currency(self.currency_type, "UZS", self.amount)
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') + converted_amount)
 
 
 class SalaryPayment(BaseModel):
@@ -265,187 +393,143 @@ class SalaryPayment(BaseModel):
         return str(self.id)
 
     def save(self, *args, **kwargs):
-        if self.creator.role == "CEO":
-            self.status = 'verified'
-
-        super().save(*args, **kwargs)
-
-
-CONTRACT_STATUS = (
-    ('new', 'Yangi'),
-    ('waiting', 'Kutilmoqda'),
-    ('warning', 'Ogohlantirish'),
-    ('accepted', 'Qabul qilingan'),
-    ('given', 'Berib yuborilgan')
-)
-
-class Contract(BaseModel):
-    number = models.CharField(max_length=50, verbose_name="Shartnoma raqami")
-    date = models.DateField(verbose_name="Shartnoma sanasi")
-    invoice_id = models.CharField(max_length=50, null=True, blank=True, verbose_name="Faktura raqami")
-    contractor = models.ForeignKey(Contractor, on_delete=models.SET_NULL, null=True)
-    car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=True)
-    trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True, blank=True)
-    tenant  = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True)
-    amount = models.FloatField(null=True)
-    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
-    status = models.CharField(max_length=20, choices=CONTRACT_STATUS, default='new', verbose_name="Status")
-
-    class Meta:
-        verbose_name = "Shartnoma "
-        verbose_name_plural = "Shartnomalar "
-
-    def __str__(self):
-        return self.number
-
-    def save(self, *args, **kwargs):
         with transaction.atomic():
             if self.pk:
-                pass
-
-            if self.contractor is None:
-                raise ValueError("Contractor majburiy ravishda kiritilishi kerak.")
+                prev = SalaryPayment.objects.get(id=self.pk)
+                converted_amount = convert_currency(prev.currency_type, "UZS", prev.amount)
+                User.objects.filter(id=prev.creator.id).update(balance=F('balance') + converted_amount)
 
             if self.creator.role == "CEO":
                 self.status = 'verified'
 
             super().save(*args, **kwargs)
 
-            self.contractor.landing += self.amount
-            self.contractor.save(update_fields=["landing"])
-
-            if self.tenant:
-                self.tenant.debt += self.amount
-
-class ContractIncome(BaseModel):
-    contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
-    amount = models.FloatField()
-    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
-    bank_name = models.CharField(max_length=50, null=True, blank=True)
+            converted_amount = convert_currency(self.currency_type, "UZS", self.amount)
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') - converted_amount)
 
 
-
-TRANSIT_STATUS_CHOICES = (
-    ('new', 'Yangi'),
-    ('left', 'Yuborilgan'),
-    ('arrived', 'Qaytib kelgan'),
-    ('pending', 'To\'lov kutilyapti'),
-    ('finished', 'Yakunlangan')
-)
-
-class Transit(models.Model):
-    car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True)
-    trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True)
-    driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True)
-    leaving_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, related_name='leaving_transits')
-    leaving_amount = models.FloatField(null=True, blank=True)
-    leaving_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
-    leaving_date = models.DateTimeField(null=True, blank=True)
-    arrival_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, related_name='arrival_transits')
-    arrival_amount = models.FloatField(null=True, blank=True)
-    arrival_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
-    arrival_date = models.DateTimeField(null=True, blank=True)
-    driver_fee = models.FloatField(null=True, blank=True)
-    fee_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
-    status = models.CharField(max_length=50, choices=TRANSIT_STATUS_CHOICES, default='new')
-    remainder = models.FloatField(default=0)
-
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
-
-    class Meta:
-        verbose_name = "Qatnov "
-        verbose_name_plural = "Qatnovlar "
-
-    def save(self, *args, **kwargs):
-        with transaction.atomic():
-            if self.pk:
-                pass
-
-
-            if self.leaving_amount and self.arrival_amount:
-                if self.leaving_currency == self.arrival_currency:
-                    self.remainder = self.leaving_amount + self.arrival_amount
-                else:
-                    self.remainder = self.leaving_amount + convert_currency(self.arrival_currency, self.leaving_currency, self.arrival_amount)
-                self.remainder = self.leaving_amount
-            elif self.leaving_amount:
-                self.remainder = self.leaving_amount
-            elif self.arrival_amount:
-                self.remainder = self.arrival_amount
-
-            if self.status == "finished":
-                converted_driver_fee = self.driver_fee
-                if self.driver.currency_type != self.fee_currency:
-                    converted_driver_fee = convert_currency(self.driver.currency_type, self.fee_currency, self.driver_fee)
-                self.driver.balance += converted_driver_fee
-                self.driver.save(update_fields=["balance"])
-
-            super().save(*args, **kwargs)
-
-    def __str__(self):
-        if self.driver and self.car and self.leaving_date:
-            return f"{self.driver.full_name} | {self.car.state_number} | {self.leaving_date}"
-        return str(self.id)
-
-
-class TransitExpense(BaseModel):
-    transit = models.ForeignKey(Transit, on_delete=models.SET_NULL, null=True, blank=False)
-    reason = models.CharField(max_length=255)
-    description = models.TextField(null=True, blank=True)
-    amount = models.FloatField()
-    transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPE, default="cash")
-    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
-
-    class Meta:
-        verbose_name = "Qatnov xarajati "
-        verbose_name_plural = "Qatnov xarajatlari "
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        if self.transit:
-            return f"{self.transit.id} | {self.reason}"
-        return self.reason
-
-REASON_CHOICES = (
-    ('leaving', 'Ketish uchun'),
-    ('arrival', 'Qaytish uchun'),
-    ('other', 'Boshqa')
-)
-
-class TransitIncome(BaseModel):
-    transit = models.ForeignKey(Transit, on_delete=models.SET_NULL, null=True, blank=False)
-    reason = models.CharField(max_length=255, choices=REASON_CHOICES)
-    description = models.TextField(null=True, blank=True)
-    amount = models.FloatField()
-    transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPE, default="transfer")
-    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
-
-    class Meta:
-        verbose_name = "Qatnov kirimi "
-        verbose_name_plural = "Qatnov kirimlari "
-        ordering = ["-created_at"]
-
-    def save(self, *args, **kwargs):
-        with transaction.atomic():
-            if self.pk:
-                pass
-
-            converted_amount = self.amount
-            if self.reason == "leaving":
-                pass
-            if self.transit.leaving_currency != self.currency_type:
-                self.transit.remainder -= convert_currency(self.currency_type, self.transit.leaving_currency, self.amount)
-
-            else:
-                raise ValidationError("Reason should be one of the following: 'leaving', 'arrival' or 'other'")
-
-            if self.creator.role == "CEO":
-                self.status = 'verified'
-
-            super().save(*args, **kwargs)
-
-    def __str__(self):
-        if self.transit:
-            return f"{self.transit.id} | {self.reason}"
-        return self.reason
+#
+# TRANSIT_STATUS_CHOICES = (
+#     ('new', 'Yangi'),
+#     ('left', 'Yuborilgan'),
+#     ('arrived', 'Qaytib kelgan'),
+#     ('pending', 'To\'lov kutilyapti'),
+#     ('finished', 'Yakunlangan')
+# )
+#
+# class Transit(models.Model):
+#     car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True)
+#     trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True)
+#     driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True)
+#     leaving_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, related_name='leaving_transits')
+#     leaving_amount = models.FloatField(null=True, blank=True)
+#     leaving_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
+#     leaving_date = models.DateTimeField(null=True, blank=True)
+#     arrival_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, related_name='arrival_transits')
+#     arrival_amount = models.FloatField(null=True, blank=True)
+#     arrival_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
+#     arrival_date = models.DateTimeField(null=True, blank=True)
+#     driver_fee = models.FloatField(null=True, blank=True)
+#     fee_currency = models.CharField(max_length=20, choices=CURRENCY_TYPE)
+#     status = models.CharField(max_length=50, choices=TRANSIT_STATUS_CHOICES, default='new')
+#     remainder = models.FloatField(default=0)
+#
+#     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
+#     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
+#
+#     class Meta:
+#         verbose_name = "Qatnov "
+#         verbose_name_plural = "Qatnovlar "
+#
+#     def save(self, *args, **kwargs):
+#         with transaction.atomic():
+#             if self.pk:
+#                 pass
+#
+#
+#             if self.leaving_amount and self.arrival_amount:
+#                 if self.leaving_currency == self.arrival_currency:
+#                     self.remainder = self.leaving_amount + self.arrival_amount
+#                 else:
+#                     self.remainder = self.leaving_amount + convert_currency(self.arrival_currency, self.leaving_currency, self.arrival_amount)
+#                 self.remainder = self.leaving_amount
+#             elif self.leaving_amount:
+#                 self.remainder = self.leaving_amount
+#             elif self.arrival_amount:
+#                 self.remainder = self.arrival_amount
+#
+#             if self.status == "finished":
+#                 converted_driver_fee = self.driver_fee
+#                 if self.driver.currency_type != self.fee_currency:
+#                     converted_driver_fee = convert_currency(self.driver.currency_type, self.fee_currency, self.driver_fee)
+#                 self.driver.balance += converted_driver_fee
+#                 self.driver.save(update_fields=["balance"])
+#
+#             super().save(*args, **kwargs)
+#
+#     def __str__(self):
+#         if self.driver and self.car and self.leaving_date:
+#             return f"{self.driver.full_name} | {self.car.state_number} | {self.leaving_date}"
+#         return str(self.id)
+#
+#
+# class TransitExpense(BaseModel):
+#     transit = models.ForeignKey(Transit, on_delete=models.SET_NULL, null=True, blank=False)
+#     reason = models.CharField(max_length=255)
+#     description = models.TextField(null=True, blank=True)
+#     amount = models.FloatField()
+#     transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPE, default="cash")
+#     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
+#
+#     class Meta:
+#         verbose_name = "Qatnov xarajati "
+#         verbose_name_plural = "Qatnov xarajatlari "
+#         ordering = ["-created_at"]
+#
+#     def __str__(self):
+#         if self.transit:
+#             return f"{self.transit.id} | {self.reason}"
+#         return self.reason
+#
+# REASON_CHOICES = (
+#     ('leaving', 'Ketish uchun'),
+#     ('arrival', 'Qaytish uchun'),
+#     ('other', 'Boshqa')
+# )
+#
+# class TransitIncome(BaseModel):
+#     transit = models.ForeignKey(Transit, on_delete=models.SET_NULL, null=True, blank=False)
+#     reason = models.CharField(max_length=255, choices=REASON_CHOICES)
+#     description = models.TextField(null=True, blank=True)
+#     amount = models.FloatField()
+#     transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPE, default="transfer")
+#     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
+#
+#     class Meta:
+#         verbose_name = "Qatnov kirimi "
+#         verbose_name_plural = "Qatnov kirimlari "
+#         ordering = ["-created_at"]
+#
+#     def save(self, *args, **kwargs):
+#         with transaction.atomic():
+#             if self.pk:
+#                 pass
+#
+#             converted_amount = self.amount
+#             if self.reason == "leaving":
+#                 pass
+#             if self.transit.leaving_currency != self.currency_type:
+#                 self.transit.remainder -= convert_currency(self.currency_type, self.transit.leaving_currency, self.amount)
+#
+#             else:
+#                 raise ValidationError("Reason should be one of the following: 'leaving', 'arrival' or 'other'")
+#
+#             if self.creator.role == "CEO":
+#                 self.status = 'verified'
+#
+#             super().save(*args, **kwargs)
+#
+#     def __str__(self):
+#         if self.transit:
+#             return f"{self.transit.id} | {self.reason}"
+#         return self.reason

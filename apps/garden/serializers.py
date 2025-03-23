@@ -8,14 +8,14 @@ from rest_framework.fields import SerializerMethodField
 class GardenSerializer(ModelSerializer):
     class Meta:
         model = Garden
-        fields = ['name','description']
+        fields = ['id', 'name','description']
 
 class SalaryPaymentDetailSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = SalaryPayment
-        fields = ['description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
+        fields = ['id', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
 
 class GardenerSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -52,7 +52,7 @@ class GardenerSalaryPaymentSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = SalaryPayment
-        fields = ['gardener', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
+        fields = ['id', 'gardener', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
     def create(self, validated_data):
@@ -76,7 +76,7 @@ class GardenExpensePostSerializer(ModelSerializer):
 
     class Meta:
         model = Expense
-        fields = ['description', 'amount', 'currency_type', 'garden', 'status', 'updated_at', 'created_at']
+        fields = ['id', 'description', 'amount', 'currency_type', 'garden', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
     def create(self, validated_data):
@@ -93,7 +93,7 @@ class GardenExpenseSerializer(ModelSerializer):
     garden = SerializerMethodField()
     class  Meta:
         model = Expense
-        fields = ['description', 'amount', 'currency_type','garden','reason','description', 'status', 'updated_at', 'created_at']
+        fields = ['id', 'description', 'amount', 'currency_type','garden','reason','description', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
     def get_garden(self, obj):
