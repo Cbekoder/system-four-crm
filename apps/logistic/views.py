@@ -16,7 +16,7 @@ from .serializers import (
     TIRSerializer, TIRRecordDetailSerializer, TIRRecordSerializer,
     TIRRecordUpdateSerializer, CompanySerializer, WaybillSerializer, ContractRecordDetailSerializer, ContractRecordCreateSerializer
 )
-from apps.users.permissions import IsCEOorIsLogisticAdmin, IsCEO
+from apps.users.permissions import IsLogisticAdmin, IsCEO
 
 
 # Driver views
@@ -30,66 +30,66 @@ class DriverListCreateView(ListCreateAPIView):
 class DriverRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Driver.objects.all()
     serializer_class = DriverSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 # Tenant views
 class TenantListCreateView(ListCreateAPIView):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 class TenantRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 # Generic Views for Contractor
 class ContractorListCreateView(ListCreateAPIView):
     queryset = Contractor.objects.all()
     serializer_class = ContractorSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 class ContractorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Contractor.objects.all()
     serializer_class = ContractorSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 # Generic Views for Car
 class CarListCreateView(ListCreateAPIView):
     queryset = Car.objects.all()
     serializer_class = CarSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 class CarRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Car.objects.all()
     serializer_class = CarSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 # Generic Views for Trailer
 class TrailerListCreateView(ListCreateAPIView):
     queryset = Trailer.objects.all()
     serializer_class = TrailerSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 
 class TrailerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Trailer.objects.all()
     serializer_class = TrailerSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 class TIRListCreateView(ListCreateAPIView):
     queryset = TIR.objects.all()
     serializer_class = TIRSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('status',)
     search_fields = ('serial_number',)
@@ -130,12 +130,12 @@ class TIRListCreateView(ListCreateAPIView):
 class TIRDetailView(RetrieveUpdateDestroyAPIView):
     queryset = TIR.objects.all()
     serializer_class = TIRSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 class CompanyListCreateView(ListCreateAPIView):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
@@ -143,22 +143,22 @@ class CompanyListCreateView(ListCreateAPIView):
 class CompanyDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 class WaybillListCreateView(ListCreateAPIView):
     queryset = Waybill.objects.all()
     serializer_class = WaybillSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 class WaybillDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Waybill.objects.all()
     serializer_class = WaybillSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 class TIRRecordListCreateView(ListCreateAPIView):
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
     queryset = TIRRecord.objects.all()
 
     def get_serializer_class(self):
@@ -171,7 +171,7 @@ class TIRRecordListCreateView(ListCreateAPIView):
 
 
 class TIRRecordDetailView(RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
     queryset = TIRRecord.objects.all()
 
     def get_serializer_class(self):
@@ -182,7 +182,7 @@ class TIRRecordDetailView(RetrieveUpdateDestroyAPIView):
 
 class ContractRecordListCreateView(ListCreateAPIView):
     queryset = ContractRecord.objects.all()
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
     def perform_create(self, serializer):
         """Optional: Additional logic before saving."""
@@ -195,7 +195,7 @@ class ContractRecordListCreateView(ListCreateAPIView):
 
 class ContractRecordDetailView(RetrieveUpdateDestroyAPIView):
     queryset = ContractRecord.objects.all()
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -207,21 +207,21 @@ class ContractRecordDetailView(RetrieveUpdateDestroyAPIView):
 class CarExpenseListCreateView(ListCreateAPIView):
     queryset = CarExpense.objects.all()
     serializer_class = CarExpenseSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
 
 class CarExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
     queryset = CarExpense.objects.all()
     serializer_class = CarExpenseSerializer
 
 
 # Generic Views for SalaryPayment
 class SalaryPaymentListCreateView(ListCreateAPIView):
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
     queryset = SalaryPayment.objects.all()
     serializer_class = DriverSalaryPaymentSerializer
     filter_backends = [SearchFilter]
@@ -274,7 +274,7 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
 class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = SalaryPayment.objects.all()
     serializer_class = DriverSalaryPaymentSerializer
-    permission_classes = [IsCEOorIsLogisticAdmin]
+    permission_classes = [IsLogisticAdmin | IsCEO]
 
 
 # Generic Views for Contract
