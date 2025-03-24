@@ -14,13 +14,13 @@ from drf_yasg import openapi
 class RefrigatorListCreateView(ListCreateAPIView):
     serializer_class = RefrigeratorSerializer
     queryset = Refrigerator.objects.all()
-    permission_classes = [IsFridgeAdmin, IsCEO]
+    permission_classes = [IsFridgeAdmin | IsCEO]
 
 
 class RefrigatorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = RefrigeratorSerializer
     queryset = Refrigerator.objects.all()
-    permission_classes = [IsFridgeAdmin, IsCEO]
+    permission_classes = [IsFridgeAdmin | IsCEO]
 
     def delete(self, request, *args, **kwargs):
         if not request.user.role == 'CEO':
@@ -31,7 +31,7 @@ class RefrigatorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
 
 class FridgeExpenseListCreateView(ListCreateAPIView):
-    permission_classes = [IsFridgeAdmin, IsCEO]
+    permission_classes = [IsFridgeAdmin | IsCEO]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     ordering_fields = ['created_at', 'price']
 
@@ -81,11 +81,11 @@ class FridgeExpenseListCreateView(ListCreateAPIView):
 class FridgeExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = FridgeExpenseSerializer
     queryset = Expense.objects.all()
-    permission_classes = [IsFridgeAdmin, IsCEO]
+    permission_classes = [IsFridgeAdmin | IsCEO]
 
 
 class FridgeIncomeListCreateView(ListCreateAPIView):
-    permission_classes = [IsFridgeAdmin, IsCEO]
+    permission_classes = [IsFridgeAdmin | IsCEO]
 
     def get_serializer_class(self):
         if self.request.method == "GET":
@@ -133,11 +133,11 @@ class FridgeIncomeListCreateView(ListCreateAPIView):
 class FridgeIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Income.objects.all()
     serializer_class = FridgeIncomeSerializer
-    permission_classes = [IsFridgeAdmin, IsCEO]
+    permission_classes = [IsFridgeAdmin | IsCEO]
 
 
 class ElectricityBillListCreateView(ListCreateAPIView):
-    permission_classes = [IsFridgeAdmin, IsCEO]
+    permission_classes = [IsFridgeAdmin | IsCEO]
 
     def get_serializer_class(self):
         if self.request.method == "GET":

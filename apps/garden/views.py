@@ -15,17 +15,17 @@ from drf_yasg import openapi
 class GardenListCreateView(ListCreateAPIView):
     queryset = Garden.objects.all()
     serializer_class = GardenSerializer
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
 
 class GardenRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Garden.objects.all()
     serializer_class = GardenSerializer
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
 
 class GardenerListCreateView(ListCreateAPIView):
     queryset = Gardener.objects.all()
     serializer_class = GardenerSerializer
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
 
 class GardenerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Gardener.objects.all()
@@ -40,7 +40,7 @@ class GardenerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class GardenIncomeListCreateView(ListCreateAPIView):
     queryset = Income.objects.all()
     serializer_class = IncomeSerializer
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
 
 
     def get_queryset(self):
@@ -85,7 +85,7 @@ class GardenIncomeListCreateView(ListCreateAPIView):
 class GardenIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Income.objects.all()
     serializer_class = IncomeSerializer
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
 
     def get_queryset(self):
         queryset = Income.objects.filter(section="garden")
@@ -94,7 +94,7 @@ class GardenIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 class GardenExpenseListCreateView(ListCreateAPIView):
     serializer_class = ExpenseSerializer
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
 
     def get_queryset(self):
         queryset = Expense.objects.filter(section="garden")
@@ -141,7 +141,7 @@ class GardenExpenseListCreateView(ListCreateAPIView):
 
 class GardenExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = ExpenseSerializer
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
 
     def get_queryset(self):
         queryset = Expense.objects.filter(section="garden")
@@ -151,7 +151,7 @@ class GardenExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 class SalaryPaymentListCreateView(ListCreateAPIView):
     queryset = SalaryPayment.objects.all()
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['created_at', 'gardener__balance']
     search_fields = ['gardener__first_name', 'gardener__last_name', 'gardener__phone_number']
@@ -220,4 +220,4 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
 class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = SalaryPayment.objects.all()
     serializer_class = GardenerSalaryPaymentSerializer
-    permission_classes = [IsGardenAdmin, IsCEO]
+    permission_classes = [IsGardenAdmin | IsCEO]
