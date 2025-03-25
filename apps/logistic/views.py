@@ -673,9 +673,13 @@ class LogisticSummaryAPIView(APIView):
 
         for car_expense in car_expenses:
             total_outcome += car_expense.amount
+            reason = ""
+            reason += car_expense.car.brand, car_expense.car.state_number, "|" if car_expense.car else ""
+            reason += car_expense.trailer.model, car_expense.trailer.state_number if car_expense.trailer else ""
+            reason += " учун ҳаражат."
             outcomes_list.append({
                 'id': f"CE{car_expense.id}",
-                'reason': f"{car_expense.car.state_number+" |" if car_expense.car is not None else ''}{car_expense.trailer.state_number if car_expense.trailer is not None else ''} учун ҳаражат.",
+                'reason': reason,
                 'amount': car_expense.amount,
                 'currency_type': car_expense.currency_type,
                 'date': car_expense.date,

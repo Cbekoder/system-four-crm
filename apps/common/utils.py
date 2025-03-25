@@ -12,7 +12,10 @@ exchange_rates = {
 }
 
 def convert_currency(base, target, amount):
+    print(exchange_rates['UZS'])
+    print(exchange_rates['RUB'])
     if exchange_rates['UZS'] is None or exchange_rates['RUB'] is None:
+        print(exchange_rates['UZS'], exchange_rates['RUB'])
         try:
             currency_rate = CurrencyRate.objects.latest('created_at')
             cache.set("UZS_rate", currency_rate.usd)
