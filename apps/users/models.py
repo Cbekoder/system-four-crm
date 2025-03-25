@@ -14,8 +14,15 @@ SECTION_CHOICES = (
     ("factory", "Zavod")
 )
 
+CURRENCY_TYPE = (
+    ("USD", "USD🇺🇸"),
+    ("UZS", "UZS🇺🇿"),
+    ("RUB", "RUB🇷🇺")
+)
+
 class User(AbstractUser):
     balance = models.FloatField(default=0, verbose_name="Qoldiq")
+    currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS")
     role = models.CharField(max_length=30, choices=ROLE_CHOICES, help_text="Role bo'lishi mumkin: 'ceo', 'admin'", default="admin")
     section = models.CharField(max_length=30, choices=SECTION_CHOICES, null=True, blank=True)
 

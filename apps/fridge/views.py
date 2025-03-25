@@ -114,12 +114,14 @@ class FridgeIncomeListCreateView(ListCreateAPIView):
             openapi.Parameter(
                 'start_date', openapi.IN_QUERY,
                 description="Start date for filtering (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE
             ),
             openapi.Parameter(
                 'end_date', openapi.IN_QUERY,
                 description="End date for filtering (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE
             ),
         ],
         responses={200: FridgeIncomeSerializer(many=True)}

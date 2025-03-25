@@ -4,6 +4,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import *
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .serializers import *
 from apps.users.permissions import IsFactoryAdmin, IsCEO
 from apps.main.models import Expense, Income
@@ -505,7 +507,7 @@ class SaleItemRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = SaleItemSerializer
 
 
-class FactorySummaryView(ListAPIView):
+class FactorySummaryView(APIView):
     permission_classes = [IsFactoryAdmin | IsCEO]
 
     @swagger_auto_schema(
@@ -525,10 +527,7 @@ class FactorySummaryView(ListAPIView):
 
         ]
     )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
-    def list(self, request, *args, **kwargs):
+    def get(self, request):
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')

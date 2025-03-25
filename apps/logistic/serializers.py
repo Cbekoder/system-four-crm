@@ -1,11 +1,13 @@
 from rest_framework.exceptions import ValidationError
+from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import ModelSerializer, DateTimeField, PrimaryKeyRelatedField, SerializerMethodField
 from django.utils import timezone
+
 from .models import (
     Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment,
-    # Contract, Transit, TransitExpense, TransitIncome,
-    TIR, TIRRecord, Company, Waybill, ContractRecord, ContractCars
+    TIR, TIRRecord, Company, Waybill, ContractRecord, ContractCars, ContractIncome, WaybillPayout
 )
+from ..main.serializers import IncomeSerializer
 
 
 # Driver serilizers
@@ -33,6 +35,7 @@ class TenantSerializer(ModelSerializer):
         read_only_fields = ['updated_at', 'created_at']
 
 
+# Contractor serializer
 class ContractorSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -43,7 +46,7 @@ class ContractorSerializer(ModelSerializer):
                   'landing', 'currency_type', 'updated_at', 'created_at']
         read_only_fields = ['landing', 'updated_at', 'created_at']
 
-
+# Car serializer
 class CarSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -55,6 +58,7 @@ class CarSerializer(ModelSerializer):
         read_only_fields = ['updated_at', 'created_at']
 
 
+# Trailer serializer
 class TrailerSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -65,16 +69,17 @@ class TrailerSerializer(ModelSerializer):
         read_only_fields = ['updated_at', 'created_at']
 
 
+# TIR serializer
 class TIRSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-
     class Meta:
         model = TIR
         fields = ['id', 'serial_number', 'get_date', 'deadline', 'status', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
 
+# Company serializer
 class CompanySerializer(ModelSerializer):
     class Meta:
         model = Company
@@ -82,6 +87,7 @@ class CompanySerializer(ModelSerializer):
         read_only_fields = ['creator']
 
 
+# Waybill serializer
 class WaybillSerializer(ModelSerializer):
     class Meta:
         model = Waybill
@@ -95,6 +101,43 @@ class WaybillSerializer(ModelSerializer):
         return data
 
 
+class WaybillPayoutSerializer(ModelSerializer):
+    creator = StringRelatedField()
+    class Meta:
+        model = WaybillPayout
+        fields = ['id', 'amount', 'currency_type', 'description', 'date', 'creator']
+
+
+class WaybillDetailSerailizer(ModelSerializer):
+    driver_1 = DriverSerializer()
+    driver_2 = DriverSerializer()
+    car = CarSerializer()
+    trailer = TrailerSerializer()
+    company = CompanySerializer()
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    payouts = WaybillPayoutSerializer(many=True, read_only=True)
+    class Meta:
+        model = Waybill
+        fields = ['id', 'departure_date', 'arrival_date', 'driver_1', 'driver_2', 'car', 'trailer', 'company', 'created_at', 'updated_at', 'payouts']
+
+
+class WaybillPayoutCreateSerializer(ModelSerializer):
+    class Meta:
+        model = WaybillPayout
+        fields = ['id', 'waybill', 'amount', 'currency_type', 'description', 'creator', 'date']
+
+
+class WaybillPayoutDetailSerializer(ModelSerializer):
+    waybill = WaybillSerializer()
+    creator = StringRelatedField()
+    class Meta:
+        model = WaybillPayout
+        fields = ['id', 'waybill', 'amount', 'currency_type', 'description', 'creator', 'date']
+
+
+
+# TIR Record serializers
 class TIRRecordSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -139,6 +182,7 @@ class TIRRecordUpdateSerializer(ModelSerializer):
         read_only_fields = ('creator', 'updated_at', 'created_at')
 
 
+# Contract serializers
 class ContractCarsCreateSerailizer(ModelSerializer):
     car = PrimaryKeyRelatedField(queryset=Car.objects.all(), allow_null=False)
     trailer = PrimaryKeyRelatedField(queryset=Trailer.objects.all(), allow_null=False)
@@ -155,6 +199,12 @@ class ContractCarsDetailSerializer(ModelSerializer):
     class Meta:
         model = ContractCars
         fields = ['id', 'car', 'trailer']
+
+
+class ContractIncomeDetailSerializer(ModelSerializer):
+    class Meta:
+        model = ContractIncome
+        fields = ['id', 'amount', 'currency_type', 'date', 'bank_name']
 
 
 class ContractRecordCreateSerializer(ModelSerializer):
@@ -208,16 +258,32 @@ class ContractRecordCreateSerializer(ModelSerializer):
 class ContractRecordDetailSerializer(ModelSerializer):
     contractor = PrimaryKeyRelatedField(queryset=Contractor.objects.all(), allow_null=True)
     cars = ContractCarsDetailSerializer(source="contractcars_set", many=True, read_only=True)
+    incomes = ContractIncomeDetailSerializer(source="contractincome_set", many=True, read_only=True)
 
     class Meta:
         model = ContractRecord
         fields = [
             'id', 'contract_number', 'date', 'invoice_number',
             'contractor', 'description', 'amount', 'currency_type',
-            'remaining', 'status', 'cars'
+            'remaining', 'status', 'cars', 'incomes'
         ]
 
 
+class ContractIncomeCreateSerializer(ModelSerializer):
+    class Meta:
+        model = ContractIncome
+        fields = ['id', 'contract', 'amount', 'currency_type', 'date', 'bank_name', 'created_at']
+        read_only_fields = ['created_at']
+
+class ContractIncomeFullDetailSerializer(ModelSerializer):
+    contract = ContractRecordDetailSerializer()
+    class Meta:
+        model = ContractIncome
+        fields = ['id', 'contract', 'amount', 'currency_type', 'date', 'bank_name', 'created_at']
+        read_only_fields = ['created_at']
+
+
+# Car expense serializer
 class CarExpenseSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -229,6 +295,7 @@ class CarExpenseSerializer(ModelSerializer):
         read_only_fields = ['status', 'updated_at', 'created_at']
 
 
+# Driver serializer
 class DriverSalaryPaymentSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -237,69 +304,3 @@ class DriverSalaryPaymentSerializer(ModelSerializer):
         model = SalaryPayment
         fields = ['id', 'driver', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
-
-# class ContractSerializer(ModelSerializer):
-#     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     class Meta:
-#         model = Contract
-#         fields = ['id', 'number', 'contractor', 'status', 'updated_at', 'created_at']
-#         read_only_fields = ['status', 'updated_at', 'created_at']
-#
-#
-# class TransitPostSerializer(ModelSerializer):
-#     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     class Meta:
-#         model = Transit
-#         fields = ['id', 'car', 'driver', 'leaving_contract', 'leaving_amount', 'leaving_date', 'arrival_contract',
-#                   'arrival_amount', 'arrival_date', 'driver_fee', 'status', 'updated_at', 'created_at']
-#         read_only_fields = ['updated_at', 'created_at']
-#
-# class TransitGetSerializer(ModelSerializer):
-#     car = CarSerializer()
-#     driver = DriverSerializer()
-#     leaving_contract = ContractSerializer()
-#     arrival_contract = ContractSerializer()
-#     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     class Meta:
-#         model = Transit
-#         fields = ['id', 'car', 'driver', 'leaving_contract', 'leaving_amount', 'leaving_date', 'arrival_contract',
-#                   'arrival_amount', 'arrival_date', 'driver_fee', 'status', 'updated_at', 'created_at']
-#         read_only_fields = ['updated_at', 'created_at']
-#
-#
-# class TransitExpenseSerializer(ModelSerializer):
-#     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     class Meta:
-#         model = TransitExpense
-#         fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type','status',
-#                   'updated_at', 'created_at']
-#         read_only_fields = ['status', 'updated_at', 'created_at']
-#
-#
-# class TransitIncomeSerializer(ModelSerializer):
-#     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     class Meta:
-#         model = TransitIncome
-#         fields = ['id', 'transit', 'reason', 'description', 'amount', 'transfer_type', 'currency_type','status',
-#                   'updated_at', 'created_at']
-#         read_only_fields = ['status', 'updated_at', 'created_at']
-#
-#
-# class TransitDetailSerializer(ModelSerializer):
-#     car = CarSerializer()
-#     driver = DriverSerializer()
-#     leaving_contract = ContractSerializer()
-#     arrival_contract = ContractSerializer()
-#     expenses = TransitExpenseSerializer(many=True, source="expenses_set")
-#     incomes = TransitIncomeSerializer(many=True, source="incomes_set")
-#     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     class Meta:
-#         model = Transit
-#         fields = ['id', 'car', 'driver', 'leaving_contract', 'leaving_amount', 'leaving_date', 'arrival_contract',
-#                   'arrival_amount', 'arrival_date', 'driver_fee', 'status', 'updated_at', 'created_at', 'expenses', 'incomes']

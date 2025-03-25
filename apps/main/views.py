@@ -2,6 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import redirect
 from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 from django.utils.dateparse import parse_date
@@ -19,11 +20,21 @@ from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, M
     TransactionToAdminCreateSerializer, TransactionToSectionSerializer, TransactionToSectionCreateSerializer, \
     CurrencyRateSerializer
 from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction, get_summary
-from ..common.utils import convert_currency
+from apps.common.utils import convert_currency
+
+
+class CurrencyRateListCreateView(ListCreateAPIView):
+    permission_classes = [IsCEO | IsAdmin]
+    queryset = CurrencyRate.objects.all()
+    serializer_class = CurrencyRateSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
 
 def RedirectToDocs(request):
     return redirect('/docs/')
+
 
 class AcquaintanceListCreateView(ListCreateAPIView):
     queryset = Acquaintance.objects.all()
@@ -32,12 +43,6 @@ class AcquaintanceListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(landing=0, debt=0)
-
-
-class CurrencyRateListCreateView(ListCreateAPIView):
-    permission_classes = [IsAdmin]
-    queryset = CurrencyRate.objects.all()
-    serializer_class = CurrencyRateSerializer
 
 
 class AcquaintanceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):

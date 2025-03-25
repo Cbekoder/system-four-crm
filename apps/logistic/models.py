@@ -51,7 +51,8 @@ class Contractor(BaseModel):
     name = models.CharField(max_length=100, unique=True, verbose_name="Shartnomachi firma nomi")
     inn = models.CharField(max_length=30, verbose_name="INN")
     phone_number = models.CharField(max_length=15, verbose_name="Telefon raqami")
-    extra_phone_number = models.CharField(max_length=15, blank=True, null=True, verbose_name="Qo'shimcha telefon raqami")
+    extra_phone_number = models.CharField(max_length=15, blank=True, null=True,
+                                          verbose_name="Qo'shimcha telefon raqami")
     landing = models.FloatField(default=0, verbose_name="Qarzdorlik")
     currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="UZS", verbose_name="Valyuta turi")
 
@@ -99,6 +100,7 @@ class Car(BaseModel):
     def __str__(self):
         return self.state_number
 
+
 class Trailer(BaseModel):
     model = models.CharField(max_length=100, null=True, blank=True)
     state_number = models.CharField(max_length=20, unique=True)
@@ -126,10 +128,9 @@ class Trailer(BaseModel):
 
 TIR_STATUS = (
     ('new', 'Yangi'),
-    ('accepted', 'Qabul qilingan'),
     ('given', 'Berib yuborilgan'),
-    ('waiting', 'Kutilmoqda'),
-    ('submitted', 'Topshirilgan'),
+    ('accepted', 'Qabul qilingan'),
+    ('submitted', 'Topshirilgan')
 )
 
 
@@ -146,7 +147,6 @@ class TIR(BaseModel):
         verbose_name = "TIR "
         verbose_name_plural = "TIRlar "
         ordering = ["-created_at"]
-
 
 
 class Company(BaseModel):
@@ -172,7 +172,6 @@ class Company(BaseModel):
 ##  Actions  ##
 ###############
 
-
 class Waybill(BaseModel):
     departure_date = models.DateField()
     arrival_date = models.DateField(null=True, blank=True)
@@ -182,7 +181,6 @@ class Waybill(BaseModel):
     trailer = models.ForeignKey(Trailer, on_delete=models.SET_NULL, null=True, blank=True)
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
 
-
     def __str__(self):
         return str(self.created_at)
 
@@ -190,6 +188,31 @@ class Waybill(BaseModel):
         verbose_name = "Putyovka "
         verbose_name_plural = "Putyovkalar "
         ordering = ['-created_at']
+
+
+class WaybillPayout(BaseModel):
+    waybill = models.ForeignKey(Waybill, on_delete=models.SET_NULL, null=True, blank=True)
+    amount = models.FloatField()
+    currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="USD")
+    description = models.TextField(null=True, blank=True)
+    date = models.DateField()
+
+    def __str__(self):
+        return str(self.waybill.departure_date)
+
+    class Meta:
+        verbose_name = "Haydochi yo'l puli "
+        verbose_name_plural = "Haydochi yo'l pullari "
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                prev = WaybillPayout.objects.get(pk=self.pk)
+
+            super().save(*args, **kwargs)
+
+
 
 
 class TIRRecord(BaseModel):
@@ -209,12 +232,10 @@ class TIRRecord(BaseModel):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-
             if self.creator.role == "CEO":
                 self.status = 'verified'
 
             super().save(*args, **kwargs)
-
 
 
 CONTRACT_STATUS = (
@@ -224,6 +245,7 @@ CONTRACT_STATUS = (
     ('accepted', 'Qabul qilingan'),
     ('given', 'Berib yuborilgan')
 )
+
 
 class ContractRecord(BaseModel):
     contract_number = models.CharField(max_length=50, verbose_name="Shartnoma raqami")
@@ -283,7 +305,7 @@ class ContractIncome(BaseModel):
     contract = models.ForeignKey(ContractRecord, on_delete=models.CASCADE)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
-    date = models.DateField()
+    date = models.DateField(null=True, blank=True)
     bank_name = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
@@ -294,6 +316,25 @@ class ContractIncome(BaseModel):
     def __str__(self):
         return self.contract.contract_number
 
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                prev = ContractIncome.objects.get(pk=self.pk)
+                ContractRecord.objects.filter(id=prev.contract).update(
+                    remaining=F("remaining") +
+                              convert_currency(prev.currency_type, prev.contract.currency_type, prev.amount),
+                )
+                User.objects.filter(id=prev.creator.id).update(
+                    balance=F("balance") -
+                            convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
+            super().save(*args, **kwargs)
+
+            ContractRecord.objects.filter(id=self.contract).update(
+                remaining=F('remaining') -
+                          convert_currency(self.currency_type, self.contract.currency_type, self.amount))
+            User.objects.filter(id=self.creator.id).update(
+                balance=F("balance") - convert_currency(self.currency_type, self.creator.currency_type, self.amount)
+            )
 
 
 class CarExpense(BaseModel):
@@ -304,16 +345,12 @@ class CarExpense(BaseModel):
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default='USD')
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="salary_payments_logistic")
+    date = models.DateField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Mashina harajati "
         verbose_name_plural = "Mashina harajatlari "
-        ordering = ['-created_at']
-
-    # def save(self, *args, **kwargs):
-    #     with transaction.atomic():
-    #
-    #         super().save(*args, **kwargs)
+        ordering = ['-date']
 
     def __str__(self):
         if self.car and self.trailer:
@@ -331,41 +368,6 @@ class CarExpense(BaseModel):
                 converted_amount = convert_currency(prev.currency_type, "UZS", prev.amount)
                 User.objects.filter(id=prev.creator.id).update(balance=F('balance') + converted_amount)
 
-                # old_amount = old_expense.amount
-                # if self.currency_type != old_expense.currency_type:
-                #     valid_currencies = ("USD", "UZS")
-                #     if old_expense.currency_type in valid_currencies and self.currency_type in valid_currencies:
-                #         old_amount = convert_currency(old_expense.currency_type, self.currency_type, old_amount)
-                # if self.amount != old_expense.amount:
-                #     if self.car:
-                #         self.car.landing += old_amount
-                #         self.car.save()
-                #     if self.trailer:
-                #         self.trailer.landing += old_amount
-                #         self.trailer.save()
-            # if self.car != old_expense.car:
-            #     raise ValidationError("It is not allowed to change car")
-            # if self.trailer != old_expense.trailer:
-            #     raise ValidationError("It is not allowed to change trailer")
-            # converted_amount = self.amount
-            # if self.car:
-            #     if self.car.currency_type == self.currency_type:
-            #         valid_currencies = ("USD", "UZS")
-            #         if self.car.currency_type in valid_currencies and self.currency_type in valid_currencies:
-            #             converted_amount = convert_currency(self.currency_type, self.car.currency_type, self.amount)
-            #         else:
-            #             raise ValidationError("Invalid currency type")
-            #     self.car.landing -= converted_amount
-            #     self.car.save()
-            # if self.trailer:
-            #     if self.trailer.currency_type == self.currency_type:
-            #         valid_currencies = ("USD", "UZS")
-            #         if self.trailer.currency_type in valid_currencies and self.currency_type in valid_currencies:
-            #             converted_amount = convert_currency(self.currency_type, self.trailer.currency_type, self.amount)
-            #         else:
-            #             raise ValidationError("Invalid currency type")
-            #     self.trailer.landing -= converted_amount
-            #     self.trailer.save()
             if self.creator.role == "CEO":
                 self.status = 'verified'
             super().save(*args, **kwargs)
@@ -379,6 +381,7 @@ class SalaryPayment(BaseModel):
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
+    date = models.DateField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Haydovchi maoshi "
@@ -406,7 +409,6 @@ class SalaryPayment(BaseModel):
 
             converted_amount = convert_currency(self.currency_type, "UZS", self.amount)
             User.objects.filter(id=self.creator.id).update(balance=F('balance') - converted_amount)
-
 
 #
 # TRANSIT_STATUS_CHOICES = (

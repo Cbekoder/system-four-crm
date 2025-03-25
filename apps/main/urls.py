@@ -4,10 +4,12 @@ from .views import (
     GetMoneyListCreateView, MoneyCirculationsRetrieveUpdateDestroyView, GeneralExpenseRetrieveUpdateDestroyView,
     GeneralExpenseListCreateView, GeneralIncomeListCreateView, GeneralIncomeRetrieveUpdateDestroyView,
     DailyRemainderView, TransactionToAdminListCreateView, TransactionToAdminDetailView,
-    TransactionToSectionListCreateView, TransactionToSectionDetailView
+    TransactionToSectionListCreateView, TransactionToSectionDetailView, CurrencyRateListCreateView
 )
 
 urlpatterns = [
+    path('currency-rates/', CurrencyRateListCreateView.as_view(), name='currency-rate-list'),
+
     path('acquaintances/', AcquaintanceListCreateView.as_view(), name='acquaintance-list-create'),
     path('acquaintances/<int:pk>/', AcquaintanceRetrieveUpdateDestroyView.as_view(), name='acquaintance-detail'),
 

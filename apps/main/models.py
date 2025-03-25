@@ -10,6 +10,8 @@ from apps.users.models import User
 class CurrencyRate(BaseModel):
     usd = models.FloatField()
     rub = models.FloatField()
+    updated_at = None
+    status = None
 
     def __str__(self):
         return str(self.created_at)
@@ -17,6 +19,7 @@ class CurrencyRate(BaseModel):
     class Meta:
         verbose_name = "Valyutalar kursi "
         verbose_name_plural = "Valyutalar kurslari "
+        ordering = ['-created_at']
 
 
     def save(self, *args, **kwargs):
