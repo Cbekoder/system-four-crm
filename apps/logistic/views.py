@@ -27,6 +27,8 @@ from .serializers import (
 )
 from apps.users.permissions import IsLogisticAdmin, IsCEO
 from apps.main.models import Expense, Income
+from ..common.utils import convert_currency
+from ..main.serializers import TransactionHistorySerializer
 
 
 # Driver views
@@ -662,12 +664,41 @@ class LogisticSummaryAPIView(APIView):
         for waybill_payout in waybill_payouts:
             total_outcome += waybill_payout.amount
             outcomes_list.append({
-                'id': waybill_payout.id,
-                'date': waybill_payout.date,
-                'description': waybill_payout.description,
+                'id': f"WB{waybill_payout.id}",
+                'reason': f"{waybill_payout.waybill.id} рақамидаги путёвка учун йўл ҳақи тўлови",
                 'amount': waybill_payout.amount,
                 'currency_type': waybill_payout.currency_type,
-                'waybill': waybill_payout.waybill.id
+                'date': waybill_payout.date,
+            })
+
+        for car_expense in car_expenses:
+            total_outcome += car_expense.amount
+            outcomes_list.append({
+                'id': f"CE{car_expense.id}",
+                'reason': f"{car_expense.car.state_number+" |" if car_expense.car is not None else ''}{car_expense.trailer.state_number if car_expense.trailer is not None else ''} учун ҳаражат.",
+                'amount': car_expense.amount,
+                'currency_type': car_expense.currency_type,
+                'date': car_expense.date,
+            })
+
+        for salary_payment in salary_payment:
+            total_outcome += salary_payment.amount
+            outcomes_list.append({
+                'id': f"SP{salary_payment.id}",
+                'reason': f"{salary_payment.driver.full_name}га маош учун.",
+                'amount': salary_payment.amount,
+                'currency_type': salary_payment.currency_type,
+                'date': salary_payment.date,
+            })
+
+        for expense in expense:
+            total_outcome += expense.amount
+            outcomes_list.append({
+                'id': f"EX{expense.id}",
+                'reason': expense.reason,
+                'amount': expense.amount,
+                'currency_type': expense.currency_type,
+                'date': expense.created_at.strftime('%Y-%m-%d'),
             })
 
         # income: ContractIncome, Income
@@ -676,6 +707,41 @@ class LogisticSummaryAPIView(APIView):
 
         contract_income = ContractIncome.objects.filter(date__range=[start_date, end_date])
         income = Income.objects.filter(section='logistic', created_at__range=[start_date, end_date])
+
+        for contract_income in contract_income:
+            total_income += contract_income.amount
+            incomes_list.append({
+                'id': f"CI{contract_income.id}",
+                'reason': f"{contract_income.contract.contract_number} рақамли шартнома пули тўланди.",
+                'amount': contract_income.amount,
+                'currency_type': contract_income.currency_type,
+                'date': contract_income.date,
+            })
+
+        for income in income:
+            total_income += income.amount
+            incomes_list.append({
+                'id': f"IN{income.id}",
+                'reason': income.reason,
+                'amount': income.amount,
+                'currency_type': income.currency_type,
+                'date': income.created_at,
+            })
+
+
+        return Response({
+            'start_date': start_date_str,
+            'end_date': end_date_str,
+            'balance': {
+                'uzs': convert_currency(request.user.currency_type, "UZS", request.user.balance),
+                'usd': convert_currency(request.user.currency_type, "USD", request.user.balance),
+                'rub': convert_currency(request.user.currency_type, "RUB", request.user.balance)
+            },
+            'total_income': total_income,
+            'total_outcome': total_outcome,
+            'incomes': TransactionHistorySerializer(incomes_list, many=True).data,
+            'outcomes': TransactionHistorySerializer(outcomes_list, many=True).data,
+        })
 
 
 

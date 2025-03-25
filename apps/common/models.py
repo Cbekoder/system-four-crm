@@ -1,4 +1,5 @@
-from django.db import models
+from django.core.cache import cache
+from django.db import models, transaction
 
 from apps.users.models import User
 
@@ -41,6 +42,30 @@ class BaseModel(models.Model):
             update_fields.append("updated_at")
 
         super().save(force_insert, force_update, using, update_fields)
+
+
+class CurrencyRate(BaseModel):
+    usd = models.FloatField()
+    rub = models.FloatField()
+    updated_at = None
+    status = None
+
+    def __str__(self):
+        return str(self.created_at)
+
+    class Meta:
+        verbose_name = "Valyutalar kursi "
+        verbose_name_plural = "Valyutalar kurslari "
+        ordering = ['-created_at']
+
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+
+            cache.set("UZS_rate", self.usd)
+            cache.set("RUB_rate", round(self.usd / self.rub, 2))
+            print(cache.get("RUB_rate"))
 
 
 class BasePerson(BaseModel):

@@ -49,7 +49,7 @@ def calculate_remainder(date, user):
     remainder = 0
     incomes = [
         Sale.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day)),
-        TransitIncome.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day)),
+        # TransitIncome.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day)),
         Income.objects.filter(user=user, created_at__range=(start_of_day, end_of_day)),
         MoneyCirculation.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day), type='get')
     ]
@@ -58,7 +58,7 @@ def calculate_remainder(date, user):
         CarExpense.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day)),
         GardenSalaryPayment.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day)),
         LogisticSalaryPayment.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day)),
-        TransitExpense.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day)),
+        # TransitExpense.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day)),
         Expense.objects.filter(user=user, created_at__range=(start_of_day, end_of_day)),
         MoneyCirculation.objects.filter(creator__in=user, created_at__range=(start_of_day, end_of_day), type='give'),
     ]
@@ -180,34 +180,34 @@ def verification_transaction():
 
 
 
-    transit_expenses = TransitExpense.objects.filter(creator__role="admin", status="new").select_related('creator')
-    for obj in transit_expenses:
-        unique_id = f"LO-TE-{obj.id}"
-        transactions.append({
-            "unique_id": unique_id,
-            "creator": str(obj.creator.get_full_name()),
-            "section": "Логистика",
-            "description": getattr(obj, 'description', 'No description'),
-            "amount": float(getattr(obj, 'amount', 0.0)),
-            "currency_type": getattr(obj, 'currency_type', 'UZS'),
-            "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
-            "created_at": obj.created_at,
-        })
+    # transit_expenses = TransitExpense.objects.filter(creator__role="admin", status="new").select_related('creator')
+    # for obj in transit_expenses:
+    #     unique_id = f"LO-TE-{obj.id}"
+    #     transactions.append({
+    #         "unique_id": unique_id,
+    #         "creator": str(obj.creator.get_full_name()),
+    #         "section": "Логистика",
+    #         "description": getattr(obj, 'description', 'No description'),
+    #         "amount": float(getattr(obj, 'amount', 0.0)),
+    #         "currency_type": getattr(obj, 'currency_type', 'UZS'),
+    #         "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
+    #         "created_at": obj.created_at,
+    #     })
 
 
-    transit_incomes = TransitIncome.objects.filter(creator__role="admin", status="new").select_related('creator')
-    for obj in transit_incomes:
-        unique_id = f"LO-TI-{obj.id}"
-        transactions.append({
-            "unique_id": unique_id,
-            "creator": str(obj.creator.get_full_name()),
-            "section": "Логистика",
-            "description": getattr(obj, 'description', 'No description'),
-            "amount": float(getattr(obj, 'amount', 0.0)),
-            "currency_type": getattr(obj, 'currency_type', 'UZS'),
-            "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
-            "created_at": obj.created_at,
-        })
+    # transit_incomes = TransitIncome.objects.filter(creator__role="admin", status="new").select_related('creator')
+    # for obj in transit_incomes:
+    #     unique_id = f"LO-TI-{obj.id}"
+    #     transactions.append({
+    #         "unique_id": unique_id,
+    #         "creator": str(obj.creator.get_full_name()),
+    #         "section": "Логистика",
+    #         "description": getattr(obj, 'description', 'No description'),
+    #         "amount": float(getattr(obj, 'amount', 0.0)),
+    #         "currency_type": getattr(obj, 'currency_type', 'UZS'),
+    #         "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
+    #         "created_at": obj.created_at,
+    #     })
 
     ######## Main ############
 
@@ -255,7 +255,7 @@ def verify_transaction(unique_id, action):
         "FA": {"RM": RawMaterialHistory, "SP": WorkerSalaryPayment, "SL": Sale},
         # "FR": {"ST": "Storage"},
         "GA": {"SP": GardenSalaryPayment},
-        "LO": {"CE": CarExpense, "SP": LogisticSalaryPayment, "TE": TransitExpense, "TI": TransitIncome},
+        # "LO": {"CE": CarExpense, "SP": LogisticSalaryPayment, "TE": TransitExpense, "TI": TransitIncome},
         "MA": {"EX": Expense, "IN": Income},
     }
 
@@ -387,32 +387,32 @@ def get_summary(start_date, end_date, user:list):
 
 
 
-    transit_expenses = TransitExpense.objects.filter(creator__in=user, created_at__range=(start_date, end_date))
-    for obj in transit_expenses:
-        unique_id = f"LO-TE-{obj.id}"
-        transactions["outcome"].append({
-            "unique_id": unique_id,
-            "section": "Логистика",
-            "description": getattr(obj, 'description', 'No description'),
-            "amount": float(getattr(obj, 'amount', 0.0)),
-            "currency_type": getattr(obj, 'currency_type', 'UZS'),
-            "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
-            "created_at": obj.created_at,
-        })
-
-
-    transit_incomes = TransitIncome.objects.filter(creator__in=user, created_at__range=(start_date, end_date))
-    for obj in transit_incomes:
-        unique_id = f"LO-TI-{obj.id}"
-        transactions["income"].append({
-            "unique_id": unique_id,
-            "section": "Логистика",
-            "description": getattr(obj, 'description', 'No description'),
-            "amount": float(getattr(obj, 'amount', 0.0)),
-            "currency_type": getattr(obj, 'currency_type', 'UZS'),
-            "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
-            "created_at": obj.created_at,
-        })
+    # transit_expenses = TransitExpense.objects.filter(creator__in=user, created_at__range=(start_date, end_date))
+    # for obj in transit_expenses:
+    #     unique_id = f"LO-TE-{obj.id}"
+    #     transactions["outcome"].append({
+    #         "unique_id": unique_id,
+    #         "section": "Логистика",
+    #         "description": getattr(obj, 'description', 'No description'),
+    #         "amount": float(getattr(obj, 'amount', 0.0)),
+    #         "currency_type": getattr(obj, 'currency_type', 'UZS'),
+    #         "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
+    #         "created_at": obj.created_at,
+    #     })
+    #
+    #
+    # transit_incomes = TransitIncome.objects.filter(creator__in=user, created_at__range=(start_date, end_date))
+    # for obj in transit_incomes:
+    #     unique_id = f"LO-TI-{obj.id}"
+    #     transactions["income"].append({
+    #         "unique_id": unique_id,
+    #         "section": "Логистика",
+    #         "description": getattr(obj, 'description', 'No description'),
+    #         "amount": float(getattr(obj, 'amount', 0.0)),
+    #         "currency_type": getattr(obj, 'currency_type', 'UZS'),
+    #         "updated_at": obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at,
+    #         "created_at": obj.created_at,
+    #     })
 
     ######## Main ############
 

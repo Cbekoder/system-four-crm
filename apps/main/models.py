@@ -7,29 +7,6 @@ from apps.common.models import BaseModel, SECTION_CHOICES, BasePerson, CURRENCY_
 from apps.common.utils import convert_currency
 from apps.users.models import User
 
-class CurrencyRate(BaseModel):
-    usd = models.FloatField()
-    rub = models.FloatField()
-    updated_at = None
-    status = None
-
-    def __str__(self):
-        return str(self.created_at)
-
-    class Meta:
-        verbose_name = "Valyutalar kursi "
-        verbose_name_plural = "Valyutalar kurslari "
-        ordering = ['-created_at']
-
-
-    def save(self, *args, **kwargs):
-        with transaction.atomic():
-            super().save(*args, **kwargs)
-
-            cache.set("UZS_rate", self.usd)
-            cache.set("RUB_rate", round(self.usd / self.rub, 2))
-            print(cache.get("RUB_rate"))
-
 
 class Expense(BaseModel):
     reason = models.CharField(max_length=100)

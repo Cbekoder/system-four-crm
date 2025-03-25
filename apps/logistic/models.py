@@ -195,7 +195,7 @@ class WaybillPayout(BaseModel):
     amount = models.FloatField()
     currency_type = models.CharField(max_length=10, choices=CURRENCY_TYPE, default="USD")
     description = models.TextField(null=True, blank=True)
-    date = models.DateField()
+    date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return str(self.waybill.departure_date)

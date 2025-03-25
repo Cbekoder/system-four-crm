@@ -3,13 +3,16 @@ from rest_framework import serializers
 from tutorial.quickstart.serializers import UserSerializer
 
 from .models import Acquaintance, MoneyCirculation, Income, Expense, DailyRemainder, TransactionToAdmin, \
-    TransactionToSection, CurrencyRate
+    TransactionToSection
+
+from apps.common.models import CurrencyRate
 from apps.users.serializers import UserDetailSerializer
 
 class CurrencyRateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyRate
         fields = '__all__'
+        read_only_fields = ('id', 'creator')
 
 class AcquaintanceSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -97,6 +100,13 @@ class DailyRemainderSerializer(ModelSerializer):
 
 
 ################################
+
+class TransactionHistorySerializer(serializers.Serializer):
+    id = serializers.CharField()
+    reason = serializers.CharField()
+    amount = serializers.FloatField()
+    currency_type = serializers.CharField()
+    date = serializers.DateTimeField()
 
 class MixedDataSerializer(Serializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)

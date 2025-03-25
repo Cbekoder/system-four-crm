@@ -14,7 +14,7 @@ from .views import (
     TIRListCreateView, TIRDetailView, TIRRecordListCreateView, TIRRecordDetailView,
     CompanyListCreateView, CompanyDetailView, WaybillListCreateView, WaybillDetailView, ContractRecordListCreateView,
     ContractRecordDetailView, ContractIncomeListCreateView, ContractIncomeRetrieveUpdateDestroyView,
-    WaybillPayoutListCreateView, WaybillPayoutRetrieveUpdateDestroyView
+    WaybillPayoutListCreateView, WaybillPayoutRetrieveUpdateDestroyView, LogisticSummaryAPIView
 )
 
 urlpatterns = [
@@ -71,15 +71,6 @@ urlpatterns = [
     path('salary-payments/', SalaryPaymentListCreateView.as_view(), name='salary-payment-list-create'),
     path('salary-payments/<int:pk>/', SalaryPaymentRetrieveUpdateDestroyView.as_view(), name='salary-payment-detail'),
 
-    # # Transit URLs
-    # path('transits/', TransitListCreateView.as_view(), name='transit-list-create'),
-    # path('transits/<int:pk>/', TransitRetrieveUpdateDestroyView.as_view(), name='transit-detail'),
-    #
-    # # TransitExpenses URLs
-    # path('transit-expenses/', TransitExpenseListCreateView.as_view(), name='transit-expenses-list-create'),
-    # path('transit-expenses/<int:pk>/', TransitExpenseRetrieveUpdateDestroyView.as_view(), name='transit-expenses-detail'),
-    #
-    # # TransitIncome URLs
-    # path('transit-incomes/', TransitIncomeListCreateView.as_view(), name='transit-income-list-create'),
-    # path('transit-incomes/<int:pk>/', TransitIncomeRetrieveUpdateDestroyView.as_view(), name='transit-income-detail'),
+    # Summary URLs
+    path('summary/', LogisticSummaryAPIView.as_view(), name='logistic-summary'),
 ]

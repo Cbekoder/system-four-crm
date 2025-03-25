@@ -13,7 +13,8 @@ from datetime import timedelta
 from rest_framework.response import Response
 from apps.users.permissions import IsCEO, IsAdmin
 from .models import Acquaintance, MoneyCirculation, Expense, Income, DailyRemainder, TransactionToAdmin, \
-    TransactionToSection, CurrencyRate
+    TransactionToSection
+from apps.common.models import CurrencyRate
 from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, MoneyCirculationSerializer, \
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer, \
     TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer, TransactionToAdminSerializer, \
