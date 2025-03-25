@@ -25,6 +25,9 @@ urlpatterns = [
     path('raw-material-history/', RawMaterialHistoryListCreateView.as_view()),
     path('raw-materials-history/<int:pk>/', RawMaterialHistoryRetrieveUpdateDestroyView.as_view()),
 
+    path('suppliers/', SupplierListCreateView.as_view()),
+    path('suppliers/<int:pk>/', SupplierRetrieveUpdateDestroyView.as_view()),
+
     #Urls for Clients
     path('clients/', ClientListCreateView.as_view()),
     path('clients/<int:pk>/', ClientRetrieveUpdateDestroyView.as_view()),

@@ -1,11 +1,9 @@
 from datetime import timedelta
-
 from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import *
 from rest_framework.response import Response
-
 from .serializers import *
 from apps.users.permissions import IsFactoryAdmin, IsCEO
 from apps.main.models import Expense, Income
@@ -41,6 +39,8 @@ class BasketListCreateView(ListCreateAPIView):
     queryset = Basket.objects.all()
     permission_classes = [IsFactoryAdmin | IsCEO]
 
+    
+
 class BasketRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = BasketSerializer
     queryset = Basket.objects.all()
@@ -53,6 +53,7 @@ class DailyWorkListCreateView(ListCreateAPIView):
     ordering_fields = ['created_at', 'worker']
     search_fields = ['worker__first_name', 'worker__last_name', 'worker__phone_number']
     permission_classes = [IsFactoryAdmin | IsCEO]
+
 
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
@@ -112,10 +113,24 @@ class DailyWorkRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
             return UserDailyWorkDetailSerializer
         return UserDailyWorkCreateSerializer
 
+class SupplierListCreateView(ListCreateAPIView):
+    serializer_class = SupplierSerializer
+    queryset = Supplier.objects.all()
+    permission_classes = [IsFactoryAdmin, IsCEO]
+
+
+class SupplierRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    serializer_class = SupplierSerializer
+    queryset = Supplier.objects.all()
+    permission_classes = [IsFactoryAdmin, IsCEO]
+
+
 class RawMaterialListCreateView(ListCreateAPIView):
     serializer_class = RawMaterialSerializer
     queryset = RawMaterial.objects.all()
     permission_classes = [IsFactoryAdmin | IsCEO]
+
+    
 
 
 class RawMaterialRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -396,7 +411,7 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
     queryset = SalaryPayment.objects.all()
     permission_classes = [IsFactoryAdmin | IsCEO]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    ordering_fields = ['created_at', 'worker__balance','amount']
+    ordering_fields = ['worker', 'worker__balance','amount']
     searching_fields=['worker__first_name','worker__last_name','worker__phone_number']
 
     def get_serializer_class(self):
@@ -507,14 +522,11 @@ class FactorySummaryView(ListAPIView):
                 type=openapi.TYPE_STRING,
                 format=openapi.FORMAT_DATE
             ),
-            openapi.Parameter(
-                'section', openapi.IN_QUERY,
-                description="Bo‘lim nomi",
-                type=openapi.TYPE_STRING,
-                required=True
-            ),
+
         ]
     )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
 
@@ -541,16 +553,22 @@ class FactorySummaryView(ListAPIView):
 
         incomes=Income.objects.filter(section=section, created_at__range=[start_date, end_date])
         expenses=Expense.objects.filter(section=section, created_at__range=[start_date, end_date])
+        salary_payments=SalaryPayment.objects.filter( created_at__range=[start_date, end_date])
+        sales=Sale.objects.filter( date__range=[start_date, end_date])
+        raw_material_histories=RawMaterialHistory.objects.filter( date__range=[start_date, end_date])
+        incomes=IncomeSummarySerializer(incomes, many=True).data+SaleSummarySerializer(sales, many=True).data
+        expenses=ExpenseSummarySerializer(expenses, many=True).data+SalaryPaymentSummarySerializer(salary_payments, many=True).data+RawMaterialHistorySummarySerializer(raw_material_histories, many=True).data
+
 
         return Response({
             'start_date': start_date,
             'end_date': end_date,
-            "remainder": income_total - expense_total,
+            "remainder": self.request.user.balance,
             "section": section,
             "income_total": income_total,
             "expense_total": expense_total,
-            "incomes": IncomeSerializer(incomes, many=True).data,
-            "expenses": ExpenseSerializer(expenses, many=True).data,
+            "incomes": incomes,
+            "expenses": expenses
         })
 
 

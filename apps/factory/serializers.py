@@ -39,7 +39,7 @@ class SupplierSerializer(ModelSerializer):
 
     class Meta:
         model = Supplier
-        fields = ['id', 'name', 'phone_number']
+        fields = ['id', 'name', 'phone_number', 'extra_phone_number', 'description', 'created_at', 'updated_at']
 
 ##################################
 ####### User Daily work ##########
@@ -208,26 +208,26 @@ class SaleItemSerializer(ModelSerializer):
         model = SaleItem
         fields = ['id', 'basket', 'quantity','amount']
 
-    def create(self, validated_data):
-        request = self.context.get('request')
-
-        sale_items_data = validated_data.pop('sale_items', [])
-        sale = Sale.objects.create(**validated_data)
-
-        for item_data in sale_items_data:
-            SaleItem.objects.create(sale=sale, **item_data)
-
-        # Daromadni yaratish
-        Income.objects.create(
-            reason=f"Korzinka sotuvi | {sale.client.first_name} {sale.client.last_name if sale.client else ''}",
-            description=sale.description,
-            amount=sale.amount,
-            currency_type=sale.currency_type,
-            section="factory",
-            user=request.user if request else None
-        )
-
-        return sale
+    # def create(self, validated_data):
+    #     request = self.context.get('request')
+    #
+    #     sale_items_data = validated_data.pop('sale_items', [])
+    #     sale = Sale.objects.create(**validated_data)
+    #
+    #     for item_data in sale_items_data:
+    #         SaleItem.objects.create(sale=sale, **item_data)
+    #
+    #     # Daromadni yaratish
+    #     Income.objects.create(
+    #         reason=f"Korzinka sotuvi | {sale.client.first_name} {sale.client.last_name if sale.client else ''}",
+    #         description=sale.description,
+    #         amount=sale.amount,
+    #         currency_type=sale.currency_type,
+    #         section="factory",
+    #         user=request.user if request else None
+    #     )
+    #
+    #     return sale
 
 
 class SaleSerializer(ModelSerializer):
@@ -269,7 +269,7 @@ class SaleGetSerializer(ModelSerializer):
 
     class Meta:
         model = Sale
-        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'date', 'sale_items','created_at', 'updated_at']
+        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'date', 'total_quantity','sale_items','created_at', 'updated_at']
 
     def get_client(self, obj):
         if obj.client:
@@ -325,3 +325,54 @@ class RawMaterialUsageSerializer(ModelSerializer):
     class Meta:
         model = RawMaterialUsage
         fields = ['id', 'raw_material', 'amount', 'date']
+
+
+#Serializers for summary
+
+
+class SaleSummarySerializer(ModelSerializer):
+    amount = CharField(source='total_amount')
+    reason = SerializerMethodField()
+
+    class Meta:
+        model = Sale
+        fields = ['id', 'description', 'reason', 'amount', 'date']
+
+    def get_reason(self, obj):
+        return f"{obj.client.first_name} {obj.client.last_name}ga {obj.total_quantity} ta savat sotildi"
+
+
+class RawMaterialHistorySummarySerializer(ModelSerializer):
+    reason=SerializerMethodField()
+    class Meta:
+        model = RawMaterialHistory
+        fields = ['id','description','reason', 'amount', 'date']
+
+    def get_reason(self, obj):
+        return f"{obj.raw_material.name} xomashyosi otib olindi"
+
+class DailyWorkSummarySerializer(ModelSerializer):
+    class Meta:
+        model = UserDailyWork
+        fields = ['id', 'description','reason', 'amount', 'date']
+
+class SalaryPaymentSummarySerializer(ModelSerializer):
+    reason=SerializerMethodField()
+    class Meta:
+        model = SalaryPayment
+        fields = ['id', 'description', 'reason','amount', 'date']
+
+    def get_reason(self,obj):
+        return f"{obj.worker.first_name} {obj.worker.last_name}ga {obj.amount} miqdorda maosh berildi"
+
+class ExpenseSummarySerializer(ModelSerializer):
+    date=DateTimeField(format="%d.%m.%Y", source='created_at')
+    class Meta:
+        model = Expense
+        fields = ['id', 'description', 'reason','amount', 'date']
+
+class IncomeSummarySerializer(ModelSerializer):
+    date=DateTimeField(format="%d.%m.%Y", source='created_at')
+    class Meta:
+        model = Income
+        fields = ['id', 'description', 'reason','amount', 'date']

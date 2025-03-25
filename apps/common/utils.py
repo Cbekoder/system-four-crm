@@ -5,7 +5,7 @@ from apps.common.services.logging import Telegram
 
 exchange_rates = {
     'USD': 1.0,
-    'UZS': cache.get("UZS_rate"),
+    'UZS': 1300.0,
     'RUB': cache.get("RUB_rate")
 }
 

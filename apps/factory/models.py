@@ -75,8 +75,10 @@ class UserBasketCount(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            raw_material = RawMaterial.objects.all().last()
+            raw_material = RawMaterial.objects.all().first()
             print(raw_material)
+            print(raw_material.weight)
+            print(11)
             if self.pk:
                 prev = UserBasketCount.objects.get(pk=self.pk)
 
@@ -110,8 +112,10 @@ class UserBasketCount(models.Model):
             self.user_daily_work.save(update_fields=['amount'])
             self.user_daily_work.refresh_from_db()
 
+            print(((self.basket.weight)/1000)*self.quantity)
             raw_material.weight-=((self.basket.weight)/1000)*self.quantity
             raw_material.save(update_fields=['weight'])
+            print(raw_material.weight)
 
 
     def delete(self, *args, **kwargs):
@@ -124,7 +128,7 @@ class UserBasketCount(models.Model):
 
             self.user_daily_work.amount = F('amount') - (self.quantity * self.basket.per_worker_fee)
             self.user_daily_work.save(update_fields=['amount'])
-            raw_material = RawMaterial.objects.all().last()
+            raw_material = RawMaterial.objects.all().first()
 
             raw_material.weight += ((self.basket.weight) / 1000) * self.quantity
             raw_material.save(update_fields=['weight'])
@@ -135,8 +139,6 @@ class UserBasketCount(models.Model):
 class RawMaterial(BaseModel):
     name = models.CharField(max_length=100)
     weight = models.FloatField()
-    price = models.FloatField()
-    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
     description = models.TextField(null=True, blank=True)
     creator = None
 
@@ -151,6 +153,8 @@ class RawMaterial(BaseModel):
 class Supplier(BaseModel):
     name = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
+    extra_phone_number = models.CharField(max_length=15, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     creator = None
 
     class Meta:
@@ -162,7 +166,7 @@ class Supplier(BaseModel):
         return self.name
 
 class RawMaterialHistory(BaseModel):
-    supplier = models.CharField(max_length=100, null=True, blank=True)
+    supplier = models.ForeignKey(Supplier,on_delete=models.SET_NULL, null=True,blank=True)
     raw_material = models.ForeignKey(RawMaterial, on_delete=models.CASCADE)
     weight = models.FloatField(default=0)
     amount = models.FloatField(default=0)
@@ -182,7 +186,15 @@ class RawMaterialHistory(BaseModel):
                 prev.raw_material.weight = F('weight') - prev.weight
                 prev.raw_material.save(update_fields=['weight'])
                 prev.raw_material.refresh_from_db()
+                if prev.raw_material.currency_type != prev.currency_type:
+                    prev.amount = convert_currency(prev.currency_type, prev.raw_material.currency_type, prev.amount)
+                if prev.currency_type!=User.objects.filter(id=self.creator.id).currency_type:
+                    amount = convert_currency(prev.currency_type, User.objects.filter(id=self.creator.id).currency_type, prev.amount)
+                    User.objects.filter(id=self.creator.id).update(balance=F('balance') + amount)
+                else:
+                    User.objects.filter(id=self.creator.id).update(balance=F('balance') + prev.amount)
 
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') - amount)
             # if self.raw_material.currency_type != self.currency_type:
             #     self.amount = convert_currency(self.raw_material.currency_type, self.currency_type, self.amount)
 
@@ -222,6 +234,7 @@ class RawMaterialUsage(BaseModel):
             self.raw_material.weight = F('weight') - self.amount
             self.raw_material.save(update_fields=['weight'])
             self.raw_material.refresh_from_db()
+
 
             super().save(*args, **kwargs)
 
@@ -364,11 +377,15 @@ class Sale(BaseModel):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Sotuv #{self.pk} | {self.client.name if self.client else 'Noma’lum'}"
+        return f"Sotuv #{self.pk} | {self.client.first_name if self.client else 'Noma’lum'}"
 
     @property
     def total_amount(self):
         return sum(item.amount for item in self.sale_items.all())
+
+    @property
+    def total_quantity(self):
+        return sum(item.quantity for item in self.sale_items.all())
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -382,10 +399,7 @@ class Sale(BaseModel):
                     item.delete()
             super().save(*args, **kwargs)
             self.refresh_from_db()
-            if self.is_debt and self.client:
-                self.client.debt = F('debt') + self.total_amount
-                self.client.save(update_fields=['debt'])
-            print(self.total_amount)
+
 
 
 
@@ -414,6 +428,9 @@ class SaleItem(models.Model):
                 prev.basket.quantity = F('quantity') + prev_quantity
                 prev.basket.save(update_fields=['quantity'])
                 prev.basket.refresh_from_db()
+                if self.sale.is_debt and self.sale.client:
+                    self.sale.client.debt = F('debt') - self.amount
+                    self.sale.client.save(update_fields=['debt'])
             else:
                 prev_quantity = 0
 
@@ -424,6 +441,9 @@ class SaleItem(models.Model):
             self.basket.quantity = F('quantity') - quantity_diff
             self.basket.save(update_fields=['quantity'])
             self.basket.refresh_from_db()
+            if self.sale.is_debt and self.sale.client:
+                self.sale.client.debt = F('debt') + self.amount
+                self.sale.client.save(update_fields=['debt'])
 
             super().save(*args, **kwargs)
 
@@ -432,6 +452,9 @@ class SaleItem(models.Model):
             self.basket.quantity = F('quantity') + self.quantity
             self.basket.save(update_fields=['quantity'])
             super().delete(*args, **kwargs)
+            if self.sale.is_debt and self.sale.client:
+                self.sale.client.debt = F('debt') - self.amount
+                self.sale.client.save(update_fields=['debt'])
 
     def __str__(self):
         return f"{self.sale.client.name if self.sale.client else 'Noma’lum'} - {self.basket.name}"
@@ -478,6 +501,7 @@ class SalaryPayment(BaseModel):
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
     description = models.TextField(null=True, blank=True)
     creator=models.ForeignKey(User, on_delete=models.CASCADE,related_name="salary_payments_factory")
+    date=models.DateField(auto_now=True)
 
     class Meta:
         verbose_name = "Oylik maosh "
@@ -493,6 +517,7 @@ class SalaryPayment(BaseModel):
             prev=SalaryPayment.objects.get(pk=self.pk)
             if prev.currency_type != self.worker.currency_type:
                 prev.amount = convert_currency(prev.currency_type, self.worker.currency_type, prev.amount)
+
             self.worker.balance+=prev.amount
             old_expense = SalaryPayment.objects.get(id=self.pk)
 
@@ -502,13 +527,15 @@ class SalaryPayment(BaseModel):
             amount = convert_currency(self.currency_type, self.worker.currency_type, self.amount)
             self.worker.balance-=amount
             self.worker.save()
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') - amount)
         else:
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') - self.amount)
             self.worker.balance -= self.amount
             self.worker.save()
 
         super().save(*args, **kwargs)
 
-        User.objects.filter(id=self.creator.id).update(balance=F('balance') - self.amount)
+
 
     def delete(self, *args, **kwargs):
         if self.worker.currency_type != self.currency_type:
@@ -516,7 +543,9 @@ class SalaryPayment(BaseModel):
             amount = convert_currency(self.currency_type, self.worker.currency_type, self.amount)
             self.worker.balance += amount
             self.worker.save()
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') + amount)
         else:
+            User.objects.filter(id=self.creator.id).update(balance=F('balance') + self.amount)
             self.worker.balance += self.amount
             self.worker.save()
 
@@ -524,4 +553,3 @@ class SalaryPayment(BaseModel):
 
         super().delete(*args, **kwargs)
 
-        User.objects.filter(id=self.creator.id).update(balance=F('balance') + self.amount)
