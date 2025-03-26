@@ -109,7 +109,7 @@ class Trailer(BaseModel):
     dimensions = models.CharField(max_length=50, null=True, blank=True)
     capacity = models.FloatField(null=True, blank=True)
     axle_count = models.PositiveSmallIntegerField(null=True, blank=True)
-    year = models.CharField(max_length=4)
+    year = models.CharField(max_length=4, null=True, blank=True)
     color = models.CharField(max_length=20, null=True, blank=True)
     tech_passport = models.CharField(max_length=20, null=True, blank=True, unique=True)
     car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=True)
