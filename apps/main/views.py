@@ -18,7 +18,7 @@ from apps.common.models import CurrencyRate
 from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, MoneyCirculationSerializer, \
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer, \
     TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer, TransactionToAdminSerializer, \
-    TransactionToAdminCreateSerializer, TransactionToSectionSerializer, TransactionToSectionCreateSerializer, \
+    TransactionToAdminCreateSerializer, TransactionToSectionSerializer, \
     CurrencyRateSerializer, TransactionHistorySerializer
 from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction, get_summary
 from apps.common.utils import convert_currency
@@ -309,10 +309,11 @@ class TransactionToAdminDetailView(RetrieveUpdateDestroyAPIView):
 
 
 class TransactionToSectionListCreateView(ListCreateAPIView):
-    permission_classes = [IsCEO]
+    serializer_class = TransactionToSectionSerializer
+    permission_classes = [IsCEO | IsAdmin]
 
     def get_queryset(self):
-        queryset = TransactionToSection.objects.all()
+        queryset = TransactionToSection.objects.filter(type='give')
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
@@ -335,28 +336,86 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
                 description="End date for filtering (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
             ),
+            openapi.Parameter(
+                'section', openapi.IN_QUERY,
+                description="Section to filter by. Options: 'logistic', 'fridge', 'garden', 'factory'",
+                type=openapi.TYPE_STRING,
+                enum=['logistic', 'fridge', 'garden', 'factory']
+            ),
         ]
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    # def perform_create(self, serializer):
-    #     serializer.save(creator=self.request.user)
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return TransactionToSectionSerializer
-        return TransactionToSectionCreateSerializer
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
 
 class TransactionToSectionDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = TransactionToSection.objects.all()
-    permission_classes = [IsCEO]
 
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return TransactionToSectionSerializer
-        return TransactionToSectionCreateSerializer
+    serializer_class = TransactionToSectionSerializer
+    permission_classes = [IsCEO | IsAdmin]
+
+    def get_queryset(self):
+        queryset = TransactionToSection.objects.filter(type='give')
+        return queryset
+
+
+class TransactionFromSectionListCreateView(ListCreateAPIView):
+    serializer_class = TransactionToSectionSerializer
+    permission_classes = [IsCEO | IsAdmin]
+
+    def get_queryset(self):
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        section = self.request.query_params.get('section')
+
+        queryset = TransactionToSection.objects.filter(type='get', section=section)
+
+        if start_date:
+            queryset = queryset.filter(created_at__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(created_at__date__lte=end_date)
+
+        return queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'section', openapi.IN_QUERY,
+                description="Section to filter by. Options: 'logistic', 'fridge', 'garden', 'factory'",
+                type=openapi.TYPE_STRING,
+                enum=['logistic', 'fridge', 'garden', 'factory'],
+                required=True
+            ),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+
+class TransactionFromSectionDetailView(RetrieveUpdateDestroyAPIView):
+    serializer_class = TransactionToSectionSerializer
+    permission_classes = [IsCEO | IsAdmin]
+
+    def get_queryset(self):
+        queryset = TransactionToSection.objects.filter(type='get')
+        return queryset
+
+
 
 
 class DailyRemainderView(ListAPIView):

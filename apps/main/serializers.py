@@ -78,18 +78,9 @@ class TransactionToAdminCreateSerializer(ModelSerializer):
 
 
 class TransactionToSectionSerializer(ModelSerializer):
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = TransactionToSection
-        fields = '__all__'
-
-
-class TransactionToSectionCreateSerializer(ModelSerializer):
-    class Meta:
-        model = TransactionToSection
-        fields = ('id', 'section', 'amount', 'currency_type', 'description')
-
+        fields = ('id', 'section', 'amount', 'currency_type', 'description', 'date')
 
 
 class DailyRemainderSerializer(ModelSerializer):

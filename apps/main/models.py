@@ -187,13 +187,19 @@ class TransactionToAdmin(BaseModel):
             User.objects.filter(id=self.creator.id).update(balance=F('balance') - converted_amount)
 
 
+TRANSACTION_TYPE = (
+    ('give', 'Berish'),
+    ('get', 'Olish')
+)
+
 class TransactionToSection(BaseModel):
     section = models.CharField(max_length=30, choices=SECTION_CHOICES)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
     description = models.TextField(null=True, blank=True)
+    type = models.CharField(max_length=20, choices=CIRCULATION_TYPE_CHOICES)
+    date = models.DateField(null=True, blank=True)
     status = None
-    creator = None
 
     def __str__(self):
         return self.section
