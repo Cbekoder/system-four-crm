@@ -562,10 +562,21 @@ class FactorySummaryView(APIView):
         return Response({
             'start_date': start_date,
             'end_date': end_date,
-            "remainder": self.request.user.balance,
-            "section": section,
-            "income_total": income_total,
-            "expense_total": expense_total,
+            'balance': {
+                'uzs': convert_currency(request.user.currency_type, "UZS", request.user.balance),
+                'usd': convert_currency(request.user.currency_type, "USD", request.user.balance),
+                'rub': convert_currency(request.user.currency_type, "RUB", request.user.balance)
+            },
+            'total_income': {
+                'uzs': income_total,
+                'usd': convert_currency("UZS", "USD", income_total),
+                'rub': convert_currency("UZS", "RUB", income_total)
+            },
+            'total_outcome': {
+                'uzs': expense_total,
+                'usd': convert_currency("UZS", "USD", expense_total),
+                'rub': convert_currency("UZS", "RUB", expense_total)
+            },
             "incomes": incomes,
             "expenses": expenses
         })

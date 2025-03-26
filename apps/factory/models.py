@@ -215,41 +215,41 @@ class RawMaterialHistory(BaseModel):
     def __str__(self):
         return self.supplier
 
-class RawMaterialUsage(BaseModel):
-    raw_material = models.ForeignKey(RawMaterial, on_delete=models.CASCADE)
-    amount = models.FloatField(default=0)
-    description = models.TextField(null=True, blank=True)
-    date=models.DateField(auto_now=True)
-
-
-    def save(self, *args, **kwargs):
-        with transaction.atomic():
-            if self.pk:
-                prev = RawMaterialUsage.objects.get(pk=self.pk)
-                prev.raw_material.weight = F('weight') + prev.amount
-                prev.raw_material.save(update_fields=['weight'])
-                prev.raw_material.refresh_from_db()
-
-
-            self.raw_material.weight = F('weight') - self.amount
-            self.raw_material.save(update_fields=['weight'])
-            self.raw_material.refresh_from_db()
-
-
-            super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        with transaction.atomic():
-            self.raw_material.weight = F('weight') + self.amount
-            self.raw_material.save(update_fields=['weight'])
-            self.raw_material.refresh_from_db()
-
-            super().delete(*args, **kwargs)
-
-    class Meta:
-        verbose_name = "Xomashyo ishlatilishi "
-        verbose_name_plural = "Xomashyo ishlatilishi "
-        ordering = ['-created_at']
+# class RawMaterialUsage(BaseModel):
+#     raw_material = models.ForeignKey(RawMaterial, on_delete=models.CASCADE)
+#     amount = models.FloatField(default=0)
+#     description = models.TextField(null=True, blank=True)
+#     date=models.DateField(auto_now=True)
+#
+#
+#     def save(self, *args, **kwargs):
+#         with transaction.atomic():
+#             if self.pk:
+#                 prev = RawMaterialUsage.objects.get(pk=self.pk)
+#                 prev.raw_material.weight = F('weight') + prev.amount
+#                 prev.raw_material.save(update_fields=['weight'])
+#                 prev.raw_material.refresh_from_db()
+#
+#
+#             self.raw_material.weight = F('weight') - self.amount
+#             self.raw_material.save(update_fields=['weight'])
+#             self.raw_material.refresh_from_db()
+#
+#
+#             super().save(*args, **kwargs)
+#
+#     def delete(self, *args, **kwargs):
+#         with transaction.atomic():
+#             self.raw_material.weight = F('weight') + self.amount
+#             self.raw_material.save(update_fields=['weight'])
+#             self.raw_material.refresh_from_db()
+#
+#             super().delete(*args, **kwargs)
+#
+#     class Meta:
+#         verbose_name = "Xomashyo ishlatilishi "
+#         verbose_name_plural = "Xomashyo ishlatilishi "
+#         ordering = ['-created_at']
 
 class Client(BasePerson):
     class Meta:

@@ -648,8 +648,8 @@ class LogisticSummaryAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        total_income = Decimal('0.00')
-        total_outcome = Decimal('0.00')
+        total_income = 0.00
+        total_outcome = 0.00
 
 
         # outcome: WaybillPayout, CarExpense, SalaryPayment, Expense
@@ -741,8 +741,16 @@ class LogisticSummaryAPIView(APIView):
                 'usd': convert_currency(request.user.currency_type, "USD", request.user.balance),
                 'rub': convert_currency(request.user.currency_type, "RUB", request.user.balance)
             },
-            'total_income': total_income,
-            'total_outcome': total_outcome,
+            'total_income': {
+                'uzs': total_income,
+                'usd': convert_currency("UZS", "USD", total_income),
+                'rub': convert_currency("UZS", "RUB", total_income)
+            },
+            'total_outcome': {
+                'uzs': total_outcome,
+                'usd': convert_currency("UZS", "USD", total_outcome),
+                'rub': convert_currency("UZS", "RUB", total_outcome)
+            },
             'incomes': TransactionHistorySerializer(incomes_list, many=True).data,
             'outcomes': TransactionHistorySerializer(outcomes_list, many=True).data,
         })

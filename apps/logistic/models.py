@@ -78,6 +78,7 @@ class Car(BaseModel):
     is_active = models.BooleanField(default=True)
     tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True, blank=True)
     creator = None
+    status = None
 
     class Meta:
         verbose_name = "Mashina "
@@ -112,6 +113,8 @@ class Trailer(BaseModel):
     color = models.CharField(max_length=20, null=True, blank=True)
     tech_passport = models.CharField(max_length=20, unique=True)
     car = models.ForeignKey(Car, on_delete=models.SET_NULL, null=True, blank=True)
+    creator = None
+    status = None
 
     class Meta:
         verbose_name = "Tirkama "
@@ -121,8 +124,7 @@ class Trailer(BaseModel):
         return self.state_number
 
     def save(self, *args, **kwargs):
-        if self.creator.role == "CEO":
-            self.status = 'verified'
+
         super().save(*args, **kwargs)
 
 

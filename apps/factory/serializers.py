@@ -321,10 +321,10 @@ class SalaryPaymentPostSerializer(ModelSerializer):
     #     )
     #     return salary_payment
 
-class RawMaterialUsageSerializer(ModelSerializer):
-    class Meta:
-        model = RawMaterialUsage
-        fields = ['id', 'raw_material', 'amount', 'date']
+# class RawMaterialUsageSerializer(ModelSerializer):
+#     class Meta:
+#         model = RawMaterialUsage
+#         fields = ['id', 'raw_material', 'amount', 'date']
 
 
 #Serializers for summary
