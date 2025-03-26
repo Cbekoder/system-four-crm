@@ -313,9 +313,11 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
     permission_classes = [IsCEO | IsAdmin]
 
     def get_queryset(self):
-        queryset = TransactionToSection.objects.filter(type='give')
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
+        section = self.request.query_params.get('section')
+
+        queryset = TransactionToSection.objects.filter(type='give', section=section)
 
         if start_date:
             queryset = queryset.filter(created_at__date__gte=start_date)
@@ -369,6 +371,9 @@ class TransactionFromSectionListCreateView(ListCreateAPIView):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         section = self.request.query_params.get('section')
+
+        if not section:
+            raise ValidationError("The 'section' parameter is required.")
 
         queryset = TransactionToSection.objects.filter(type='get', section=section)
 
