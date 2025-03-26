@@ -10,8 +10,12 @@ class Command(BaseCommand):
     help = 'Run daily tasks at 00:00'
 
     def handle(self, *args, **kwargs):
-        fetch_currency_rate()
-        # last_remainder = DailyRemainder.objects.last()
-        # user = User.objects.filter(role="CEO").first()
-        # DailyRemainder.objects.create(amount=(last_remainder.amount+calculate_remainder(timezone.now().date(), user)), type='auto')
+
+        for user in User.objects.all():
+            DailyRemainder.objects.create(
+                user=user,
+                amount=user.balance,
+                currency_type=user.currency_type
+            )
+
         self.stdout.write(self.style.SUCCESS('Daily tasks completed!'))

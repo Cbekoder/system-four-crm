@@ -106,13 +106,15 @@ class TransactionHistorySerializer(serializers.Serializer):
     reason = serializers.CharField()
     amount = serializers.FloatField()
     currency_type = serializers.CharField()
-    date = serializers.DateTimeField()
+    date = serializers.DateField()
 
 class MixedDataSerializer(Serializer):
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    description = CharField()
-    amount = FloatField()
-    currency_type = CharField()
+    id = serializers.CharField()
+    section = serializers.CharField()
+    reason = serializers.CharField()
+    amount = serializers.FloatField()
+    currency_type = serializers.CharField()
+    date = serializers.DateField()
 
 class TransactionVerifyDetailSerializer(serializers.Serializer):
     unique_id = serializers.CharField(max_length=50, read_only=True)

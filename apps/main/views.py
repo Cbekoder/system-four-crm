@@ -19,7 +19,7 @@ from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, M
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer, \
     TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer, TransactionToAdminSerializer, \
     TransactionToAdminCreateSerializer, TransactionToSectionSerializer, TransactionToSectionCreateSerializer, \
-    CurrencyRateSerializer
+    CurrencyRateSerializer, TransactionHistorySerializer
 from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction, get_summary
 from apps.common.utils import convert_currency
 
@@ -410,32 +410,65 @@ class MixedHistoryView(APIView):
         responses={200: MoneyCirculationSerializer(many=True)}
     )
     def get(self, request):
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
+        start_date_str = request.query_params.get('start_date',
+                                                  (timezone.now() - timedelta(days=7)).strftime('%Y-%m-%d'))
+        end_date_str = request.query_params.get('end_date', timezone.now().strftime('%Y-%m-%d'))
 
-        start_date = timezone.datetime.strptime(start_date, "%Y-%m-%d").date() if start_date else (
-                timezone.now() - timedelta(days=7)).date()
+        try:
+            start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d')
 
-        if end_date:
-            end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
-            remainder = DailyRemainder.objects.filter(created_at=(end_date + timedelta(days=1)))
-            remainder_value = remainder.last().amount if remainder.exists() else 0
+            start_date = timezone.make_aware(
+                timezone.datetime(start_date.year, start_date.month, start_date.day, 0, 0, 0)
+            )
+            end_date = timezone.make_aware(
+                timezone.datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+            )
+        except ValueError:
+            return Response(
+                {"error": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if end_date < start_date:
+            return Response(
+                {"error": "end_date cannot be before start_date."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if end_date.date() == timezone.now().date():
+            balance = request.user.balance
         else:
-            end_date = timezone.now().date()
-            remainder_value = request.user.balance
+            remainder = DailyRemainder.objects.filter(user=request.user, created_at=(end_date + timedelta(days=1)))
+            balance = remainder.last().amount if remainder.exists() else 0
 
-        data = get_summary(start_date, end_date, [request.user])
-        response_data = {
-            "income": MixedDataSerializer(data["sorted_income"], many=True).data,
-            "outcome": MixedDataSerializer(data["sorted_outcome"], many=True).data,
-            "remainder": {
-                "UZS": remainder_value,
-                "RUB": convert_currency("UZS", "RUB", remainder_value),
-                "USD": convert_currency("UZS", "USD", remainder_value),
-            }
-        }
 
-        return Response(response_data)
+
+        transactions_data = get_summary(start_date, end_date, [request.user])
+
+
+        return Response({
+            'start_date': start_date_str,
+            'end_date': end_date_str,
+            'balance': {
+                'uzs': convert_currency(request.user.currency_type, "UZS", balance),
+                'usd': convert_currency(request.user.currency_type, "USD", balance),
+                'rub': convert_currency(request.user.currency_type, "RUB", balance)
+            },
+            'total_income': {
+                'uzs': transactions_data["total_income"],
+                'usd': convert_currency("UZS", "USD", transactions_data["total_income"]),
+                'rub': convert_currency("UZS", "RUB", transactions_data["total_income"])
+            },
+            'total_outcome': {
+                'uzs': transactions_data["total_outcome"],
+                'usd': convert_currency("UZS", "USD", transactions_data["total_outcome"]),
+                'rub': convert_currency("UZS", "RUB", transactions_data["total_outcome"])
+            },
+            'incomes': MixedDataSerializer(transactions_data["incomes_list"], many=True).data,
+            'outcomes': MixedDataSerializer(transactions_data["outcomes_list"], many=True).data,
+        })
+
 
 class TransactionApprovalView(APIView):
     permission_classes = [IsCEO]

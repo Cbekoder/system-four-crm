@@ -24,14 +24,22 @@ class Expense(BaseModel):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            if self.pk:
+                prev = Expense.objects.get(id=self.pk)
+                User.objects.filter(id=prev.user.id).update(
+                    balance=F("balance") + convert_currency(prev.currency_type, prev.user.currency_type, prev.amount))
 
             super().save(*args, **kwargs)
+
+            User.objects.filter(id=self.user.id).update(
+                balance=F("balance") - convert_currency(self.currency_type, self.user.currency_type, self.amount)
+            )
 
             if self.user.role == "CEO":
                 self.status = 'verified'
                 self.save(update_fields=['status'])
 
-            message = f"💸 Xarajat\n🔣 {self.section.title()}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➖ {self.amount} {self.currency_type}"
+            message = f"💸 Харажат\n🔣 {self.section.title()}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➖ {self.amount} {self.currency_type}"
             Telegram.send_log(message, app_button=True)
 
     def __str__(self):
@@ -57,14 +65,22 @@ class Income(BaseModel):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            if self.pk:
+                prev = Income.objects.get(id=self.pk)
+                User.objects.filter(id=prev.user.id).update(
+                    balance=F("balance") - convert_currency(prev.currency_type, prev.user.currency_type, prev.amount))
 
             super().save(*args, **kwargs)
+
+            User.objects.filter(id=self.user.id).update(
+                balance=F("balance") + convert_currency(self.currency_type, self.user.currency_type, self.amount)
+            )
 
             if self.user.role == "CEO":
                 self.status = 'verified'
                 self.save(update_fields=['status'])
 
-            message = f"💸 Kirim\n🔣 {self.section.title()}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➖ {self.amount} {self.currency_type}"
+            message = f"💸 Кирим\n🔣 {self.section.title()}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➕ {self.amount} {self.currency_type}"
             Telegram.send_log(message, app_button=True)
 
 
@@ -201,14 +217,9 @@ class TransactionToSection(BaseModel):
 
 
 
-REMAINDER_TYPE_CHOICES = (
-    ('auto', 'Avtomatik'),
-    ('manual', 'Qo\'lda')
-)
-
 class DailyRemainder(BaseModel):
     amount = models.FloatField()
-    type = models.CharField(max_length=20, choices=REMAINDER_TYPE_CHOICES, default="manual")
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     status = None

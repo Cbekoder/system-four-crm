@@ -12,14 +12,14 @@ exchange_rates = {
 }
 
 def convert_currency(base, target, amount):
-    print(exchange_rates['UZS'])
-    print(exchange_rates['RUB'])
     if exchange_rates['UZS'] is None or exchange_rates['RUB'] is None:
         print(exchange_rates['UZS'], exchange_rates['RUB'])
         try:
             currency_rate = CurrencyRate.objects.latest('created_at')
             cache.set("UZS_rate", currency_rate.usd)
             cache.set("RUB_rate", currency_rate.rub)
+            exchange_rates['UZS'] = currency_rate.usd
+            exchange_rates['RUB'] = currency_rate.rub
             print(cache.get("UZS_rate", currency_rate.usd))
         except ObjectDoesNotExist:
             raise ValueError("Currency rates not found in the database. Please ensure CurrencyRate data exists.")
@@ -30,6 +30,7 @@ def convert_currency(base, target, amount):
     base_to_target_rate = exchange_rates[target] / exchange_rates[base]
     converted_amount = amount * base_to_target_rate
     return round(converted_amount, 2)
+
 
 def fetch_currency_rate():
     response = requests.get("https://api.exchangerate-api.com/v4/latest/USD")
