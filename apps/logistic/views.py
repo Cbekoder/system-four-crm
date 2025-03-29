@@ -626,7 +626,54 @@ class LogisticSummaryAPIView(APIView):
                 type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
             )
         ],
-        responses={200: DriverSalaryPaymentSerializer(many=True)}
+        responses={
+            200: openapi.Response(
+                description="Financial overview",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'start_date': openapi.Schema(type=openapi.TYPE_STRING, description="Start date in YYYY-MM-DD"),
+                        'end_date': openapi.Schema(type=openapi.TYPE_STRING, description="End date in YYYY-MM-DD"),
+                        'balance': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'uzs': openapi.Schema(type=openapi.TYPE_NUMBER, description="Balance in UZS"),
+                                'usd': openapi.Schema(type=openapi.TYPE_NUMBER, description="Balance in USD"),
+                                'rub': openapi.Schema(type=openapi.TYPE_NUMBER, description="Balance in RUB"),
+                            }
+                        ),
+                        'total_income': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'uzs': openapi.Schema(type=openapi.TYPE_NUMBER, description="Total income in UZS"),
+                                'usd': openapi.Schema(type=openapi.TYPE_NUMBER, description="Total income in USD"),
+                                'rub': openapi.Schema(type=openapi.TYPE_NUMBER, description="Total income in RUB"),
+                            }
+                        ),
+                        'total_outcome': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'uzs': openapi.Schema(type=openapi.TYPE_NUMBER, description="Total outcome in UZS"),
+                                'usd': openapi.Schema(type=openapi.TYPE_NUMBER, description="Total outcome in USD"),
+                                'rub': openapi.Schema(type=openapi.TYPE_NUMBER, description="Total outcome in RUB"),
+                            }
+                        ),
+                        'incomes': openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Items(ref='#/components/schemas/TransactionHistory'),
+                            description="List of income transactions"
+                        ),
+                        'outcomes': openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Items(ref='#/components/schemas/TransactionHistory'),
+                            description="List of outcome transactions"
+                        ),
+                    },
+                    required=['start_date', 'end_date', 'balance', 'total_income', 'total_outcome', 'incomes',
+                              'outcomes']
+                )
+            )
+        }
     )
     def get(self, request):
         start_date_str = request.query_params.get('start_date', (timezone.now()-timedelta(days=7)).strftime('%Y-%m-%d'))
