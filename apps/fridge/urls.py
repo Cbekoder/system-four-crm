@@ -18,4 +18,7 @@ urlpatterns = [
     #Urls for Electricity Bills
     path('billings/', ElectricityBillListCreateView.as_view()),
 
+    #Urls for Summary
+    path('summary/', FridgeSummaryView.as_view()),
+
 ]

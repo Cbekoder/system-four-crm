@@ -558,7 +558,6 @@ class FactorySummaryView(APIView):
         incomes=IncomeSummarySerializer(incomes, many=True).data+SaleSummarySerializer(sales, many=True).data
         expenses=ExpenseSummarySerializer(expenses, many=True).data+SalaryPaymentSummarySerializer(salary_payments, many=True).data+RawMaterialHistorySummarySerializer(raw_material_histories, many=True).data
 
-
         return Response({
             'start_date': start_date,
             'end_date': end_date,

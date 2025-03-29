@@ -41,11 +41,9 @@ class ElectricityBillPostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
         queryset=Refrigerator.objects.all(), write_only=True, required=True
     )
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Expense
-        fields = '__all__'
+        fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type']
         extra_kwargs = {'reason': {'read_only': True}}
 
     def create(self, validated_data):
@@ -68,24 +66,31 @@ class ElectricityBillSerializer(ModelSerializer):
             refrigerator = Refrigerator.objects.get(id=refrigerator_id)
             return RefrigeratorSerializer(refrigerator).data
         except Refrigerator.DoesNotExist:
-            return None  # Return None if ref
+            return None
 
 
 class FridgeExpensePostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
-        queryset=Refrigerator.objects.all(), write_only=True, required=True
+        queryset=Refrigerator.objects.all(), write_only=True, required=False
     )
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+
     class Meta:
         model = Expense
         fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type', 'section', 'status', 'updated_at', 'created_at']
         read_only_fields = ['updated_at', 'created_at', 'status', 'section']
 
     def create(self, validated_data):
-        refrigerator = validated_data.pop('refrigerator')
-        validated_data['reason'] = f"expense|{refrigerator.id}"
+
+        refrigerator = validated_data.pop('refrigerator', None)
+        if refrigerator:
+            validated_data['reason'] = f"expense|{refrigerator.id}"
+        else:
+            validated_data['reason'] = "Muzlatkich uchun xarajat"
+
         return super().create(validated_data)
+
 
 class FridgeExpenseSerializer(ModelSerializer):
     refrigerator = SerializerMethodField()
@@ -98,9 +103,12 @@ class FridgeExpenseSerializer(ModelSerializer):
 
     def get_refrigerator(self, obj):
         try:
-            reason, refrigerator_id = map(str, obj.reason.split("|"))
-            refrigerator = Refrigerator.objects.get(id=refrigerator_id)
-            return RefrigeratorSerializer(refrigerator).data
+            if obj.reason == "Muzlatkich uchun xarajat" or obj.reason == "expense|unknown":
+                return None
+            else:
+                reason, refrigerator_id = map(str, obj.reason.split("|"))
+                refrigerator = Refrigerator.objects.get(id=refrigerator_id)
+                return RefrigeratorSerializer(refrigerator).data
         except Refrigerator.DoesNotExist:
             return None
 
@@ -123,7 +131,7 @@ class FridgeIncomeSerializer(ModelSerializer):
 
 class FridgeIncomePostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
-        queryset=Refrigerator.objects.all(), write_only=True, required=True
+        queryset=Refrigerator.objects.all(), write_only=True, required=False
     )
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -134,6 +142,20 @@ class FridgeIncomePostSerializer(ModelSerializer):
 
     def create(self, validated_data):
         refrigerator = validated_data.pop('refrigerator')
-        validated_data['reason'] = f"income|{refrigerator.id}"
+        if not refrigerator:
+            validated_data['reason'] = f"Muzlatkich uchun kirim"
+        else:
+            validated_data['reason'] = f"income|{refrigerator.id}"
         return super().create(validated_data)
 
+class ExpenseSummarySerializer(ModelSerializer):
+    date=DateTimeField(format="%d.%m.%Y", source='created_at')
+    class Meta:
+        model = Expense
+        fields = ['id', 'description', 'reason','amount', 'date']
+
+class IncomeSummarySerializer(ModelSerializer):
+    date=DateTimeField(format="%d.%m.%Y", source='created_at')
+    class Meta:
+        model = Income
+        fields = ['id', 'description', 'reason','amount', 'date']
