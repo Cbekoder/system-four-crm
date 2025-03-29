@@ -720,7 +720,7 @@ class LogisticSummaryAPIView(APIView):
 
         waybill_payouts = WaybillPayout.objects.filter(date__range=[start_date, end_date])
         car_expenses = CarExpense.objects.filter(date__range=[start_date, end_date])
-        salary_payment = SalaryPayment.objects.filter(date__range=[start_date, end_date])
+        salary_payments = SalaryPayment.objects.filter(date__range=[start_date, end_date])
         expense = Expense.objects.filter(section='logistic', created_at__range=[start_date, end_date])
 
         for waybill_payout in waybill_payouts:
@@ -747,7 +747,7 @@ class LogisticSummaryAPIView(APIView):
                 'date': car_expense.date,
             })
 
-        for salary_payment in salary_payment:
+        for salary_payment in salary_payments:
             total_outcome += salary_payment.amount
             outcomes_list.append({
                 'id': f"SP{salary_payment.id}",
