@@ -421,6 +421,13 @@ class ContractRecordListCreateView(ListCreateAPIView):
             return ContractRecordDetailSerializer
         return ContractRecordCreateSerializer()
 
+    @swagger_auto_schema(
+        request_body=ContractRecordCreateSerializer,
+        responses={201: ContractRecordCreateSerializer}
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
 
 class ContractRecordDetailView(RetrieveUpdateDestroyAPIView):
     queryset = ContractRecord.objects.all()
