@@ -660,12 +660,20 @@ class LogisticSummaryAPIView(APIView):
                         ),
                         'incomes': openapi.Schema(
                             type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(ref='#/components/schemas/TransactionHistory'),
+                            items=openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                description="Transaction history object",
+                                # Optionally define properties manually if needed
+                            ),
                             description="List of income transactions"
                         ),
                         'outcomes': openapi.Schema(
                             type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(ref='#/components/schemas/TransactionHistory'),
+                            items=openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                description="Transaction history object",
+                                # Optionally define properties manually if needed
+                            ),
                             description="List of outcome transactions"
                         ),
                     },
