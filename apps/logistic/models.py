@@ -346,7 +346,7 @@ class CarExpense(BaseModel):
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default='USD')
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="salary_payments_logistic")
+    # creator = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField(null=True, blank=True)
 
     class Meta:
@@ -378,12 +378,13 @@ class CarExpense(BaseModel):
             User.objects.filter(id=self.creator.id).update(balance=F('balance') + converted_amount)
 
 
-class SalaryPayment(BaseModel):
+class LogisticSalaryPayment(BaseModel):
     driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True, blank=False)
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="USD")
     date = models.DateField(null=True, blank=True)
+    # creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="logistic_salary_payments")
 
     class Meta:
         verbose_name = "Haydovchi maoshi "
@@ -400,7 +401,7 @@ class SalaryPayment(BaseModel):
     def save(self, *args, **kwargs):
         with transaction.atomic():
             if self.pk:
-                prev = SalaryPayment.objects.get(id=self.pk)
+                prev = LogisticSalaryPayment.objects.get(id=self.pk)
                 converted_amount = convert_currency(prev.currency_type, "UZS", prev.amount)
                 User.objects.filter(id=prev.creator.id).update(balance=F('balance') + converted_amount)
 

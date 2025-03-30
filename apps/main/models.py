@@ -3,7 +3,7 @@ from django.db import models, transaction
 from django.db.models import F
 from rest_framework.exceptions import ValidationError
 from apps.common.services.logging import Telegram
-from apps.common.models import BaseModel, SECTION_CHOICES, BasePerson, CURRENCY_TYPE
+from apps.common.models import BaseModel, SECTION_CHOICES, BasePerson, CURRENCY_TYPE, SECTION_TO_KIRILL
 from apps.common.utils import convert_currency
 from apps.users.models import User
 
@@ -39,8 +39,17 @@ class Expense(BaseModel):
                 self.status = 'verified'
                 self.save(update_fields=['status'])
 
-            message = f"💸 Харажат\n🔣 {self.section.title()}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➖ {self.amount} {self.currency_type}"
+            message = f"💸 Харажат\n🔣 {SECTION_TO_KIRILL[self.section]}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➖ {self.amount} {self.currency_type}"
             Telegram.send_log(message, app_button=True)
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            User.objects.filter(id=self.creator.id).update(
+                balance=F('balance') + convert_currency(
+                    self.currency_type, self.creator.currency_type, self.amount
+                )
+            )
+            super().delete(*args, **kwargs)
 
     def __str__(self):
         return self.reason
@@ -80,8 +89,17 @@ class Income(BaseModel):
                 self.status = 'verified'
                 self.save(update_fields=['status'])
 
-            message = f"💸 Кирим\n🔣 {self.section.title()}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➕ {self.amount} {self.currency_type}"
+            message = f"💸 Кирим\n🔣 {SECTION_TO_KIRILL[self.section]}\n🆔 {self.id}\n🏷 {self.reason}\n📝 {self.description}\n👤 {self.user.get_full_name()}\n➕ {self.amount} {self.currency_type}"
             Telegram.send_log(message, app_button=True)
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            User.objects.filter(id=self.creator.id).update(
+                balance=F('balance') - convert_currency(
+                    self.currency_type, self.creator.currency_type, self.amount
+                )
+            )
+            super().delete(*args, **kwargs)
 
 
 class Acquaintance(BasePerson):

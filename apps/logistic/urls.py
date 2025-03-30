@@ -6,7 +6,7 @@ from .views import (
     CarListCreateView, CarRetrieveUpdateDestroyView,
     TrailerListCreateView, TrailerRetrieveUpdateDestroyView,
     CarExpenseListCreateView, CarExpenseRetrieveUpdateDestroyView,
-    SalaryPaymentListCreateView, SalaryPaymentRetrieveUpdateDestroyView,
+    LogisticSalaryPaymentListCreateView, LogisticSalaryPaymentRetrieveUpdateDestroyView,
     # ContractListCreateView, ContractRetrieveUpdateDestroyView,
     # TransitListCreateView, TransitRetrieveUpdateDestroyView,
     # TransitExpenseListCreateView, TransitExpenseRetrieveUpdateDestroyView,
@@ -67,9 +67,9 @@ urlpatterns = [
     path('car-expenses/', CarExpenseListCreateView.as_view(), name='car-expense-list-create'),
     path('car-expenses/<int:pk>/', CarExpenseRetrieveUpdateDestroyView.as_view(), name='car-expense-detail'),
 
-    # SalaryPayment URLs
-    path('salary-payments/', SalaryPaymentListCreateView.as_view(), name='salary-payment-list-create'),
-    path('salary-payments/<int:pk>/', SalaryPaymentRetrieveUpdateDestroyView.as_view(), name='salary-payment-detail'),
+    # LogisticSalaryPayment URLs
+    path('salary-payments/', LogisticSalaryPaymentListCreateView.as_view(), name='salary-payment-list-create'),
+    path('salary-payments/<int:pk>/', LogisticSalaryPaymentRetrieveUpdateDestroyView.as_view(), name='salary-payment-detail'),
 
     # Summary URLs
     path('summary/', LogisticSummaryAPIView.as_view(), name='logistic-summary'),

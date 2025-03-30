@@ -1,6 +1,4 @@
 from datetime import timedelta
-from decimal import Decimal
-
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
@@ -14,12 +12,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import (
-    Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment,
+    Driver, Tenant, Contractor, Car, Trailer, CarExpense, LogisticSalaryPayment,
     TIR, TIR_STATUS, TIRRecord, Company, Waybill, ContractRecord, ContractIncome, WaybillPayout
 )
 from .serializers import (
     DriverSerializer, TenantSerializer, ContractorSerializer, CarSerializer, TrailerSerializer,
-    CarExpenseSerializer, DriverSalaryPaymentSerializer,
+    CarExpenseSerializer, DriverLogisticSalaryPaymentSerializer,
     TIRSerializer, TIRRecordDetailSerializer, TIRRecordSerializer,
     TIRRecordUpdateSerializer, CompanySerializer, WaybillSerializer, ContractRecordDetailSerializer,
     ContractRecordCreateSerializer, ContractIncomeFullDetailSerializer, ContractIncomeCreateSerializer,
@@ -544,11 +542,11 @@ class CarExpenseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = CarExpenseSerializer
 
 
-# SalaryPayment views
-class SalaryPaymentListCreateView(ListCreateAPIView):
+# LogisticSalaryPayment views
+class LogisticSalaryPaymentListCreateView(ListCreateAPIView):
     permission_classes = [IsLogisticAdmin | IsCEO]
-    queryset = SalaryPayment.objects.all()
-    serializer_class = DriverSalaryPaymentSerializer
+    queryset = LogisticSalaryPayment.objects.all()
+    serializer_class = DriverLogisticSalaryPaymentSerializer
     filter_backends = [SearchFilter]
     search_fields = [
         'id', 'driver__first_name', 'driver__last_name', 'amount', 'description',
@@ -594,7 +592,7 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
                 type=openapi.TYPE_STRING
             ),
         ],
-        responses={200: DriverSalaryPaymentSerializer(many=True)}
+        responses={200: DriverLogisticSalaryPaymentSerializer(many=True)}
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
@@ -603,9 +601,9 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
         serializer.save(creator=self.request.user)
 
 
-class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    queryset = SalaryPayment.objects.all()
-    serializer_class = DriverSalaryPaymentSerializer
+class LogisticSalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = LogisticSalaryPayment.objects.all()
+    serializer_class = DriverLogisticSalaryPaymentSerializer
     permission_classes = [IsLogisticAdmin | IsCEO]
 
 
@@ -714,13 +712,13 @@ class LogisticSummaryAPIView(APIView):
         total_outcome = 0.00
 
 
-        # outcome: WaybillPayout, CarExpense, SalaryPayment, Expense
+        # outcome: WaybillPayout, CarExpense, LogisticSalaryPayment, Expense
 
         outcomes_list = []
 
         waybill_payouts = WaybillPayout.objects.filter(date__range=[start_date, end_date])
         car_expenses = CarExpense.objects.filter(date__range=[start_date, end_date])
-        salary_payments = SalaryPayment.objects.filter(date__range=[start_date, end_date])
+        salary_payments = LogisticSalaryPayment.objects.filter(date__range=[start_date, end_date])
         expense = Expense.objects.filter(section='logistic', created_at__range=[start_date, end_date])
 
         for waybill_payout in waybill_payouts:

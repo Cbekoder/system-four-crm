@@ -22,6 +22,14 @@ SECTION_CHOICES = (
     ("general", "Umumiy")
 )
 
+SECTION_TO_KIRILL = {
+    "logistic": "Логистика",
+    "fridge": "Холодильник",
+    "garden": "Боғ",
+    "factory": "Завод",
+    "general": "Умумий"
+}
+
 STATUS_CHOICES = (
     ('new', 'Yangi'),
     ('verified', 'Tasdiqlangan'),

@@ -1,3 +1,4 @@
+from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import ModelSerializer, DateTimeField, Serializer, CharField, FloatField
 from rest_framework import serializers
 from tutorial.quickstart.serializers import UserSerializer
@@ -9,6 +10,8 @@ from apps.common.models import CurrencyRate
 from apps.users.serializers import UserDetailSerializer
 
 class CurrencyRateSerializer(serializers.ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    creator = StringRelatedField(read_only=True)
     class Meta:
         model = CurrencyRate
         fields = '__all__'

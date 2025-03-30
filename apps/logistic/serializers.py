@@ -4,7 +4,7 @@ from rest_framework.serializers import ModelSerializer, DateTimeField, PrimaryKe
 from django.utils import timezone
 
 from .models import (
-    Driver, Tenant, Contractor, Car, Trailer, CarExpense, SalaryPayment,
+    Driver, Tenant, Contractor, Car, Trailer, CarExpense, LogisticSalaryPayment,
     TIR, TIRRecord, Company, Waybill, ContractRecord, ContractCars, ContractIncome, WaybillPayout
 )
 from ..main.serializers import IncomeSerializer
@@ -296,11 +296,11 @@ class CarExpenseSerializer(ModelSerializer):
 
 
 # Driver serializer
-class DriverSalaryPaymentSerializer(ModelSerializer):
+class DriverLogisticSalaryPaymentSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
 
     class Meta:
-        model = SalaryPayment
+        model = LogisticSalaryPayment
         fields = ['id', 'driver', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
