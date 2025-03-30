@@ -237,6 +237,20 @@ class ElectricityBillListCreateView(ListCreateAPIView):
         serializer.save(section="fridge", user=self.request.user)
 
 
+
+class ElectricityBillRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsFridgeAdmin | IsCEO]
+
+    def get_queryset(self):
+        queryset = Expense.objects.filter(section='fridge', reason__startswith="electricity|")
+        return queryset
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return ElectricityBillSerializer
+        return ElectricityBillPostSerializer
+
+
 # Fridge Summary View
 class FridgeSummaryAPIView(APIView):
     permission_classes = [IsFridgeAdmin | IsCEO]
