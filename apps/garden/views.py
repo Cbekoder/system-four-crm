@@ -35,6 +35,8 @@ class GardenerListCreateView(ListCreateAPIView):
     queryset = Gardener.objects.all()
     serializer_class = GardenerSerializer
     permission_classes = [IsGardenAdmin | IsCEO]
+    filter_backends = [SearchFilter]
+    search_fields = ['first_name', 'last_name', 'phone_number']
 
 class GardenerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Gardener.objects.all()
@@ -62,6 +64,7 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
+        gardener_id = self.request.query_params.get('gardener')
 
         if start_date:
             if not parse_date(start_date):
@@ -72,6 +75,10 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
             if not parse_date(end_date):
                 raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
             self.queryset = self.queryset.filter(created_at__date__lte=end_date)
+
+        if gardener_id:
+            self.queryset = self.queryset.filter(gardener_id=gardener_id)
+
 
         return self.queryset
 
@@ -92,6 +99,11 @@ class SalaryPaymentListCreateView(ListCreateAPIView):
                 openapi.IN_QUERY,
                 description="Search by expense columns: id, workers first name and last name, description.",
                 type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                'gardener', openapi.IN_QUERY,
+                description="Filter by gardener ID",
+                type=openapi.TYPE_INTEGER
             ),
         ],
         responses={200: GardenerSalaryPaymentGetSerializer(many=True)}
@@ -371,7 +383,7 @@ class GardenSummaryAPIView(APIView):
         for salary_payment in salary_payments:
             total_outcome += salary_payment.amount
             outcomes_list.append({
-                'id': f"SP{salary_payment.id}",
+                'id': f"SP-{salary_payment.id}",
                 'reason': f"{salary_payment.gardener.full_name}га маош учун.",
                 'amount': salary_payment.amount,
                 'currency_type': salary_payment.currency_type,
@@ -381,7 +393,7 @@ class GardenSummaryAPIView(APIView):
         for expense in expense:
             total_outcome += expense.amount
             outcomes_list.append({
-                'id': f"EX{expense.id}",
+                'id': f"EX-{expense.id}",
                 'reason': expense.reason,
                 'amount': expense.amount,
                 'currency_type': expense.currency_type,
@@ -397,7 +409,7 @@ class GardenSummaryAPIView(APIView):
         for income in income:
             total_income += income.amount
             incomes_list.append({
-                'id': f"IN{income.id}",
+                'id': f"IN-{income.id}",
                 'reason': income.reason,
                 'amount': income.amount,
                 'currency_type': income.currency_type,

@@ -6,6 +6,7 @@ from apps.main.serializers import ExpenseSerializer
 from apps.common.models import SECTION_CHOICES
 
 
+# Refrigerator Serializers
 class RefrigeratorSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -21,7 +22,7 @@ class RefrigeratorDetailSerializer(ModelSerializer):
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Refrigerator
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'year', 'created_at', 'updated_at', 'expenses', 'electricity_bills']
 
     def get_expenses(self, obj):
         expenses = Expense.objects.filter(section='fridge', reason=f"expense|{obj.id}")
@@ -37,6 +38,7 @@ class RefrigeratorDetailSerializer(ModelSerializer):
         return serialized_data
 
 
+# Electricity Bill Serializers
 class ElectricityBillPostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
         queryset=Refrigerator.objects.all(), write_only=True, required=True
@@ -44,7 +46,7 @@ class ElectricityBillPostSerializer(ModelSerializer):
     class Meta:
         model = Expense
         fields = ['id', 'refrigerator', 'description', 'amount', 'currency_type']
-        extra_kwargs = {'reason': {'read_only': True}}
+        read_only_fields = ['reason']
 
     def create(self, validated_data):
         refrigerator = validated_data.pop('refrigerator')
@@ -69,6 +71,7 @@ class ElectricityBillSerializer(ModelSerializer):
             return None
 
 
+# Expense Serializers
 class FridgeExpensePostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
         queryset=Refrigerator.objects.all(), write_only=True, required=False
@@ -82,7 +85,6 @@ class FridgeExpensePostSerializer(ModelSerializer):
         read_only_fields = ['updated_at', 'created_at', 'status', 'section']
 
     def create(self, validated_data):
-
         refrigerator = validated_data.pop('refrigerator', None)
         if refrigerator:
             validated_data['reason'] = f"expense|{refrigerator.id}"
@@ -112,6 +114,8 @@ class FridgeExpenseSerializer(ModelSerializer):
         except Refrigerator.DoesNotExist:
             return None
 
+
+# Income Serializer
 class FridgeIncomeSerializer(ModelSerializer):
     refrigerator = SerializerMethodField()
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -143,10 +147,12 @@ class FridgeIncomePostSerializer(ModelSerializer):
     def create(self, validated_data):
         refrigerator = validated_data.pop('refrigerator')
         if not refrigerator:
-            validated_data['reason'] = f"Muzlatkich uchun kirim"
+            validated_data['reason'] = f"Музлаткич учун кирим"
         else:
             validated_data['reason'] = f"income|{refrigerator.id}"
         return super().create(validated_data)
+
+
 
 class ExpenseSummarySerializer(ModelSerializer):
     date=DateTimeField(format="%d.%m.%Y", source='created_at')

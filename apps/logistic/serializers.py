@@ -81,10 +81,12 @@ class TIRSerializer(ModelSerializer):
 
 # Company serializer
 class CompanySerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = Company
-        fields = ['id', 'name', 'director', 'inn', 'xp', 'mfo', 'phone_number', 'email', 'creator', 'status']
-        read_only_fields = ['creator']
+        fields = ['id', 'name', 'director', 'inn', 'xp', 'mfo', 'phone_number', 'email', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 # Waybill serializer

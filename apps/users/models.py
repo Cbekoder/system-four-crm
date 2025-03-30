@@ -30,4 +30,7 @@ class User(AbstractUser):
         verbose_name = "Foydalanuvchi "
         verbose_name_plural = "Foydalanuvchilar "
 
+    def __str__(self):
+        return self.get_full_name() if self.get_full_name() else self.username
+
 
