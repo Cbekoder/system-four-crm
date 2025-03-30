@@ -1,22 +1,17 @@
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer, DateTimeField
 from .models import *
-from apps.main.models import Expense
+from apps.main.models import Expense, Income
 from rest_framework.fields import SerializerMethodField
 
-
+# Garden Serializers
 class GardenSerializer(ModelSerializer):
     class Meta:
         model = Garden
         fields = ['id', 'name','description']
 
-class SalaryPaymentDetailSerializer(ModelSerializer):
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    class Meta:
-        model = SalaryPayment
-        fields = ['id', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
 
+# Gardener Serializers
 class GardenerSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -26,8 +21,15 @@ class GardenerSerializer(ModelSerializer):
                   'balance', 'currency_type', 'updated_at', 'created_at',]
         read_only_fields = ['balance', 'updated_at', 'created_at']
 
+class GardenSalaryPaymentDetailSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    class Meta:
+        model = GardenSalaryPayment
+        fields = ['id', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
+
 class GardenerDetailSerializer(ModelSerializer):
-    salaries = SalaryPaymentDetailSerializer(source="salarypayment_set", many=True)
+    salaries = GardenSalaryPaymentDetailSerializer(source="gardensalarypayment_set", many=True)
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
@@ -37,63 +39,98 @@ class GardenerDetailSerializer(ModelSerializer):
         read_only_fields = ['balance', 'updated_at', 'created_at']
 
 
+# Gardener Salary Payment Serializers
+class GardenerSalaryPaymentSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    class Meta:
+        model = GardenSalaryPayment
+        fields = ['id', 'gardener', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
+
 class GardenerSalaryPaymentGetSerializer(ModelSerializer):
     gardener = GardenerSerializer()
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
-        model = SalaryPayment
+        model = GardenSalaryPayment
         fields = ['id', 'gardener','description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
 
-class GardenerSalaryPaymentSerializer(ModelSerializer):
+# Garden Expense Serializers
+class GardenExpensePostSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    class Meta:
-        model = SalaryPayment
-        fields = ['id', 'gardener', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
-        read_only_fields = ['status', 'updated_at', 'created_at']
-
-    def create(self, validated_data):
-        salary_payment = SalaryPayment.objects.create(**validated_data)
-
-        Expense.objects.create(
-            reason="Bog'bonning oylik maoshi",
-            description=validated_data.get("description", ""),
-            amount=validated_data["amount"],
-            currency_type=validated_data.get("currency_type", "UZS"),
-            section="garden",
-            user=self.context["request"].user if "request" in self.context else None
-        )
-
-        return salary_payment
-
-class GardenExpensePostSerializer(ModelSerializer):
     garden = PrimaryKeyRelatedField(
         queryset=Garden.objects.all(), write_only=True, required=False, allow_null=True
     )
 
     class Meta:
         model = Expense
-        fields = ['id', 'description', 'amount', 'currency_type', 'garden', 'status', 'updated_at', 'created_at']
+        fields = ['id', 'reason', 'description', 'amount', 'currency_type', 'garden', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
     def create(self, validated_data):
         garden = validated_data.pop('garden', None)
         if garden:
-            validated_data['reason'] = f"{garden.name} uchun xarajat | {garden.id}"
-        else:
-            validated_data['reason'] = "Umumiy xarajat"
+            validated_data['reason'] = f"{validated_data.get('reason')} | {garden.name} uchun xarajat | {garden.id}"
+        # else:
+        #     validated_data['reason'] = "Umumiy xarajat"
 
         return super().create(validated_data)
 
 
 class GardenExpenseSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     garden = SerializerMethodField()
     class  Meta:
         model = Expense
-        fields = ['id', 'description', 'amount', 'currency_type','garden','reason','description', 'status', 'updated_at', 'created_at']
+        fields = ['id', 'reason', 'description', 'amount', 'currency_type','garden', 'description', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
+
+    def get_garden(self, obj):
+        try:
+            garden_id = int(list(obj.reason.split("|"))[-1])
+            garden = Garden.objects.get(id=garden_id)
+            return GardenSerializer(garden).data
+        except Garden.DoesNotExist:
+            return None
+        except IndexError:
+            return None
+
+
+# Garden Income Serializers
+class GardenIncomePostSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    garden = PrimaryKeyRelatedField(
+        queryset=Garden.objects.all(), write_only=True, required=False, allow_null=True
+    )
+
+    class Meta:
+        model = Income
+        fields = ['id', 'reason', 'description', 'amount', 'currency_type', 'garden', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
+
+    def create(self, validated_data):
+        garden = validated_data.pop('garden', None)
+        if garden:
+            validated_data['reason'] = f"{validated_data.get('reason')} | {garden.name} учун кирим | {garden.id}"
+        # else:
+        #     validated_data['reason'] = "Umumiy xarajat"
+
+        return super().create(validated_data)
+
+
+class GardenIncomeSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    garden = SerializerMethodField()
+    class  Meta:
+        model = Income
+        fields = ['id', 'reason', 'description', 'amount', 'currency_type','garden','description', 'status', 'updated_at', 'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
     def get_garden(self, obj):
