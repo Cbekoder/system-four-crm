@@ -4,9 +4,9 @@ from django.utils import timezone
 from apps.common.utils import convert_currency
 from apps.factory.models import RawMaterialHistory, Sale, SalaryPayment as WorkerSalaryPayment
 # from apps.fridge.models import Something
-from apps.garden.models import SalaryPayment as GardenSalaryPayment
+from apps.garden.models import GardenSalaryPayment
 from apps.logistic.models import (
-    CarExpense, SalaryPayment as LogisticSalaryPayment,
+    CarExpense, LogisticSalaryPayment,
     # TransitExpense, TransitIncome
 )
 from apps.main.models import Income, Expense, MoneyCirculation, DailyRemainder
