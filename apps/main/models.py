@@ -231,13 +231,37 @@ class TransactionToSection(BaseModel):
         with transaction.atomic():
             if self.pk:
                 prev = TransactionToSection.objects.get(id=self.pk)
-                converted_amount = convert_currency(prev.currency_type, "UZS", prev.amount)
-                User.objects.filter(id=prev.creator.id).update(balance=F('balance') + converted_amount)
+                if prev.type == "get":
+                    if prev.creator.role == 'admin':
+                        User.objects.filter(id=prev.creator.id).update(
+                            balance=F('balance') + convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
+                    else:
+                        User.objects.filter(id=prev.creator.id).update(
+                            balance=F('balance') + convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
+                else:
+                    if prev.creator.role == 'admin':
+                        User.objects.filter(id=prev.creator.id).update(
+                            balance=F('balance') - convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
+                    else:
+                        User.objects.filter(id=prev.creator.id).update(
+                            balance=F('balance') - convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
 
             super().save(*args, **kwargs)
 
-            converted_amount = convert_currency(self.currency_type, "UZS", self.amount)
-            User.objects.filter(id=self.creator.id).update(balance=F('balance') - converted_amount)
+            if self.type == "get":
+                if self.creator.role == "admin":
+                    User.objects.filter(id=self.creator.id).update(
+                        balance=F('balance') - convert_currency(self.currency_type, self.creator.currency_type, self.amount))
+                else:
+                    User.objects.filter(id=self.creator.id).update(
+                        balance=F('balance') - convert_currency(self.currency_type, self.creator.currency_type, self.amount))
+            else:
+                if self.creator.role == "admin":
+                    User.objects.filter(id=self.creator.id).update(
+                        balance=F('balance') + convert_currency(self.currency_type, self.creator.currency_type, self.amount))
+                else:
+                    User.objects.filter(id=self.creator.id).update(
+                        balance=F('balance') + convert_currency(self.currency_type, self.creator.currency_type, self.amount))
 
 
 

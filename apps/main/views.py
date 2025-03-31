@@ -308,6 +308,7 @@ class TransactionToAdminDetailView(RetrieveUpdateDestroyAPIView):
         return TransactionToAdminCreateSerializer
 
 
+# Transaction between sections
 class TransactionToSectionListCreateView(ListCreateAPIView):
     serializer_class = TransactionToSectionSerializer
     permission_classes = [IsCEO | IsAdmin]
@@ -316,14 +317,37 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         section = self.request.query_params.get('section')
+        is_for = self.request.query_params.get('is_for')
 
-        queryset = TransactionToSection.objects.filter(type='give', section=section)
+        queryset = TransactionToSection.objects.filter(type='give')
 
         if start_date:
             queryset = queryset.filter(created_at__date__gte=start_date)
         if end_date:
             queryset = queryset.filter(created_at__date__lte=end_date)
 
+        if is_for is None:
+            raise ValidationError({"error": "'is_for' is required"})
+
+        if is_for == "ceo":
+            if self.request.user.role == "ceo":
+                if section:
+                    queryset = queryset.filter(creator=self.request.user, section=section)
+                else:
+                    queryset = queryset.filter(creator=self.request.user)
+            elif self.request.user.role == "admin":
+                raise ValidationError({"error": "Only CEO can filter by 'is_for' = 'ceo'"})
+            else:
+                raise ValidationError({"error": "Нимадир хато кетди."})
+        elif is_for == "admin":
+            if section is None:
+                raise ValidationError({"error": "If 'is_for' is 'admin', 'section' is required"})
+            if self.request.user.role == "ceo":
+                queryset = queryset.filter(creator__role='admin', creator__section=section, section=section)
+            elif self.request.user.role == "admin" and self.request.user.section == section:
+                queryset = queryset.filter(creator=self.request.user, section=section)
+            else:
+                raise ValidationError({"error": "Нимадир хато кетди."})
         return queryset
 
     @swagger_auto_schema(
@@ -342,7 +366,13 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
                 'section', openapi.IN_QUERY,
                 description="Section to filter by. Options: 'logistic', 'fridge', 'garden', 'factory'",
                 type=openapi.TYPE_STRING,
-                enum=['logistic', 'fridge', 'garden', 'factory']
+                enum=['logistic', 'fridge', 'garden', 'factory', 'general']
+            ),
+            openapi.Parameter(
+                'is_for', openapi.IN_QUERY,
+                description="Is For to filter by. Options: 'admin', 'ceo'",
+                type=openapi.TYPE_STRING,
+                enum=['admin', 'ceo'], required=True
             ),
         ]
     )
@@ -354,7 +384,6 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
 
 
 class TransactionToSectionDetailView(RetrieveUpdateDestroyAPIView):
-
     serializer_class = TransactionToSectionSerializer
     permission_classes = [IsCEO | IsAdmin]
 
@@ -371,17 +400,37 @@ class TransactionFromSectionListCreateView(ListCreateAPIView):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         section = self.request.query_params.get('section')
+        is_for = self.request.query_params.get('is_for')
 
-        if not section:
-            raise ValidationError("The 'section' parameter is required.")
-
-        queryset = TransactionToSection.objects.filter(type='get', section=section)
+        queryset = TransactionToSection.objects.filter(type='get')
 
         if start_date:
             queryset = queryset.filter(created_at__date__gte=start_date)
         if end_date:
             queryset = queryset.filter(created_at__date__lte=end_date)
 
+        if is_for is None:
+            raise ValidationError({"error": "'is_for' is required"})
+
+        if is_for == "ceo":
+            if self.request.user.role == "ceo":
+                if section:
+                    queryset = queryset.filter(creator=self.request.user, section=section)
+                else:
+                    queryset = queryset.filter(creator=self.request.user)
+            elif self.request.user.role == "admin":
+                raise ValidationError({"error": "Only CEO can filter by 'is_for' = 'ceo'"})
+            else:
+                raise ValidationError({"error": "Нимадир хато кетди."})
+        elif is_for == "admin":
+            if section is None:
+                raise ValidationError({"error": "If 'is_for' is 'admin', 'section' is required"})
+            if self.request.user.role == "ceo":
+                queryset = queryset.filter(creator__role='admin', creator__section=section, section=section)
+            elif self.request.user.role == "admin" and self.request.user.section == section:
+                queryset = queryset.filter(creator=self.request.user, section=section)
+            else:
+                raise ValidationError({"error": "Нимадир хато кетди."})
         return queryset
 
     @swagger_auto_schema(
@@ -400,8 +449,13 @@ class TransactionFromSectionListCreateView(ListCreateAPIView):
                 'section', openapi.IN_QUERY,
                 description="Section to filter by. Options: 'logistic', 'fridge', 'garden', 'factory'",
                 type=openapi.TYPE_STRING,
-                enum=['logistic', 'fridge', 'garden', 'factory'],
-                required=True
+                enum=['logistic', 'fridge', 'garden', 'factory', 'general'],
+            ),
+            openapi.Parameter(
+                'is_for', openapi.IN_QUERY,
+                description="Is For to filter by. Options: 'admin', 'ceo'",
+                type=openapi.TYPE_STRING,
+                enum=['admin', 'ceo'], required=True
             ),
         ]
     )
@@ -430,12 +484,14 @@ class DailyRemainderView(ListAPIView):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
+        queryset = DailyRemainder.objects.filter(user=self.request.user)
+
         start_date = timezone.datetime.strptime(start_date, "%Y-%m-%d").date() if start_date else (
                     timezone.now() - timedelta(days=30)).date()
         end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date() if end_date else timezone.now().date()
 
-        queryset = DailyRemainder.objects.filter(created_at__range=[start_date, end_date])
-        return DailyRemainder.objects.all()
+        queryset = queryset.filter(created_at__range=[start_date, end_date])
+        return queryset
 
     @swagger_auto_schema(
         manual_parameters=[
