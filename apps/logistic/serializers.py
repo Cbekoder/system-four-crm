@@ -211,7 +211,7 @@ class ContractIncomeDetailSerializer(ModelSerializer):
 
 
 class ContractRecordDetailSerializer(ModelSerializer):
-    contractor = PrimaryKeyRelatedField(queryset=Contractor.objects.all(), allow_null=True)
+    contractor = ContractorSerializer()
     cars = ContractCarsDetailSerializer(source="contractcars_set", many=True, read_only=True)
     incomes = ContractIncomeDetailSerializer(source="contractincome_set", many=True, read_only=True)
 
@@ -240,14 +240,14 @@ class ContractRecordCreateSerializer(ModelSerializer):
     def validate(self, data):
         if not data.get('contractor'):
             raise ValidationError("Contractor majburiy ravishda kiritilishi kerak.")
-        if data.get('amount') is not None and data['amount'] < 0:
+        if data.get('amount') is not None and data['amount'] <= 0:
             raise ValidationError("Amount must be a positive value.")
         return data
 
     def create(self, validated_data):
         with transaction.atomic():
             cars_data = validated_data.pop('cars', [])
-            validated_data.remaining = validated_data.get('amount', 0)
+            validated_data['remaining'] = validated_data.get('amount', 0)
             contract_record = ContractRecord.objects.create(**validated_data)
             serialized_cars = []
             for car_data in cars_data:
