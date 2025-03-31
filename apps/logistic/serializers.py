@@ -340,8 +340,8 @@ class ContractRecordCreateSerializer(ModelSerializer):
 class ContractIncomeCreateSerializer(ModelSerializer):
     class Meta:
         model = ContractIncome
-        fields = ['id', 'contract', 'amount', 'currency_type', 'date', 'bank_name', 'created_at']
-        read_only_fields = ['created_at']
+        fields = ['id', 'contract', 'amount', 'currency_type', 'date', 'bank_name', 'creator', 'created_at']
+        read_only_fields = ['creator', 'created_at']
 
 class ContractIncomeFullDetailSerializer(ModelSerializer):
     contract = ContractRecordDetailSerializer()
@@ -349,6 +349,11 @@ class ContractIncomeFullDetailSerializer(ModelSerializer):
         model = ContractIncome
         fields = ['id', 'contract', 'amount', 'currency_type', 'date', 'bank_name', 'created_at']
         read_only_fields = ['created_at']
+
+class ContractIncomeSimplaDetailSerializer(ModelSerializer):
+    class Meta:
+        model = ContractIncome
+        fields = ['id', 'amount', 'currency_type', 'date', 'bank_name', 'created_at']
 
 
 # Car expense serializer

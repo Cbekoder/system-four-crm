@@ -314,7 +314,7 @@ class ContractIncome(BaseModel):
     class Meta:
         verbose_name = "Shartnoma to'lovi "
         verbose_name_plural = "Shartnoma to'lovlari "
-        ordering = ["-created_at"]
+        ordering = ["-date"]
 
     def __str__(self):
         return self.contract.contract_number
@@ -332,7 +332,7 @@ class ContractIncome(BaseModel):
                             convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
             super().save(*args, **kwargs)
 
-            ContractRecord.objects.filter(id=self.contract).update(
+            ContractRecord.objects.filter(id=self.contract.id).update(
                 remaining=F('remaining') -
                           convert_currency(self.currency_type, self.contract.currency_type, self.amount))
             User.objects.filter(id=self.creator.id).update(

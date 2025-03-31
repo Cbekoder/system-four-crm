@@ -21,7 +21,8 @@ from .serializers import (
     TIRSerializer, TIRRecordDetailSerializer, TIRRecordSerializer,
     TIRRecordUpdateSerializer, CompanySerializer, WaybillSerializer, ContractRecordDetailSerializer,
     ContractRecordCreateSerializer, ContractIncomeFullDetailSerializer, ContractIncomeCreateSerializer,
-    WaybillPayoutDetailSerializer, WaybillPayoutCreateSerializer, TIRGetSerializer, WaybillDetailSerailizer
+    WaybillPayoutDetailSerializer, WaybillPayoutCreateSerializer, TIRGetSerializer, WaybillDetailSerailizer,
+    ContractIncomeSimplaDetailSerializer
 )
 from apps.users.permissions import IsLogisticAdmin, IsCEO
 from apps.main.models import Expense, Income
@@ -454,6 +455,31 @@ class ContractIncomeListCreateView(ListCreateAPIView):
     filterset_fields = ['date', 'contract', 'currency_type']
     search_fields = ['contract__contract_number', 'bank_name', 'currency_type']
 
+    def get_queryset(self):
+        queryset = ContractIncome.objects.all()
+        date = self.request.query_params.get('date')
+        contract = self.request.query_params.get('contract')
+        currency_type = self.request.query_params.get('currency_type')
+        search = self.request.query_params.get('search')
+
+        if date:
+            queryset = queryset.filter(date=date)
+
+        if contract:
+            queryset = queryset.filter(contract=contract)
+
+        if currency_type:
+            queryset = queryset.filter(currency_type=currency_type)
+
+        if search:
+            queryset = queryset.filter(
+                contract__contract_number__icontains=search,
+                bank_name__icontains=search,
+                currency_type__icontains=search
+            )
+
+        return queryset
+
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
@@ -483,12 +509,15 @@ class ContractIncomeListCreateView(ListCreateAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_serializer_class(self):
+        if self.request.query_params.get('contract'):
+            return ContractIncomeSimplaDetailSerializer
         if self.request.method == 'GET':
             return ContractIncomeFullDetailSerializer
         return ContractIncomeCreateSerializer
 
     def perform_create(self, serializer):
-        serializer.save(crator=self.request.user)
+        serializer.save(creator=self.request.user)
+
 
 class ContractIncomeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = ContractIncome.objects.all()
