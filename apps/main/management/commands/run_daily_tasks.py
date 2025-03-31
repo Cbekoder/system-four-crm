@@ -14,7 +14,7 @@ class Command(BaseCommand):
         for user in User.objects.all():
             DailyRemainder.objects.create(
                 user=user,
-                amount=user.balance,
+                amount=round(user.balance, 2),
                 currency_type=user.currency_type
             )
 

@@ -485,12 +485,14 @@ class DailyRemainderView(ListAPIView):
         end_date = self.request.query_params.get('end_date')
 
         queryset = DailyRemainder.objects.filter(user=self.request.user)
-
-        start_date = timezone.datetime.strptime(start_date, "%Y-%m-%d").date() if start_date else (
-                    timezone.now() - timedelta(days=30)).date()
-        end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date() if end_date else timezone.now().date()
-
-        queryset = queryset.filter(created_at__range=[start_date, end_date])
+        if start_date or end_date:
+            if start_date:
+                queryset = queryset.filter(created_at__date__gte=start_date)
+            if end_date:
+                queryset = queryset.filter(created_at__date__lte=end_date)
+        else:
+            queryset = queryset[:30]
+      
         return queryset
 
     @swagger_auto_schema(
