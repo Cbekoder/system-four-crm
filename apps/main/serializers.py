@@ -87,7 +87,7 @@ class TransactionToSectionSerializer(ModelSerializer):
 
 
 class DailyRemainderSerializer(ModelSerializer):
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    created_at = DateTimeField(format="%d.%m.%Y", read_only=True)
     class Meta:
         model = DailyRemainder
         fields = ['id', 'amount', 'currency_type', 'created_at']
