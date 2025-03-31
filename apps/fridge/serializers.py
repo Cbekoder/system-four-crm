@@ -135,7 +135,7 @@ class FridgeIncomeSerializer(ModelSerializer):
 
 class FridgeIncomePostSerializer(ModelSerializer):
     refrigerator = PrimaryKeyRelatedField(
-        queryset=Refrigerator.objects.all(), write_only=True, required=False
+        queryset=Refrigerator.objects.all(), write_only=True, required=False, allow_null=True
     )
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -151,17 +151,3 @@ class FridgeIncomePostSerializer(ModelSerializer):
         else:
             validated_data['reason'] = f"income|{refrigerator.id}"
         return super().create(validated_data)
-
-
-
-class ExpenseSummarySerializer(ModelSerializer):
-    date=DateTimeField(format="%d.%m.%Y", source='created_at')
-    class Meta:
-        model = Expense
-        fields = ['id', 'description', 'reason','amount', 'date']
-
-class IncomeSummarySerializer(ModelSerializer):
-    date=DateTimeField(format="%d.%m.%Y", source='created_at')
-    class Meta:
-        model = Income
-        fields = ['id', 'description', 'reason','amount', 'date']

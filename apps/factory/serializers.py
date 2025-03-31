@@ -1,9 +1,12 @@
+from django.utils import timezone
+from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import ModelSerializer, ValidationError, CharField, DateTimeField, \
     PrimaryKeyRelatedField, SerializerMethodField
 from .models import *
 from apps.main.models import Expense, Income
 
 
+# Worker Serializers
 class WorkerSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -12,6 +15,7 @@ class WorkerSerializer(ModelSerializer):
         model = Worker
         fields = ['id', 'first_name', 'last_name', 'phone_number', 'extra_phone_number', 'birth_date', 'description',
                   'balance', 'currency_type', 'updated_at', 'created_at']
+        read_only_fields = ['balance', 'created_at', 'updated_at']
 
 class WorkerSimpleSerializer(ModelSerializer):
     class Meta:
@@ -19,13 +23,20 @@ class WorkerSimpleSerializer(ModelSerializer):
         fields = ['id', 'first_name', 'last_name']
 
 
-class BasketSerializer(ModelSerializer):
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-
+# Basket Serializers
+class BasketPostSerializer(ModelSerializer):
     class Meta:
         model = Basket
-        fields = ["id", "name", "size", "weight", "quantity", "price", "per_worker_fee", "updated_at", "created_at"]
+        fields = ["id", "name", "size", "weight", "quantity", "price", "per_worker_fee", "raw_material"]
+
+class BasketGetSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    raw_material = StringRelatedField()
+    class Meta:
+        model = Basket
+        fields = ["id", "name", "size", "weight", "quantity", "price", "per_worker_fee", "raw_material", "updated_at", "created_at"]
+
 
 class BasketSimpleSerializer(ModelSerializer):
     class Meta:
@@ -33,6 +44,7 @@ class BasketSimpleSerializer(ModelSerializer):
         fields = ["id", "name", "size", "weight", "quantity", "price", "per_worker_fee"]
 
 
+# Supplier Serializers
 class SupplierSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -61,12 +73,16 @@ class UserDailyWorkCreateSerializer(ModelSerializer):
 
     class Meta:
         model = UserDailyWork
-        fields = ['id', 'worker', 'amount', 'description',  'user_basket_counts','date', 'updated_at', 'created_at']
+        fields = ['id', 'worker', 'amount', 'description', 'date', 'user_basket_counts', 'updated_at', 'created_at']
         read_only_fields = ['id', 'amount']
 
     def create(self, validated_data):
         with transaction.atomic():
             user_basket_counts_data = validated_data.pop('user_basket_counts')
+
+            if validated_data.get('date') is None:
+                validated_data['date'] = timezone.now().date()
+
             user_daily_work = UserDailyWork.objects.create(**validated_data)
 
             for basket_count_data in user_basket_counts_data:
@@ -130,15 +146,6 @@ class UserDailyWorkDetailSerializer(ModelSerializer):
 
 ################################
 
-class WorkerGetSerializer(ModelSerializer):
-    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-
-    class Meta:
-        model = Worker
-        fields = ['id', 'first_name', 'last_name', 'phone_number', 'debt', 'currency_type', 'created_at', 'updated_at']
-
-
 class RawMaterialSerializer(ModelSerializer):
     # created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     # updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -173,31 +180,7 @@ class ClientSerializer(ModelSerializer):
         fields = ['id', 'first_name','last_name','phone_number','debt','currency_type']
 
 
-# class SaleSerializer(ModelSerializer):
-#     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
-#
-#     class Meta:
-#         model = Sale
-#         fields = '__all__'
-
-    # def create(self, validated_data):
-    #     request = self.context.get('request')
-    #
-    #     sale = Sale.objects.create(**validated_data)
-    #
-    #     Income.objects.create(
-    #         reason=f"Korzinka sotuvi | {sale.client.first_name} {sale.client.last_name}",
-    #         description=sale.description,
-    #         amount=sale.price,
-    #         currency_type=sale.currency_type,
-    #         section="factory",
-    #         user=request.user
-    #     )
-    #
-    #     return sale
-
-
+# Sale Serializers
 class SaleItemSerializer(ModelSerializer):
     # basket = BasketSerializer(read_only=True)
     # basket_id = PrimaryKeyRelatedField(
@@ -208,26 +191,6 @@ class SaleItemSerializer(ModelSerializer):
         model = SaleItem
         fields = ['id', 'basket', 'quantity','amount']
 
-    # def create(self, validated_data):
-    #     request = self.context.get('request')
-    #
-    #     sale_items_data = validated_data.pop('sale_items', [])
-    #     sale = Sale.objects.create(**validated_data)
-    #
-    #     for item_data in sale_items_data:
-    #         SaleItem.objects.create(sale=sale, **item_data)
-    #
-    #     # Daromadni yaratish
-    #     Income.objects.create(
-    #         reason=f"Korzinka sotuvi | {sale.client.first_name} {sale.client.last_name if sale.client else ''}",
-    #         description=sale.description,
-    #         amount=sale.amount,
-    #         currency_type=sale.currency_type,
-    #         section="factory",
-    #         user=request.user if request else None
-    #     )
-    #
-    #     return sale
 
 
 class SaleSerializer(ModelSerializer):
@@ -235,31 +198,32 @@ class SaleSerializer(ModelSerializer):
 
     class Meta:
         model = Sale
-        fields = ['id', 'client', 'description', 'is_debt', 'total_amount','date' ,'sale_items']
+        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'date' ,'sale_items']
 
     def create(self, validated_data):
-        sale_items_data = validated_data.pop('sale_items')
-        sale = Sale.objects.create(**validated_data)
+        with transaction.atomic():
+            sale_items_data = validated_data.pop('sale_items')
+            sale = Sale.objects.create(**validated_data)
 
-        for item_data in sale_items_data:
-            SaleItem.objects.create(sale=sale, **item_data)
+            for item_data in sale_items_data:
+                SaleItem.objects.create(sale=sale, **item_data)
 
-        return sale
+            return sale
 
 
     def update(self, instance, validated_data):
-        sale_items_data = validated_data.pop('sale_items', [])
+        with transaction.atomic():
+            sale_items_data = validated_data.pop('sale_items', [])
 
-        # Mavjud ma'lumotlarni yangilash
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
 
-        # Yangi sale_items qo'shish
-        for item_data in sale_items_data:
-            SaleItem.objects.create(sale=instance, **item_data)
+            for item_data in sale_items_data:
+                SaleItem.objects.create(sale=instance, **item_data)
 
-        return instance
+            return instance
+
 
 class SaleGetSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
@@ -280,13 +244,15 @@ class SaleGetSerializer(ModelSerializer):
             }
         return None
 
+
+# Raw Material History Serializers
 class RawMaterialHistorySerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
 
     class Meta:
         model = RawMaterialHistory
-        fields = ['id', 'supplier', 'raw_material','date' ,'amount', 'weight', 'currency_type', 'created_at', 'updated_at']
+        fields = ['id', 'supplier', 'raw_material', 'date' ,'amount', 'weight', 'currency_type', 'created_at', 'updated_at']
 
 
 class SalaryPaymentGetSerializer(ModelSerializer):
@@ -304,7 +270,7 @@ class SalaryPaymentPostSerializer(ModelSerializer):
 
     class Meta:
         model = SalaryPayment
-        fields = ['id',  'amount',  'worker',  'amount',  'description',  'currency_type', 'created_at', 'updated_at']
+        fields = ['id',  'amount',  'worker',  'amount',  'date', 'description',  'currency_type', 'created_at', 'updated_at']
 
     # def create(self, validated_data):
     #     request = self.context.get('request')

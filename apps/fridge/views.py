@@ -357,13 +357,13 @@ class FridgeSummaryAPIView(APIView):
 
         outcomes_list = []
 
-        expense = Expense.objects.filter(section='fridge', reason__startswith="expense|",
+        expenses = Expense.objects.filter(section='fridge', reason__startswith="expense|",
                                          created_at__range=[start_date, end_date])
         electricity_bills = Expense.objects.filter(section='fridge', reason__startswith="electricity|",
                                                    created_at__range=[start_date, end_date])
 
-        for expense in expense:
-            total_outcome += expense.amount
+        for expense in expenses:
+            total_outcome += convert_currency(expense.currency_type, 'UZS', expense.amount)
             outcomes_list.append({
                 'id': f"EX-{expense.id}",
                 'reason': expense.description,
@@ -373,7 +373,7 @@ class FridgeSummaryAPIView(APIView):
             })
 
         for bill in electricity_bills:
-            total_outcome += bill.amount
+            total_outcome += convert_currency(bill.currency_type, "UZS", bill.amount)
             try:
                 reason = f"{Refrigerator.objects.get(id=int(bill.reason.split('|')[1])).name} га электр учун тўлов | {bill.description}"
             except Refrigerator.DoesNotExist:
@@ -390,11 +390,12 @@ class FridgeSummaryAPIView(APIView):
 
         incomes_list = []
 
-        income = Income.objects.filter(section='fridge', created_at__range=[start_date, end_date])
+        incomes = Income.objects.filter(section='fridge', created_at__range=[start_date, end_date])
 
-        for income in income:
-            total_income += income.amount
+        for income in incomes:
+            total_income += convert_currency(income.currency_type, "UZS", income.amount)
             try:
+                refri_id = income.reason.split('|')
                 reason = f"{Refrigerator.objects.get(id=int(income.reason.split('|')[1])).name} дан кирим | {income.description}"
             except Refrigerator.DoesNotExist:
                 reason = f"Кирим | {income.description}"

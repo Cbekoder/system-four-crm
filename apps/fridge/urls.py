@@ -21,5 +21,4 @@ urlpatterns = [
 
     #Urls for Summary
     path('summary/', FridgeSummaryAPIView.as_view()),
-
 ]

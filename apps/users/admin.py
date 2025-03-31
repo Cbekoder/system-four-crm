@@ -9,7 +9,7 @@ admin.site.unregister(Group)
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
-        ("Qo'shimcha maydonlar", {'fields': ('role', 'section')}),
+        ("Qo'shimcha maydonlar", {'fields': ('role', 'section', 'balance')}),
     )
     list_display = ('username', 'role', 'section', 'is_staff', 'is_active')
     list_filter = ('role', 'section', 'is_staff', 'is_active')

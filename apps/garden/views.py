@@ -378,10 +378,10 @@ class GardenSummaryAPIView(APIView):
         outcomes_list = []
 
         salary_payments = GardenSalaryPayment.objects.filter(created_at__range=[start_date, end_date])
-        expense = Expense.objects.filter(section='garden', created_at__range=[start_date, end_date])
+        expenses = Expense.objects.filter(section='garden', created_at__range=[start_date, end_date])
 
         for salary_payment in salary_payments:
-            total_outcome += salary_payment.amount
+            total_outcome += convert_currency(salary_payment.currency_type, "UZS", salary_payment.amount)
             outcomes_list.append({
                 'id': f"SP-{salary_payment.id}",
                 'reason': f"{salary_payment.gardener.full_name}га маош учун.",
@@ -390,8 +390,8 @@ class GardenSummaryAPIView(APIView):
                 'date': salary_payment.created_at.strftime('%Y-%m-%d')
             })
 
-        for expense in expense:
-            total_outcome += expense.amount
+        for expense in expenses:
+            total_outcome += convert_currency(expense.currency_type, "UZS", expense.amount)
             outcomes_list.append({
                 'id': f"EX-{expense.id}",
                 'reason': expense.reason,
@@ -404,10 +404,10 @@ class GardenSummaryAPIView(APIView):
 
         incomes_list = []
 
-        income = Income.objects.filter(section='garden', created_at__range=[start_date, end_date])
+        incomes = Income.objects.filter(section='garden', created_at__range=[start_date, end_date])
 
-        for income in income:
-            total_income += income.amount
+        for income in incomes:
+            total_income += convert_currency(income.currency_type, 'UZS', income.amount)
             incomes_list.append({
                 'id': f"IN-{income.id}",
                 'reason': income.reason,
