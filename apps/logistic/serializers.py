@@ -210,9 +210,9 @@ class TIRRecordDetailSerializer(ModelSerializer):
     def get_days_left(self, obj):
         if obj.is_returned:
             return 0
-        if obj.submission_deadline:
+        if obj.tir_deadline:
             today = timezone.now().date()
-            return max((obj.submission_deadline - today).days, 0)
+            return max((obj.tir_deadline - today).days, 0)
         return None
 
 
