@@ -417,7 +417,7 @@ class ContractRecordListCreateView(ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return ContractRecordDetailSerializer
-        return ContractRecordCreateSerializer()
+        return ContractRecordCreateSerializer
 
     @swagger_auto_schema(
         request_body=ContractRecordCreateSerializer,

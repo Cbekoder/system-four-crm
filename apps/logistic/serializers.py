@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import ModelSerializer, DateTimeField, PrimaryKeyRelatedField, SerializerMethodField
@@ -209,54 +210,6 @@ class ContractIncomeDetailSerializer(ModelSerializer):
         fields = ['id', 'amount', 'currency_type', 'date', 'bank_name']
 
 
-class ContractRecordCreateSerializer(ModelSerializer):
-    contractor = PrimaryKeyRelatedField(queryset=Contractor.objects.all(), allow_null=True)
-    cars = ContractCarsCreateSerailizer(many=True)
-
-    class Meta:
-        model = ContractRecord
-        fields = [
-            'id', 'contract_number', 'date', 'invoice_number',
-            'contractor', 'description', 'amount', 'currency_type',
-            'remaining', 'status', 'cars'
-        ]
-        read_only_fields = ['status']  # Status is managed by save logic in some cases
-
-    def validate(self, data):
-        """Custom validation for required fields and logic."""
-        if not data.get('contractor'):
-            raise ValidationError("Contractor majburiy ravishda kiritilishi kerak.")
-        if data.get('amount') is not None and data['amount'] < 0:
-            raise ValidationError("Amount must be a positive value.")
-        return data
-
-    # def create(self, validated_data):
-    #     """Override to handle custom save logic."""
-    #     request = self.context.get('request')
-    #     creator = request.user if request and hasattr(request, 'user') else None
-    #
-    #     # Create the instance without saving to DB yet
-    #     contract_record = ContractRecord(**validated_data)
-    #     contract_record.creator = creator  # Assuming creator is a ForeignKey to User
-    #
-    #     # Call the model's save method to trigger custom logic
-    #     contract_record.save()
-    #     return contract_record
-    #
-    # def update(self, instance, validated_data):
-    #     """Override to handle updates while respecting save logic."""
-    #     request = self.context.get('request')
-    #     instance.creator = request.user if request and hasattr(request, 'user') else instance.creator
-    #
-    #     # Update fields
-    #     for attr, value in validated_data.items():
-    #         setattr(instance, attr, value)
-    #
-    #     # Call the model's save method
-    #     instance.save()
-    #     return instance
-
-
 class ContractRecordDetailSerializer(ModelSerializer):
     contractor = PrimaryKeyRelatedField(queryset=Contractor.objects.all(), allow_null=True)
     cars = ContractCarsDetailSerializer(source="contractcars_set", many=True, read_only=True)
@@ -269,6 +222,73 @@ class ContractRecordDetailSerializer(ModelSerializer):
             'contractor', 'description', 'amount', 'currency_type',
             'remaining', 'status', 'cars', 'incomes'
         ]
+
+
+class ContractRecordCreateSerializer(ModelSerializer):
+    contractor = PrimaryKeyRelatedField(queryset=Contractor.objects.all(), allow_null=True)
+    cars = ContractCarsCreateSerailizer(many=True)
+
+    class Meta:
+        model = ContractRecord
+        fields = [
+            'id', 'contract_number', 'date', 'invoice_number',
+            'contractor', 'description', 'amount', 'currency_type',
+            'remaining', 'status', 'cars'
+        ]
+        read_only_fields = ['status', 'remaining']
+
+    def validate(self, data):
+        if not data.get('contractor'):
+            raise ValidationError("Contractor majburiy ravishda kiritilishi kerak.")
+        if data.get('amount') is not None and data['amount'] < 0:
+            raise ValidationError("Amount must be a positive value.")
+        return data
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            cars_data = validated_data.pop('cars', [])
+
+            contract_record = ContractRecord.objects.create(**validated_data)
+            serialized_cars = []
+            for car_data in cars_data:
+                car_obj = ContractCars.objects.create(contract=contract_record, **car_data)
+                serialized_cars.append(car_obj)
+            contract_record.cars = serialized_cars
+
+            return contract_record
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            cars_data = validated_data.pop('cars', None)
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
+
+            if cars_data is not None:
+                existing_cars = {car.id: car for car in ContractCars.objects.filter(contract=instance)}
+                new_car_ids = set()
+                serialized_cars = []
+
+                for car_data in cars_data:
+                    car_id = car_data.get('id', None)
+                    if car_id and car_id in existing_cars:
+                        car_obj = existing_cars[car_id]
+                        for key, value in car_data.items():
+                            setattr(car_obj, key, value)
+                        car_obj.save()
+                        new_car_ids.add(car_id)
+                    else:
+                        car_obj = ContractCars.objects.create(contract=instance, **car_data)
+                        new_car_ids.add(car_obj.id)
+                    serialized_cars.append(car_obj)
+
+                for car_id, car in existing_cars.items():
+                    if car_id not in new_car_ids:
+                        car.delete()
+
+                instance.cars = serialized_cars
+
+            return instance
 
 
 class ContractIncomeCreateSerializer(ModelSerializer):

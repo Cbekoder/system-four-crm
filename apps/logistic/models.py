@@ -264,6 +264,7 @@ class ContractRecord(BaseModel):
     class Meta:
         verbose_name = "Shartnoma "
         verbose_name_plural = "Shartnomalar "
+        ordering = ['-date']
 
     def __str__(self):
         return self.contract_number
