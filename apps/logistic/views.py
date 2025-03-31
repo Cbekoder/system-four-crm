@@ -21,7 +21,7 @@ from .serializers import (
     TIRSerializer, TIRRecordDetailSerializer, TIRRecordSerializer,
     TIRRecordUpdateSerializer, CompanySerializer, WaybillSerializer, ContractRecordDetailSerializer,
     ContractRecordCreateSerializer, ContractIncomeFullDetailSerializer, ContractIncomeCreateSerializer,
-    WaybillPayoutDetailSerializer, WaybillPayoutCreateSerializer
+    WaybillPayoutDetailSerializer, WaybillPayoutCreateSerializer, TIRGetSerializer, WaybillDetailSerailizer
 )
 from apps.users.permissions import IsLogisticAdmin, IsCEO
 from apps.main.models import Expense, Income
@@ -181,6 +181,11 @@ class TIRListCreateView(ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return TIRSerializer
+        return TIRGetSerializer
+
     def get_queryset(self):
         queryset = TIR.objects.all()
         status = self.request.query_params.get('status', None)
@@ -194,7 +199,7 @@ class TIRListCreateView(ListCreateAPIView):
 
 class TIRDetailView(RetrieveUpdateDestroyAPIView):
     queryset = TIR.objects.all()
-    serializer_class = TIRSerializer
+    serializer_class = TIRGetSerializer
     permission_classes = [IsLogisticAdmin | IsCEO]
 
 
@@ -291,6 +296,11 @@ class WaybillListCreateView(ListCreateAPIView):
             self.queryset = self.queryset.filter(created_at__date__lte=end_date)
 
         return self.queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return WaybillDetailSerailizer
+        return WaybillSerializer
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)

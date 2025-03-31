@@ -1,7 +1,8 @@
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import StringRelatedField
-from rest_framework.serializers import ModelSerializer, DateTimeField, PrimaryKeyRelatedField, SerializerMethodField
+from rest_framework.serializers import (ModelSerializer, DateTimeField, PrimaryKeyRelatedField, SerializerMethodField,
+                                        ListField, CharField)
 from django.utils import timezone
 
 from .models import (
@@ -71,13 +72,54 @@ class TrailerSerializer(ModelSerializer):
 
 
 # TIR serializer
-class TIRSerializer(ModelSerializer):
+class TIRGetSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     class Meta:
         model = TIR
-        fields = ['id', 'serial_number', 'get_date', 'deadline', 'status', 'created_at', 'updated_at']
+        fields = ['id', 'get_date', 'deadline', 'serial_number', 'status', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+
+class TIRSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    serial_numbers = ListField(
+        child=CharField(max_length=100),
+        write_only=True
+    )
+    class Meta:
+        model = TIR
+        fields = ['id', 'get_date', 'deadline', 'status', 'serial_numbers', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate(self, data):
+        if not data.get('serial_numbers'):
+            raise ValidationError("Serial number ro'yxati bo'sh bo'lmasligi kerak.")
+        if data.get('get_date') and data.get('deadline') and data['get_date'] > data['deadline']:
+            raise ValidationError("Get_date deadline dan katta bo'lmasligi kerak.")
+        return data
+
+    def create(self, validated_data):
+
+        serial_numbers = validated_data.pop('serial_numbers', [])
+
+
+        tir_instances = []
+        with transaction.atomic():
+            for serial_num in serial_numbers:
+                tir = TIR.objects.create(
+                    serial_number=serial_num,
+                    **validated_data
+                )
+                tir_instances.append(tir)
+
+        return tir_instances[0] if tir_instances else None
+
+    def to_representation(self, instance):
+
+        representation = super().to_representation(instance)
+        representation['serial_numbers'] = instance.serial_number
+        return representation
 
 
 # Company serializer
