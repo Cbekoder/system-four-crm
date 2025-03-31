@@ -254,6 +254,7 @@ class ContractIncomeDetailSerializer(ModelSerializer):
 
 class ContractRecordDetailSerializer(ModelSerializer):
     contractor = ContractorSerializer()
+    one_percent = SerializerMethodField()
     cars = ContractCarsDetailSerializer(source="contractcars_set", many=True, read_only=True)
     incomes = ContractIncomeDetailSerializer(source="contractincome_set", many=True, read_only=True)
 
@@ -262,8 +263,11 @@ class ContractRecordDetailSerializer(ModelSerializer):
         fields = [
             'id', 'contract_number', 'date', 'invoice_number',
             'contractor', 'description', 'amount', 'currency_type',
-            'remaining', 'status', 'cars', 'incomes'
+            'remaining', 'one_percent', 'status', 'cars', 'incomes'
         ]
+
+    def get_one_percent(self, obj):
+        return obj.amount / 100
 
 
 class ContractRecordCreateSerializer(ModelSerializer):
