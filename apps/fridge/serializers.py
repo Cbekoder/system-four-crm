@@ -53,6 +53,19 @@ class ElectricityBillPostSerializer(ModelSerializer):
         validated_data['reason'] = f"electricity|{refrigerator.id}"
         return super().create(validated_data)
 
+    def update(self, instance, validated_data):
+        refrigerator = validated_data.pop('refrigerator', None)
+
+        if refrigerator is not None:
+            validated_data['reason'] = f"electricity|{refrigerator.id}"
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
+
 class ElectricityBillSerializer(ModelSerializer):
     refrigerator = SerializerMethodField()
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)

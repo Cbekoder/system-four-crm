@@ -40,12 +40,12 @@ class RefrigatorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         return RefrigeratorSerializer
 
     def delete(self, request, *args, **kwargs):
-        if not request.user.role == 'CEO':
-            return Response(
-                {"detail": "Only CEO can delete this item."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().delete(request, *args, **kwargs)
+        if request.user.role == 'ceo':
+            return super().delete(request, *args, **kwargs)
+        return Response(
+            {"detail": "Only CEO can delete this item."},
+            status=status.HTTP_403_FORBIDDEN
+        )
 
 
 # Expense Views
