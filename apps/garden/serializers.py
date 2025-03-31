@@ -74,9 +74,9 @@ class GardenExpensePostSerializer(ModelSerializer):
     def create(self, validated_data):
         garden = validated_data.pop('garden', None)
         if garden:
-            validated_data['reason'] = f"{validated_data.get('reason')} | {garden.name} uchun xarajat | {garden.id}"
-        # else:
-        #     validated_data['reason'] = "Umumiy xarajat"
+            validated_data['reason'] = f"{validated_data.reason, ' | ' if validated_data.reason else ''}{garden.name} учун харажат | {garden.id}"
+        else:
+            validated_data['reason'] = f"{validated_data.reason, ' | ' if validated_data.reason else ''}Умумий харажат"
 
         return super().create(validated_data)
 
@@ -92,12 +92,17 @@ class GardenExpenseSerializer(ModelSerializer):
 
     def get_garden(self, obj):
         try:
-            garden_id = int(list(obj.reason.split("|"))[-1])
-            garden = Garden.objects.get(id=garden_id)
+            parts = obj.reason.split(' | ')
+            if len(parts) < 3 or 'учун харажат' not in parts[-2]:
+                return None
+
+            garden_id = parts[-1].strip()
+            if not garden_id.isdigit():
+                return None
+
+            garden = Garden.objects.get(id=int(garden_id))
             return GardenSerializer(garden).data
-        except Garden.DoesNotExist:
-            return None
-        except IndexError:
+        except (Garden.DoesNotExist, ValueError, IndexError):
             return None
 
 
@@ -117,9 +122,9 @@ class GardenIncomePostSerializer(ModelSerializer):
     def create(self, validated_data):
         garden = validated_data.pop('garden', None)
         if garden:
-            validated_data['reason'] = f"{validated_data.get('reason')} | {garden.name} учун кирим | {garden.id}"
-        # else:
-        #     validated_data['reason'] = "Umumiy xarajat"
+            validated_data['reason'] = f"{validated_data.reason, " | " if validated_data.reason else ""}{garden.name} учун кирим | {garden.id}"
+        else:
+            validated_data['reason'] = f"{validated_data.reason, " | " if validated_data.reason else ""}Умумий кирим"
 
         return super().create(validated_data)
 
@@ -135,12 +140,18 @@ class GardenIncomeSerializer(ModelSerializer):
 
     def get_garden(self, obj):
         try:
-            garden_id = int(list(obj.reason.split("|"))[1])
-            garden = Garden.objects.get(id=garden_id)
+            parts = obj.reason.split(' | ')
+            if len(parts) < 3 or 'учун кирим' not in parts[-2]:
+                return None
+
+            garden_id = parts[-1].strip()
+            if not garden_id.isdigit():
+                return None
+
+            garden = Garden.objects.get(id=int(garden_id))
             return GardenSerializer(garden).data
-        except Garden.DoesNotExist:
+        except (Garden.DoesNotExist, ValueError, IndexError):
             return None
-        except IndexError:
-            return None
+
 
 

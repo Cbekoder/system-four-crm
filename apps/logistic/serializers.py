@@ -247,7 +247,7 @@ class ContractRecordCreateSerializer(ModelSerializer):
     def create(self, validated_data):
         with transaction.atomic():
             cars_data = validated_data.pop('cars', [])
-
+            validated_data.remaining = validated_data.get('amount', 0)
             contract_record = ContractRecord.objects.create(**validated_data)
             serialized_cars = []
             for car_data in cars_data:
