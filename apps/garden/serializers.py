@@ -122,9 +122,9 @@ class GardenIncomePostSerializer(ModelSerializer):
     def create(self, validated_data):
         garden = validated_data.pop('garden', None)
         if garden:
-            validated_data['reason'] = f"{validated_data.reason, " | " if validated_data.reason else ""}{garden.name} учун кирим | {garden.id}"
+            validated_data['reason'] = f"{validated_data.reason, ' | ' if validated_data.reason else ''}{garden.name} учун кирим | {garden.id}"
         else:
-            validated_data['reason'] = f"{validated_data.reason, " | " if validated_data.reason else ""}Умумий кирим"
+            validated_data['reason'] = f"{validated_data.reason, ' | ' if validated_data.reason else ''}Умумий кирим"
 
         return super().create(validated_data)
 
