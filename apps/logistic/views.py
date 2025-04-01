@@ -22,7 +22,7 @@ from .serializers import (
     TIRRecordUpdateSerializer, CompanySerializer, WaybillSerializer, ContractRecordDetailSerializer,
     ContractRecordCreateSerializer, ContractIncomeFullDetailSerializer, ContractIncomeCreateSerializer,
     WaybillPayoutDetailSerializer, WaybillPayoutCreateSerializer, TIRGetSerializer, WaybillDetailSerailizer,
-    ContractIncomeSimplaDetailSerializer
+    ContractIncomeSimplaDetailSerializer, CarGetSerializer, TrailerGetSerializer
 )
 from apps.users.permissions import IsLogisticAdmin, IsCEO
 from apps.main.models import Expense, Income
@@ -104,7 +104,6 @@ class ContractorRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 # Car views
 class CarListCreateView(ListCreateAPIView):
     queryset = Car.objects.all()
-    serializer_class = CarSerializer
     permission_classes = [IsLogisticAdmin | IsCEO]
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['tenant']
@@ -131,24 +130,42 @@ class CarListCreateView(ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return CarGetSerializer
+        return CarSerializer
+
 
 class CarRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Car.objects.all()
     serializer_class = CarSerializer
     permission_classes = [IsLogisticAdmin | IsCEO]
 
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return CarGetSerializer
+        return CarSerializer
+
 
 # Trailer views
 class TrailerListCreateView(ListCreateAPIView):
     queryset = Trailer.objects.all()
-    serializer_class = TrailerSerializer
     permission_classes = [IsLogisticAdmin | IsCEO]
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return TrailerGetSerializer
+        return TrailerSerializer
 
 
 class TrailerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Trailer.objects.all()
-    serializer_class = TrailerSerializer
     permission_classes = [IsLogisticAdmin | IsCEO]
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return TrailerGetSerializer
+        return TrailerSerializer
 
 
 # TIR views
@@ -190,8 +207,14 @@ class TIRListCreateView(ListCreateAPIView):
     def get_queryset(self):
         queryset = TIR.objects.all()
         status = self.request.query_params.get('status', None)
+        search = self.request.query_params.get('search', None)
+
         if status is not None:
             queryset = queryset.filter(status=status)
+
+        if search:
+            queryset = queryset.filter(serial_number__icontains=search)
+
         return queryset
 
     def perform_create(self, serializer):

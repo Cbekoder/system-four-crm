@@ -51,7 +51,7 @@ urlpatterns = [
     path('transits/<int:pk>/', WaybillDetailView.as_view(), name='waybill-detail'),
 
     path('transit-payouts/', WaybillPayoutListCreateView.as_view(), name='waybill-payout-list-create'),
-    path('transit-payouts/<int:pk>', WaybillPayoutRetrieveUpdateDestroyView.as_view(), name='waybill-payout-detail'),
+    path('transit-payouts/<int:pk>/', WaybillPayoutRetrieveUpdateDestroyView.as_view(), name='waybill-payout-detail'),
 
     # TIR Record URLs
     path('tir-records/', TIRRecordListCreateView.as_view(), name='tir-record-list'),
@@ -61,7 +61,7 @@ urlpatterns = [
     path('contracts/', ContractRecordListCreateView.as_view(), name='contract-list-create'),
     path('contracts/<int:pk>/', ContractRecordDetailView.as_view(), name='contract-detail'),
     path('contract-incomes/', ContractIncomeListCreateView.as_view(), name='contract-income-list-create'),
-    path('contract-incomes/<int:pk>', ContractIncomeRetrieveUpdateDestroyView.as_view(), name='contract-income-detail'),
+    path('contract-incomes/<int:pk>/', ContractIncomeRetrieveUpdateDestroyView.as_view(), name='contract-income-detail'),
 
     # CarExpense URLs
     path('car-expenses/', CarExpenseListCreateView.as_view(), name='car-expense-list-create'),

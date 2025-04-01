@@ -87,15 +87,13 @@ class Car(BaseModel):
     def save(self, *args, **kwargs):
         if self.tenant:
             if not self.pk:
-                self.tenant.trucks_count -= 1
-                self.tenant.save(update_fields=["trucks_count"])
+                Tenant.objects.filter(id=self.tenant.id).update(trucks_count=F("trucks_count") + 1)
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         if self.tenant:
             if self.tenant.trucks_count and self.tenant.trucks_count > 0:
-                self.tenant.trucks_count -= 1
-                self.tenant.save(update_fields=["trucks_count"])
+                Tenant.objects.filter(id=self.tenant.id).update(trucks_count=F("trucks_count") - 1)
         super().delete(*args, **kwargs)
 
     def __str__(self):
