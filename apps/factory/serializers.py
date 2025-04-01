@@ -342,3 +342,37 @@ class IncomeSummarySerializer(ModelSerializer):
     class Meta:
         model = Income
         fields = ['id', 'description', 'reason','amount', 'date']
+
+
+class PayDebtSerializer(ModelSerializer):
+    class Meta:
+
+        model = PayDebt
+
+        fields = ['id', 'amount', 'currency_type', 'description', 'date']
+
+    def validate_amount(self, value):
+
+        client = self.context.get('client')  # Context orqali clientni olish
+
+        if not client:
+            raise ValidationError("Mijoz topilmadi!")
+
+        if value > client.debt:
+            raise ValidationError("To‘lov miqdori mijoz qarzidan ko‘p bo‘lishi mumkin emas!")
+
+        return value
+
+    def create(self, validated_data):
+
+        validated_data['client'] = self.context['client']
+
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+
+        client = self.context.get('client', instance.client)
+
+        validated_data['client'] = client
+
+        return super().update(instance, validated_data)

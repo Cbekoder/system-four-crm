@@ -4,6 +4,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import *
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.views import APIView
 
 from .serializers import *
@@ -717,3 +718,56 @@ class FactorySummaryAPIView(APIView):
         })
 
 
+class DebtorsListView(ListAPIView):
+    queryset = Client.objects.filter(debt__gt=0)
+    serializer_class = ClientSerializer
+
+
+class PayDebtView(APIView):
+    permission_classes = [IsFactoryAdmin | IsCEO]
+    @swagger_auto_schema(
+        request_body=PayDebtSerializer,
+        responses={
+            201: openapi.Response(
+
+                description="Successfully created",
+
+                examples={"application/json": {"message": "Success"}}
+
+            ),
+
+            400: openapi.Response("Bad request")
+
+        }
+    )
+
+    def post(self, request, pk):
+        client = get_object_or_404(Client, pk=pk)
+
+        serializer = PayDebtSerializer(data=request.data, context={'client': client})
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(serializer.data, status=HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+
+
+class PayedDebtListView(ListAPIView):
+    queryset = PayDebt.objects.all()
+    serializer_class = PayDebtSerializer
+
+
+class PayedDebtRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = PayDebt.objects.all()
+
+    serializer_class = PayDebtSerializer
+
+    permission_classes = [IsCEO | IsFactoryAdmin]
+
+    def get_serializer_context(self):
+        pay_debt = self.get_object()
+
+        return {'client': pay_debt.client}

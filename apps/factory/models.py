@@ -284,6 +284,54 @@ class Client(BasePerson):
         return self.full_name
 
 
+class PayDebt(BaseModel):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    amount = models.FloatField()
+    currency_type = models.CharField(max_length=15, choices=CURRENCY_TYPE)
+    description = models.TextField(null=True, blank=True)
+    date = models.DateField(auto_now=True)
+
+    class Meta:
+
+        verbose_name = "Qarz to'lash "
+
+        verbose_name_plural = "Qarzlar to'lash "
+
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+
+        if self.pk:
+            prev_pay_debt = PayDebt.objects.get(pk=self.pk)
+
+            prev_amount = prev_pay_debt.amount
+
+            prev_amount = convert_currency(prev_pay_debt.currency_type, prev_pay_debt.client.currency_type, prev_amount)
+
+            self.client.debt += prev_amount
+
+        amount = convert_currency(self.currency_type, self.client.currency_type, self.amount)
+
+        if amount > self.client.debt:
+            raise ValidationError("To‘lov miqdori mijoz qarzidan ko‘p bo‘lishi mumkin emas!")
+
+        self.client.debt -= amount
+
+        self.client.save(update_fields=['debt'])
+
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+
+        amount = convert_currency(self.currency_type, self.client.currency_type, self.amount)
+
+        self.client.debt += amount
+
+        self.client.save(update_fields=['debt'])
+
+        super().delete(*args, **kwargs)
+
+
 class Sale(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
