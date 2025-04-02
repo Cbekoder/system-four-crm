@@ -129,7 +129,7 @@ class UserBasketCount(models.Model):
                 # prev.user_daily_work.worker.refresh_from_db()
 
                 if prev.basket.raw_material:
-                    RawMaterial.objects.filter(id=prev.basket.id).update(
+                    RawMaterial.objects.filter(id=prev.basket.raw_material.id).update(
                         weight=F('weight') + (prev.basket.weight / 1000) * prev.quantity)
                 else:
                     last_raw = RawMaterial.objects.last()
@@ -159,7 +159,7 @@ class UserBasketCount(models.Model):
             # self.user_daily_work.refresh_from_db()
 
             if self.basket.raw_material:
-                RawMaterial.objects.filter(id=self.basket.id).update(
+                RawMaterial.objects.filter(id=self.basket.raw_material.id).update(
                     weight=F('weight') - (self.basket.weight / 1000) * self.quantity)
             else:
                 last_raw = RawMaterial.objects.last()
