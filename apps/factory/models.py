@@ -106,7 +106,6 @@ class UserBasketCount(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-
             if self.pk:
                 prev = UserBasketCount.objects.get(pk=self.pk)
 
@@ -117,16 +116,11 @@ class UserBasketCount(models.Model):
 
                 UserDailyWork.objects.filter(id=prev.user_daily_work.id).update(
                     amount=F('amount') - float(prev.quantity * prev.basket.per_worker_fee))
-                # prev.user_daily_work.amount = F('amount') - float(prev.quantity * prev.basket.per_worker_fee)
-                # prev.user_daily_work.save(update_fields=['amount'])
-                # prev.user_daily_work.refresh_from_db()
+
 
                 Worker.objects.filter(id=prev.user_daily_work.worker.id).update(
                     balance=F('balance') - convert_currency("UZS", prev.user_daily_work.worker.currency_type,
                                                             float(prev.quantity * prev.basket.per_worker_fee)))
-                # prev.user_daily_work.worker.balance = F('balance') - float(prev.quantity * prev.basket.per_worker_fee)
-                # prev.user_daily_work.worker.save(update_fields=['balance'])
-                # prev.user_daily_work.worker.refresh_from_db()
 
                 if prev.basket.raw_material:
                     RawMaterial.objects.filter(id=prev.basket.raw_material.id).update(
@@ -135,28 +129,17 @@ class UserBasketCount(models.Model):
                     last_raw = RawMaterial.objects.last()
                     RawMaterial.objects.filter(id=last_raw.id).update(
                         weight=F('weight') + (last_raw.weight / 1000) * prev.quantity)
-                # raw_material.weight+=((prev.basket.weight)/1000)*prev.quantity
-                # raw_material.save(update_fields=['weight'])
 
             super().save(*args, **kwargs)
 
             Basket.objects.filter(id=self.basket.id).update(quantity=F('quantity') + self.quantity)
-            # self.basket.quantity = F('quantity') + self.quantity
-            # self.basket.save(update_fields=['quantity'])
-            # self.basket.refresh_from_db()
 
             Worker.objects.filter(id=self.user_daily_work.worker.id).update(
                 balance=F('balance') + convert_currency("UZS", self.user_daily_work.worker.currency_type,
                                                         float(self.quantity * self.basket.per_worker_fee)))
-            # self.user_daily_work.worker.balance = F('balance') + float(self.quantity * self.basket.per_worker_fee)
-            # self.user_daily_work.worker.save(update_fields=['balance'])
-            # self.user_daily_work.worker.refresh_from_db()
 
             UserDailyWork.objects.filter(id=self.user_daily_work.id).update(
                 amount=F('amount') + float(self.quantity * self.basket.per_worker_fee))
-            # self.user_daily_work.amount = F('amount') + float(self.quantity * self.basket.per_worker_fee)
-            # self.user_daily_work.save(update_fields=['amount'])
-            # self.user_daily_work.refresh_from_db()
 
             if self.basket.raw_material:
                 RawMaterial.objects.filter(id=self.basket.raw_material.id).update(
@@ -165,9 +148,6 @@ class UserBasketCount(models.Model):
                 last_raw = RawMaterial.objects.last()
                 RawMaterial.objects.filter(id=last_raw.id).update(
                     weight=F('weight') - (last_raw.weight / 1000) * self.quantity)
-            # raw_material.weight-=((self.basket.weight)/1000)*self.quantity
-            # raw_material.save(update_fields=['weight'])
-            # print(raw_material.weight)
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():
@@ -435,6 +415,18 @@ class SaleItem(models.Model):
             if self.sale.is_debt and self.sale.client:
                 self.sale.client.debt = F('debt') - self.amount
                 self.sale.client.save(update_fields=['debt'])
+
+            if self.sale.is_debt:
+                if self.sale.client:
+                    Client.objects.filter(id=self.sale.client.id).update(
+                        debt=F('debt') - convert_currency("UZS", self.sale.client.currency_type, self.amount)
+                    )
+                else:
+                    raise ValidationError({"error": "Агар қарзга берилаётган бўлса, Клиент мажбурий бўлиши керак!"})
+            else:
+                User.objects.filter(id=self.sale.creator.id).update(
+                    balance=F('balance') - convert_currency("UZS", self.sale.creator.currency_type, self.amount)
+                )
 
     def __str__(self):
         return f"{self.sale.client.name if self.sale.client is not None else 'Noma’lum'} - {self.basket.name}"
