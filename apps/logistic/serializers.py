@@ -386,12 +386,34 @@ class CarExpenseSerializer(ModelSerializer):
                   'created_at']
         read_only_fields = ['status', 'updated_at', 'created_at']
 
+class CarExpenseGetSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    car = CarGetSerializer()
+    trailer = TrailerGetSerializer()
+    class Meta:
+        model = CarExpense
+        fields = ['id', 'car', 'trailer', 'reason', 'description', 'amount', 'status', 'currency_type', 'updated_at',
+                  'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
+
+
+
 
 # Driver serializer
 class DriverLogisticSalaryPaymentSerializer(ModelSerializer):
     created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
     updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
 
+    class Meta:
+        model = LogisticSalaryPayment
+        fields = ['id', 'driver', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['status', 'updated_at', 'created_at']
+
+class DriverLogisticSalaryPaymentGetSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    driver = DriverSerializer()
     class Meta:
         model = LogisticSalaryPayment
         fields = ['id', 'driver', 'description', 'amount', 'currency_type', 'status', 'updated_at', 'created_at']

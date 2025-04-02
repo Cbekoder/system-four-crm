@@ -36,6 +36,14 @@ class MoneyCirculationSerializer(ModelSerializer):
         fields = ['id', 'acquaintance', 'amount', 'description', 'currency_type', 'type', 'status', 'updated_at', 'created_at']
         read_only_fields = ['type','status',  'updated_at', 'created_at']
 
+class MoneyCirculationPostSerializer(ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    class Meta:
+        model = MoneyCirculation
+        fields = ['id', 'acquaintance', 'amount', 'description', 'currency_type', 'type', 'status', 'updated_at', 'created_at']
+        read_only_fields = ['type','status',  'updated_at', 'created_at']
+
 
 class AcquaintanceDetailSerializer(ModelSerializer):
     circulations = MoneyCirculationSerializer(source="moneycirculation_set", many=True)
