@@ -198,7 +198,7 @@ class SaleSerializer(ModelSerializer):
 
     class Meta:
         model = Sale
-        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'date' ,'sale_items']
+        fields = ['id', 'client', 'description', 'total_amount', 'date' ,'sale_items','payed_amount']
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -233,7 +233,7 @@ class SaleGetSerializer(ModelSerializer):
 
     class Meta:
         model = Sale
-        fields = ['id', 'client', 'description', 'is_debt', 'total_amount', 'date', 'total_quantity','sale_items','created_at', 'updated_at']
+        fields = ['id', 'client', 'description', 'total_amount', 'date', 'total_quantity','sale_items','payed_amount','debt_amount','created_at', 'updated_at']
 
     def get_client(self, obj):
         if obj.client:
@@ -346,26 +346,27 @@ class IncomeSummarySerializer(ModelSerializer):
 
 class PayDebtSerializer(ModelSerializer):
     class Meta:
-
         model = PayDebt
-
         fields = ['id', 'amount', 'currency_type', 'description', 'date']
 
-    def validate_amount(self, value):
-
-        client = self.context.get('client')  # Context orqali clientni olish
-
-        if not client:
-            raise ValidationError("Mijoz topilmadi!")
-
-        if value > client.debt:
-            raise ValidationError("To‘lov miqdori mijoz qarzidan ko‘p bo‘lishi mumkin emas!")
-
-        return value
 
     def create(self, validated_data):
 
         validated_data['client'] = self.context['client']
+        # client = self.context.get('client')
+        # request=self.context.get('request')
+        #
+        # if request is None:
+        #     raise ValidationError("So‘rov obyekti topilmadi!")
+        #
+        # Income.objects.create(
+        #     reason=f"Mijoz({client.first_name} {client.last_name}) qarzini to‘lash",
+        #     description=validated_data['description'],
+        #     amount=validated_data['amount'],
+        #     currency_type=validated_data['currency_type'],
+        #     section="factory",
+        #     user=request.user
+        # )
 
         return super().create(validated_data)
 
