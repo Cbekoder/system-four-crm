@@ -19,7 +19,7 @@ from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, M
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer, \
     TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer, TransactionToAdminSerializer, \
     TransactionToAdminCreateSerializer, TransactionToSectionSerializer, \
-    CurrencyRateSerializer, TransactionHistorySerializer
+    CurrencyRateSerializer, TransactionHistorySerializer, MoneyCirculationPostSerializer
 from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction, get_summary
 from apps.common.utils import convert_currency
 
@@ -58,7 +58,6 @@ class AcquaintanceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 class GiveMoneyListCreateView(ListCreateAPIView):
     queryset = MoneyCirculation.objects.all()
-    serializer_class = MoneyCirculationSerializer
     permission_classes = [IsCEO]
 
 
@@ -98,13 +97,17 @@ class GiveMoneyListCreateView(ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return MoneyCirculationSerializer
+        return MoneyCirculationPostSerializer
+
     def perform_create(self, serializer):
         serializer.save(type='give', creator=self.request.user)
 
 
 class GetMoneyListCreateView(ListCreateAPIView):
     queryset = MoneyCirculation.objects.all()
-    serializer_class = MoneyCirculationSerializer
     permission_classes = [IsCEO]
 
     def get_queryset(self):
@@ -142,6 +145,11 @@ class GetMoneyListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return MoneyCirculationSerializer
+        return MoneyCirculationPostSerializer
 
     def perform_create(self, serializer):
         serializer.save(type='get', creator=self.request.user)
