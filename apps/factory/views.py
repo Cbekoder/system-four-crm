@@ -6,6 +6,8 @@ from rest_framework.generics import *
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.views import APIView
+from datetime import datetime
+
 
 from .serializers import *
 from apps.users.permissions import IsFactoryAdmin, IsCEO
@@ -601,19 +603,22 @@ class FactorySummaryAPIView(APIView):
     )
     def get(self, request):
         start_date_str = request.query_params.get('start_date',
-                                                  (timezone.now() - timedelta(days=7)).strftime('%Y-%m-%d'))
-        end_date_str = request.query_params.get('end_date', timezone.now().strftime('%Y-%m-%d'))
+                                                  (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'))
+        end_date_str = request.query_params.get('end_date', datetime.now().strftime('%Y-%m-%d'))
 
         try:
-            start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d')
-            end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d')
+            from django.utils import timezone
 
-            start_date = timezone.make_aware(
-                timezone.datetime(start_date.year, start_date.month, start_date.day, 0, 0, 0)
-            )
-            end_date = timezone.make_aware(
-                timezone.datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
-            )
+
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+
+            start_date = datetime(start_date.year, start_date.month, start_date.day, 0, 0, 0)
+            start_date = timezone.make_aware(start_date)
+
+            end_date = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+            end_date = timezone.make_aware(end_date)
+
         except ValueError:
             return Response(
                 {"error": "Invalid date format. Use YYYY-MM-DD."},
@@ -673,7 +678,8 @@ class FactorySummaryAPIView(APIView):
         incomes_list = []
 
         incomes = Income.objects.filter(section='factory', created_at__range=[start_date, end_date])
-        sales = Sale.objects.filter(date__range=[start_date, end_date], is_debt=False)
+        sales = Sale.objects.filter(date__range=[start_date, end_date])
+        pay_debts = PayDebt.objects.filter(created_at__range=[start_date, end_date])
 
         for income in incomes:
             total_income += convert_currency(income.currency_type, 'UZS', income.amount)
@@ -693,6 +699,16 @@ class FactorySummaryAPIView(APIView):
                 'amount': sale.total_amount,
                 'currency_type': "UZS",
                 'date': sale.date.strftime('%Y-%m-%d')
+            })
+
+        for pay_debt in pay_debts:
+            total_income += pay_debt.amount
+            incomes_list.append({
+                'id': f"PD-{pay_debt.id}",
+                'reason': f"{pay_debt.client.full_name} {pay_debt.amount} {"сўм" if pay_debt.currency_type == "UZS" else "рубль" if pay_debt.currency_type == "RUB" else "АҚШ доллари"} қарзини тўлади",
+                'amount': pay_debt.amount,
+                'currency_type': "UZS",
+                'date': pay_debt.created_at.strftime('%Y-%m-%d')
             })
 
         return Response({
@@ -744,10 +760,10 @@ class PayDebtView(APIView):
     def post(self, request, pk):
         client = get_object_or_404(Client, pk=pk)
 
-        serializer = PayDebtSerializer(data=request.data, context={'client': client})
+        serializer = PayDebtSerializer(data=request.data, context={'client': client,'request':request})
 
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(creator=self.request.user)
 
             return Response(serializer.data, status=HTTP_201_CREATED)
 
@@ -758,16 +774,32 @@ class PayDebtView(APIView):
 class PayedDebtListView(ListAPIView):
     queryset = PayDebt.objects.all()
     serializer_class = PayDebtSerializer
+    permission_classes = [IsCEO | IsFactoryAdmin]
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+        ],
+        responses={200: PayDebtSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class PayedDebtRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = PayDebt.objects.all()
-
     serializer_class = PayDebtSerializer
-
     permission_classes = [IsCEO | IsFactoryAdmin]
 
     def get_serializer_context(self):
         pay_debt = self.get_object()
-
         return {'client': pay_debt.client}

@@ -1,3 +1,5 @@
+from datetime import timezone, datetime
+
 from django.db import models, transaction
 from django.db.models import F
 from rest_framework.exceptions import ValidationError
@@ -138,6 +140,7 @@ class UserBasketCount(models.Model):
                 balance=F('balance') + convert_currency("UZS", self.user_daily_work.worker.currency_type,
                                                         float(self.quantity * self.basket.per_worker_fee)))
 
+
             UserDailyWork.objects.filter(id=self.user_daily_work.id).update(
                 amount=F('amount') + float(self.quantity * self.basket.per_worker_fee))
 
@@ -161,7 +164,7 @@ class UserBasketCount(models.Model):
             # self.user_daily_work.worker.balance = F('balance') - self.quantity * self.basket.per_worker_fee
             # self.user_daily_work.worker.save(update_fields=['balance'])
 
-            UserDailyWork.objects.filter(id=self.user_daily_work).update(
+            UserDailyWork.objects.filter(id=self.user_daily_work.id).update(
                 amount=F('amount') - float(self.quantity * self.basket.per_worker_fee))
             # self.user_daily_work.amount = F('amount') - (self.quantity * self.basket.per_worker_fee)
             # self.user_daily_work.save(update_fields=['amount'])
@@ -269,42 +272,47 @@ class PayDebt(BaseModel):
     amount = models.FloatField()
     currency_type = models.CharField(max_length=15, choices=CURRENCY_TYPE)
     description = models.TextField(null=True, blank=True)
-    date = models.DateField(auto_now=True)
+    date = models.DateField(default=datetime.now)
 
     class Meta:
-
         verbose_name = "Qarz to'lash "
-
         verbose_name_plural = "Qarzlar to'lash "
-
         ordering = ['-date']
 
     def save(self, *args, **kwargs):
 
         if self.pk:
-            prev_pay_debt = PayDebt.objects.get(pk=self.pk)
-
-            prev_amount = prev_pay_debt.amount
-
-            prev_amount = convert_currency(prev_pay_debt.currency_type, prev_pay_debt.client.currency_type, prev_amount)
-
+            prev = PayDebt.objects.get(pk=self.pk)
+            prev_amount = prev.amount
+            prev_amount = convert_currency(prev.currency_type, prev.client.currency_type, prev_amount)
             self.client.debt += prev_amount
 
-        amount = convert_currency(self.currency_type, self.client.currency_type, self.amount)
+            User.objects.filter(id=prev.creator.id).update(
+                balance=F('balance') - convert_currency(prev.currency_type, prev.creator.currency_type,
+                                                        prev.amount))
 
+        amount = convert_currency(self.currency_type, self.client.currency_type, self.amount)
+        print(amount)
+        print(self.client.debt )
         if amount > self.client.debt:
-            raise ValidationError("To‘lov miqdori mijoz qarzidan ko‘p bo‘lishi mumkin emas!")
+            raise ValidationError(f"To‘lov miqdori mijoz qarzidan ko‘p bo‘lishi mumkin emas!")
 
         self.client.debt -= amount
+        print(self.client.debt)
 
         self.client.save(update_fields=['debt'])
 
         super().save(*args, **kwargs)
 
+        User.objects.filter(id=self.creator.id).update(
+            balance=F('balance') + amount)
+
     def delete(self, *args, **kwargs):
 
         amount = convert_currency(self.currency_type, self.client.currency_type, self.amount)
 
+        User.objects.filter(id=self.creator.id).update(
+            balance=F('balance') - amount)
         self.client.debt += amount
 
         self.client.save(update_fields=['debt'])
@@ -315,7 +323,7 @@ class PayDebt(BaseModel):
 class Sale(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    is_debt = models.BooleanField(default=False)
+    payed_amount= models.FloatField(default=0)
     date = models.DateField()
 
     class Meta:
@@ -331,23 +339,48 @@ class Sale(BaseModel):
         return sum(item.amount for item in self.sale_items.all())
 
     @property
+    def debt_amount(self):
+        return self.total_amount - self.payed_amount
+
+    @property
     def total_quantity(self):
         return sum(item.quantity for item in self.sale_items.all())
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            if self.pk:
-                existing_items = {item.id: item for item in self.sale_items.all()}
-                new_items_data = {item['id']: item for item in kwargs.pop('sale_items', []) if 'id' in item}
-
-                items_to_delete = [item for item_id, item in existing_items.items() if item_id not in new_items_data]
-                for item in items_to_delete:
-                    item.delete()
             super().save(*args, **kwargs)
-            self.refresh_from_db()
+            total_amount = sum(item.amount for item in self.sale_items.all())
+            debt_amount = total_amount - self.payed_amount
+            print(total_amount)
+            print(debt_amount)
+            print(self.client.debt)
+
+            prev = Sale.objects.filter(pk=self.pk).first()
+            if prev:
+                Client.objects.filter(id=self.client.id).update(
+                    debt=F('debt') - convert_currency("UZS", self.client.currency_type, prev.debt_amount)
+                )
+                User.objects.filter(id=prev.creator.id).update(
+                    balance=F('balance') - convert_currency("UZS", prev.creator.currency_type, prev.payed_amount)
+                )
+            if self.client:
+                Client.objects.filter(id=self.client.id).update(
+                    debt=F('debt') + convert_currency("UZS", self.client.currency_type, self.payed_amount)
+                )
+
+            User.objects.filter(id=self.creator.id).update(
+                balance=F('balance') + convert_currency("UZS", self.creator.currency_type, self.payed_amount)
+            )
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():
+
+            Client.objects.filter(id=self.client.id).update(
+                debt=F('debt') - convert_currency("UZS", self.client.currency_type, self.debt_amount)
+            )
+            User.objects.filter(id=self.creator.id).update(
+                balance=F('balance') - convert_currency("UZS", self.creator.currency_type, self.payed_amount)
+            )
             for item in self.sale_items.all():
                 item.delete()
             super().delete(*args, **kwargs)
@@ -371,18 +404,15 @@ class SaleItem(models.Model):
                 Basket.objects.filter(id=prev.basket.id).update(
                     quantity=F('quantity') + prev.quantity
                 )
+                Client.objects.filter(id=self.client.id).update(
+                    debt=F('debt') - convert_currency("UZS", self.client.currency_type, self.amount)
+                )
 
-                if prev.sale.is_debt:
-                    if prev.sale.client:
-                        Client.objects.filter(id=prev.sale.client.id).update(
-                            debt=F('debt') - convert_currency("UZS", prev.sale.client.currency_type, prev.amount)
-                        )
-                    else:
-                        raise ValidationError({"error": "Агар қарзга берилаётган бўлса, Клиент мажбурий бўлиши керак!"})
-                else:
-                    User.objects.filter(prev.sale.creator.id).update(
-                        balance=F('balance') - convert_currency("UZS", prev.sale.creator.currency_type, prev.amount)
-                    )
+            if self.sale.client:
+                Client.objects.filter(id=self.sale.client.id).update(
+                    debt=F('debt') + convert_currency("UZS", self.sale.client.currency_type, self.amount)
+                )
+                print("item",self.amount,self.sale.client.debt)
 
             if not self.amount:
                 self.amount = self.quantity * self.basket.price
@@ -393,28 +423,11 @@ class SaleItem(models.Model):
                 quantity=F('quantity') - self.quantity
             )
 
-            if self.sale.is_debt:
-                if self.sale.client:
-                    Client.objects.filter(id=self.sale.client.id).update(
-                        debt=F('debt') + convert_currency("UZS", self.sale.client.currency_type, self.amount)
-                    )
-                else:
-                    raise ValidationError({"error": "Агар қарзга берилаётган бўлса, Клиент мажбурий бўлиши керак!"})
-            else:
-                User.objects.filter(id=self.sale.creator.id).update(
-                    balance=F('balance') + convert_currency("UZS", self.sale.creator.currency_type, self.amount)
-                )
-
-
-
     def delete(self, *args, **kwargs):
         with transaction.atomic():
             self.basket.quantity = F('quantity') + self.quantity
             self.basket.save(update_fields=['quantity'])
             super().delete(*args, **kwargs)
-            if self.sale.is_debt and self.sale.client:
-                self.sale.client.debt = F('debt') - self.amount
-                self.sale.client.save(update_fields=['debt'])
 
             if self.sale.is_debt:
                 if self.sale.client:
@@ -429,7 +442,7 @@ class SaleItem(models.Model):
                 )
 
     def __str__(self):
-        return f"{self.sale.client.name if self.sale.client is not None else 'Noma’lum'} - {self.basket.name}"
+        return f"{self.sale.client.full_name if self.sale.client is not None else 'Noma’lum'} - {self.basket.name}"
 
 
 
