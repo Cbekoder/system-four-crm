@@ -345,7 +345,6 @@ class CarExpense(BaseModel):
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
     currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default='USD')
-    # creator = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField(null=True, blank=True)
 
     class Meta:

@@ -44,9 +44,9 @@ class Expense(BaseModel):
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():
-            User.objects.filter(id=self.creator.id).update(
+            User.objects.filter(id=self.user.id).update(
                 balance=F('balance') + convert_currency(
-                    self.currency_type, self.creator.currency_type, self.amount
+                    self.currency_type, self.user.currency_type, self.amount
                 )
             )
             super().delete(*args, **kwargs)
@@ -94,9 +94,9 @@ class Income(BaseModel):
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():
-            User.objects.filter(id=self.creator.id).update(
+            User.objects.filter(id=self.user.id).update(
                 balance=F('balance') - convert_currency(
-                    self.currency_type, self.creator.currency_type, self.amount
+                    self.currency_type, self.user.currency_type, self.amount
                 )
             )
             super().delete(*args, **kwargs)
@@ -286,9 +286,10 @@ ACCOUNT_HISTORY_TYPE_CHOICES = (
 
 REASON_CHOICES = (
     ('contact_income', 'Shartnoma puli'), # for income
-    ('tax', 'Soliq'),               #
-    ('tir', 'TIR uchun to\'lov'),   ## for outcome
-    ('to_cash', 'Naqdlashtirish')   #
+    ('tax', 'Soliq'),                #
+    ('tir', 'TIR uchun to\'lov'),    ## for outcome
+    ('to_cash', 'Naqdlashtirish'),   #
+    ('other', 'Boshqa'),             #
 )
 
 class AccountHistory(BaseModel):
