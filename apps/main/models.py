@@ -264,6 +264,92 @@ class TransactionToSection(BaseModel):
                         balance=F('balance') + convert_currency(self.currency_type, self.creator.currency_type, self.amount))
 
 
+class BankAccount(BaseModel):
+    company = models.CharField(max_length=100, null=True, blank=True)
+    account_number = models.CharField(max_length=50, null=True, blank=True)
+    bank_name = models.CharField(max_length=100, null=True, blank=True)
+    balance = models.FloatField(default=0)
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
+    status = None
+
+    def __str__(self):
+        return f"{self.company} - {self.account_number}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+
+ACCOUNT_HISTORY_TYPE_CHOICES = (
+    ('income', 'Kirim'),
+    ('outcome', 'Chiqim')
+)
+
+REASON_CHOICES = (
+    ('contact_income', 'Shartnoma puli'), # for income
+    ('tax', 'Soliq'),               #
+    ('tir', 'TIR uchun to\'lov'),   ## for outcome
+    ('to_cash', 'Naqdlashtirish')   #
+)
+
+class AccountHistory(BaseModel):
+    account = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    date = models.DateField()
+    reason = models.CharField(null=True, blank=True, max_length=100, choices=REASON_CHOICES)
+    description = models.TextField(null=True, blank=True)
+    transaction_type = models.CharField(max_length=20, choices=ACCOUNT_HISTORY_TYPE_CHOICES)
+    amount = models.FloatField()
+    currency_type = models.CharField(max_length=20, choices=CURRENCY_TYPE, default="UZS")
+    status = None
+
+    class Meta:
+        verbose_name = "Bank amaoliyoti"
+        verbose_name_plural = "Bank amaliyotlari"
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"{self.account} - {self.transaction_type} - {self.amount}"
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                prev = AccountHistory.objects.get(id=self.pk)
+                if prev.transaction_type == "income":
+                    BankAccount.objects.filter(id=prev.account.id).update(
+                        balance=F('balance') - convert_currency(prev.currency_type, prev.account.currency_type, prev.amount))
+                else:
+                    BankAccount.objects.filter(id=prev.account.id).update(
+                        balance=F('balance') + convert_currency(prev.currency_type, prev.account.currency_type, prev.amount))
+            else:
+                if self.transaction_type == "income":
+                    t_type = "💰 Кирим"
+                    arithmetic = "➕"
+                elif self.transaction_type == "outcome":
+                    t_type = "💸 Чиқим"
+                    arithmetic = "➖"
+                else:
+                    raise ValidationError("Invalid transaction type")
+                message = f"🏦 Банк амалиёти\n{t_type}\n💳{self.account.bank_name} | {self.account.account_number}\n🏷 {self.reason }\n📝 { self.description }\n{arithmetic} {self.amount} {self.currency_type}"
+                Telegram.send_log(message, app_button=True)
+            super().save(*args, **kwargs)
+
+            if self.transaction_type == "income":
+                BankAccount.objects.filter(id=self.account.id).update(
+                    balance=F('balance') + convert_currency(self.currency_type, self.account.currency_type, self.amount))
+            elif self.transaction_type == "outcome":
+                BankAccount.objects.filter(id=self.account.id).update(
+                    balance=F('balance') - convert_currency(self.currency_type, self.account.currency_type, self.amount))
+            else:
+                raise ValidationError("Invalid transaction type")
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.transaction_type == "income":
+                BankAccount.objects.filter(id=self.account.id).update(
+                    balance=F('balance') - convert_currency(self.currency_type, self.account.currency_type, self.amount))
+            elif self.transaction_type == "outcome":
+                BankAccount.objects.filter(id=self.account.id).update(
+                    balance=F('balance') + convert_currency(self.currency_type, self.account.currency_type, self.amount))
+            super().delete(*args, **kwargs)
+
 
 class DailyRemainder(BaseModel):
     amount = models.FloatField()

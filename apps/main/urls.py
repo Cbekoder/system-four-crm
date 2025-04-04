@@ -5,7 +5,8 @@ from .views import (
     GeneralExpenseListCreateView, GeneralIncomeListCreateView, GeneralIncomeRetrieveUpdateDestroyView,
     DailyRemainderView, TransactionToAdminListCreateView, TransactionToAdminDetailView,
     TransactionToSectionListCreateView, TransactionToSectionDetailView, CurrencyRateListCreateView,
-    TransactionFromSectionListCreateView, TransactionFromSectionDetailView
+    TransactionFromSectionListCreateView, TransactionFromSectionDetailView, BankAccountsListCreateView,
+    BankAccountsRetrieveUpdateDestroyView, AccountHistoryListCreateView, AccountHistoryRetrieveUpdateDestroyView
 )
 
 urlpatterns = [
@@ -32,6 +33,13 @@ urlpatterns = [
 
     path('transactions-from-section/', TransactionFromSectionListCreateView.as_view(), name='transaction-from-section-list-create'),
     path('transactions-from-section/<int:pk>/', TransactionFromSectionDetailView.as_view(), name='transaction-from-section-detail'),
+
+    path('bank-accounts/', BankAccountsListCreateView.as_view(), name='bank-accounts-list-create'),
+    path('bank-accounts/<int:pk>/', BankAccountsRetrieveUpdateDestroyView.as_view(), name='bank-accounts-detail'),
+
+    path('account-history/', AccountHistoryListCreateView.as_view(), name='account-history-list-create'),
+    path('account-history/<int:pk>/', AccountHistoryRetrieveUpdateDestroyView.as_view(), name='account-history-detail'),
+
 
     path('daily-remainder/', DailyRemainderView.as_view(), name='daily-remainder')
 ]

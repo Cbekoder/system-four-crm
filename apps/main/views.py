@@ -1,34 +1,34 @@
-from django.core.exceptions import ObjectDoesNotExist
+from django.utils.dateparse import parse_date
 from django.shortcuts import redirect
-from rest_framework import status
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
-from django.utils.dateparse import parse_date
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from django.utils import timezone
 from datetime import timedelta
-from rest_framework.response import Response
 from apps.users.permissions import IsCEO, IsAdmin
-from .models import Acquaintance, MoneyCirculation, Expense, Income, DailyRemainder, TransactionToAdmin, \
-    TransactionToSection
 from apps.common.models import CurrencyRate
+from apps.common.utils import convert_currency
+from .models import Acquaintance, MoneyCirculation, Expense, Income, DailyRemainder, TransactionToAdmin, \
+    TransactionToSection, BankAccount, AccountHistory, ACCOUNT_HISTORY_TYPE_CHOICES
 from .serializers import AcquaintanceSerializer, AcquaintanceDetailSerializer, MoneyCirculationSerializer, \
     ExpenseSerializer, IncomeSerializer, MixedDataSerializer, DailyRemainderSerializer, \
     TransactionVerifyDetailSerializer, TransactionVerifyActionSerializer, TransactionToAdminSerializer, \
     TransactionToAdminCreateSerializer, TransactionToSectionSerializer, \
-    CurrencyRateSerializer, TransactionHistorySerializer, MoneyCirculationPostSerializer
+    CurrencyRateSerializer, TransactionHistorySerializer, MoneyCirculationPostSerializer, BankAccountsSerializer, \
+    AccountHistoryGetSerializer, AccountHistoryPostSerializer
 from .utils import get_remainder_data, calculate_remainder, verification_transaction, verify_transaction, get_summary
-from apps.common.utils import convert_currency
 
 
 class CurrencyRateListCreateView(ListCreateAPIView):
     permission_classes = [IsCEO | IsAdmin]
     queryset = CurrencyRate.objects.all()
     serializer_class = CurrencyRateSerializer
-
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
@@ -60,23 +60,18 @@ class GiveMoneyListCreateView(ListCreateAPIView):
     queryset = MoneyCirculation.objects.all()
     permission_classes = [IsCEO]
 
-
     def get_queryset(self):
         self.queryset = self.queryset.filter(type='give')
-
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
-
         if start_date:
             if not parse_date(start_date):
                 raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
             self.queryset = self.queryset.filter(created_at__date__gte=start_date)
-
         if end_date:
             if not parse_date(end_date):
                 raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
             self.queryset = self.queryset.filter(created_at__date__lte=end_date)
-
         return self.queryset
 
     @swagger_auto_schema(
@@ -112,20 +107,16 @@ class GetMoneyListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         self.queryset = self.queryset.filter(type='get')
-
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
-
         if start_date:
             if not parse_date(start_date):
                 raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
             self.queryset = self.queryset.filter(created_at__date__gte=start_date)
-
         if end_date:
             if not parse_date(end_date):
                 raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
             self.queryset = self.queryset.filter(created_at__date__lte=end_date)
-
         return self.queryset
 
     @swagger_auto_schema(
@@ -168,20 +159,16 @@ class GeneralExpenseListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         self.queryset = self.queryset.filter(section="general")
-
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
-
         if start_date:
             if not parse_date(start_date):
                 raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
             self.queryset = self.queryset.filter(created_at__date__gte=start_date)
-
         if end_date:
             if not parse_date(end_date):
                 raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
             self.queryset = self.queryset.filter(created_at__date__lte=end_date)
-
         return self.queryset
 
     @swagger_auto_schema(
@@ -221,20 +208,16 @@ class GeneralIncomeListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Income.objects.filter(section="general")
-
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
-
         if start_date:
             if not parse_date(start_date):
                 raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
             queryset = queryset.filter(created_at__date__gte=start_date)
-
         if end_date:
             if not parse_date(end_date):
                 raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
             queryset = queryset.filter(created_at__date__lte=end_date)
-
         return queryset
 
     @swagger_auto_schema(
@@ -275,14 +258,12 @@ class TransactionToAdminListCreateView(ListCreateAPIView):
         queryset = TransactionToAdmin.objects.all()
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
-
         if start_date:
             queryset = queryset.filter(created_at__date__gte=start_date)
         if end_date:
             queryset = queryset.filter(created_at__date__lte=end_date)
 
         return queryset
-
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
@@ -299,7 +280,6 @@ class TransactionToAdminListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return TransactionToAdminSerializer
@@ -309,7 +289,6 @@ class TransactionToAdminListCreateView(ListCreateAPIView):
 class TransactionToAdminDetailView(RetrieveUpdateDestroyAPIView):
     queryset = TransactionToAdmin.objects.all()
     permission_classes = [IsCEO]
-
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return TransactionToAdminSerializer
@@ -320,23 +299,18 @@ class TransactionToAdminDetailView(RetrieveUpdateDestroyAPIView):
 class TransactionToSectionListCreateView(ListCreateAPIView):
     serializer_class = TransactionToSectionSerializer
     permission_classes = [IsCEO | IsAdmin]
-
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         section = self.request.query_params.get('section')
         is_for = self.request.query_params.get('is_for')
-
         queryset = TransactionToSection.objects.filter(type='give')
-
         if start_date:
             queryset = queryset.filter(created_at__date__gte=start_date)
         if end_date:
             queryset = queryset.filter(created_at__date__lte=end_date)
-
         if is_for is None:
             raise ValidationError({"error": "'is_for' is required"})
-
         if is_for == "ceo":
             if self.request.user.role == "ceo":
                 if section:
@@ -357,7 +331,6 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
             else:
                 raise ValidationError({"error": "Нимадир хато кетди."})
         return queryset
-
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
@@ -386,7 +359,6 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
@@ -394,7 +366,6 @@ class TransactionToSectionListCreateView(ListCreateAPIView):
 class TransactionToSectionDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = TransactionToSectionSerializer
     permission_classes = [IsCEO | IsAdmin]
-
     def get_queryset(self):
         queryset = TransactionToSection.objects.filter(type='give')
         return queryset
@@ -403,23 +374,18 @@ class TransactionToSectionDetailView(RetrieveUpdateDestroyAPIView):
 class TransactionFromSectionListCreateView(ListCreateAPIView):
     serializer_class = TransactionToSectionSerializer
     permission_classes = [IsCEO | IsAdmin]
-
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         section = self.request.query_params.get('section')
         is_for = self.request.query_params.get('is_for')
-
         queryset = TransactionToSection.objects.filter(type='get')
-
         if start_date:
             queryset = queryset.filter(created_at__date__gte=start_date)
         if end_date:
             queryset = queryset.filter(created_at__date__lte=end_date)
-
         if is_for is None:
             raise ValidationError({"error": "'is_for' is required"})
-
         if is_for == "ceo":
             if self.request.user.role == "ceo":
                 if section:
@@ -440,7 +406,6 @@ class TransactionFromSectionListCreateView(ListCreateAPIView):
             else:
                 raise ValidationError({"error": "Нимадир хато кетди."})
         return queryset
-
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
@@ -469,7 +434,6 @@ class TransactionFromSectionListCreateView(ListCreateAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
@@ -477,10 +441,85 @@ class TransactionFromSectionListCreateView(ListCreateAPIView):
 class TransactionFromSectionDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = TransactionToSectionSerializer
     permission_classes = [IsCEO | IsAdmin]
-
     def get_queryset(self):
         queryset = TransactionToSection.objects.filter(type='get')
         return queryset
+    
+
+class BankAccountsListCreateView(ListCreateAPIView):
+    queryset = BankAccount.objects.all()
+    permission_classes = [IsCEO]
+    serializer_class = BankAccountsSerializer
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+
+class BankAccountsRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = BankAccount.objects.all()
+    permission_classes = [IsCEO]
+    serializer_class = BankAccountsSerializer
+
+
+class AccountHistoryListCreateView(ListCreateAPIView):
+    queryset = AccountHistory.objects.all()
+    permission_classes = [IsCEO]
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'transaction_type', openapi.IN_QUERY,
+                description="Filter by transaction type (income or outcome)",
+                type=openapi.TYPE_STRING,
+                enum=[choice[0] for choice in ACCOUNT_HISTORY_TYPE_CHOICES]
+            ),
+        ],
+        responses={200: AccountHistoryGetSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        transaction_type = self.request.query_params.get('transaction_type')
+
+        queryset = AccountHistory.objects.all()
+        if start_date:
+            queryset = queryset.filter(created_at__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(created_at__date__lte=end_date)
+
+        if transaction_type is not None and transaction_type in ["income", "outcome"]:
+            queryset = queryset.filter(transaction_type=transaction_type)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return AccountHistoryGetSerializer
+        return AccountHistoryPostSerializer
+
+
+class AccountHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = AccountHistory.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return AccountHistoryGetSerializer
+        return AccountHistoryPostSerializer
 
 
 
