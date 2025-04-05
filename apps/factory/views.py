@@ -705,7 +705,7 @@ class FactorySummaryAPIView(APIView):
             total_income += pay_debt.amount
             incomes_list.append({
                 'id': f"PD-{pay_debt.id}",
-                'reason': f"{pay_debt.client.full_name} {pay_debt.amount} {"сўм" if pay_debt.currency_type == "UZS" else "рубль" if pay_debt.currency_type == "RUB" else "АҚШ доллари"} қарзини тўлади",
+                'reason': f"{pay_debt.client.full_name} {pay_debt.amount} {'сўм' if pay_debt.currency_type == 'UZS' else 'рубль' if pay_debt.currency_type == 'RUB' else 'АҚШ доллари'} қарзини тўлади",
                 'amount': pay_debt.amount,
                 'currency_type': "UZS",
                 'date': pay_debt.created_at.strftime('%Y-%m-%d')

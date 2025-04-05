@@ -4,7 +4,7 @@ from rest_framework import serializers
 from tutorial.quickstart.serializers import UserSerializer
 
 from .models import Acquaintance, MoneyCirculation, Income, Expense, DailyRemainder, TransactionToAdmin, \
-    TransactionToSection
+    TransactionToSection, AccountHistory, BankAccount
 
 from apps.common.models import CurrencyRate
 from apps.users.serializers import UserDetailSerializer
@@ -92,6 +92,27 @@ class TransactionToSectionSerializer(ModelSerializer):
     class Meta:
         model = TransactionToSection
         fields = ('id', 'section', 'amount', 'currency_type', 'description', 'date')
+
+
+class BankAccountsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = ["id", "company", "account_number", "bank_name", "balance", "currency_type"]
+
+
+class AccountHistoryPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccountHistory
+        fields = ["id", "account", "date", "reason", "description", "transaction_type", "amount", "currency_type"]
+
+
+class AccountHistoryGetSerializer(serializers.ModelSerializer):
+    created_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    updated_at = DateTimeField(format="%d.%m.%Y %H:%M", read_only=True)
+    account = BankAccountsSerializer(read_only=True)
+    class Meta:
+        model = AccountHistory
+        fields = ["id", "account", "date", "reason", "description", "transaction_type", "amount", "currency_type", "created_at", "updated_at"]
 
 
 class DailyRemainderSerializer(ModelSerializer):
