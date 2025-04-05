@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactiontosection',
             name='type',
-            field=models.CharField(choices=[('give', 'Berish'), ('get', 'Olish')], default=django.utils.timezone.now, max_length=20),
+            field=models.CharField(choices=[('give', 'Berish'), ('get', 'Olish')], max_length=20),
             preserve_default=False,
         ),
     ]
