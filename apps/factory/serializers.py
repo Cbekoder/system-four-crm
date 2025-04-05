@@ -212,17 +212,39 @@ class SaleSerializer(ModelSerializer):
 
 
     def update(self, instance, validated_data):
-        with transaction.atomic():
-            sale_items_data = validated_data.pop('sale_items', [])
+        sale_items_data = validated_data.pop('sale_items', [])
 
-            for attr, value in validated_data.items():
-                setattr(instance, attr, value)
-            instance.save()
 
-            for item_data in sale_items_data:
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+
+        existing_items = {item.basket_id: item for item in instance.sale_items.all()}
+
+
+        new_basket_ids = []
+
+        for item_data in sale_items_data:
+            basket_id = item_data['basket'].id if isinstance(item_data['basket'], Basket) else item_data['basket']
+            new_basket_ids.append(basket_id)
+
+            if basket_id in existing_items:
+                # Mavjud bo‘lsa, yangilaymiz
+                item = existing_items[basket_id]
+                item.quantity = item_data['quantity']
+                item.amount = item_data['amount']
+                item.save()
+            else:
+
                 SaleItem.objects.create(sale=instance, **item_data)
 
-            return instance
+
+        for basket_id, item in existing_items.items():
+            if basket_id not in new_basket_ids:
+                item.delete()
+
+        return instance
 
 
 class SaleGetSerializer(ModelSerializer):
