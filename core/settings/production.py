@@ -5,26 +5,27 @@ DEBUG = False
 
 STATIC_ROOT = BASE_DIR / "static"
 
-# Database
+# Database\
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env.str("DB_NAME"),
-        "USER": env.str("DB_USER"),
-        "PASSWORD": env.str("DB_PASSWORD"),
-        "HOST": env.str("DB_HOST"),
-        "PORT": env.str("DB_PORT"),
-        "ATOMIC_REQUESTS": False,
+if env.bool("USE_POSTGRES", False):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env.str("DB_NAME"),
+            "USER": env.str("DB_USER"),
+            "PASSWORD": env.str("DB_PASSWORD"),
+            "HOST": env.str("DB_HOST"),
+            "PORT": env.str("DB_PORT"),
+            "ATOMIC_REQUESTS": False,
+        }
     }
-}
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
 CELERY_ACCEPT_CONTENT = ['json']
