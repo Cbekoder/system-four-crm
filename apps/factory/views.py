@@ -325,6 +325,12 @@ class ClientListCreateView(ListCreateAPIView):
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
+        has_debt = self.request.query_params.get('has_debt', 'false')
+
+        if has_debt.lower() == 'true':
+            self.queryset = self.queryset.filter(debt__gt=0)
+        elif has_debt.lower() == 'false':
+            self.queryset = self.queryset.filter(debt__lte=0)
 
         if start_date:
             if not parse_date(start_date):
@@ -351,6 +357,11 @@ class ClientListCreateView(ListCreateAPIView):
                 type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
             ),
             openapi.Parameter(
+                'has_debt', openapi.IN_QUERY,
+                description="Filter clients with debt (true) or without debt (false), defaults to true",
+                type=openapi.TYPE_BOOLEAN
+            ),
+            openapi.Parameter(
                 'search',
                 openapi.IN_QUERY,
                 description="Search by expense columns: id, client's first name,last name and phone number .",
@@ -363,12 +374,78 @@ class ClientListCreateView(ListCreateAPIView):
         return super().get(request, *args, **kwargs)
 
 
-
-
 class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = ClientSerializer
     queryset = Client.objects.all()
     permission_classes = [IsFactoryAdmin | IsCEO]
+
+
+# Pay Debt Views
+class PayDebtListCreateView(ListCreateAPIView):
+    permission_classes = [IsFactoryAdmin | IsCEO]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['client__first_name', 'client__last_name', 'client__phone_number']
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return PayDebtGetSerializer
+        return PayDebtPostSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+    def get_queryset(self):
+        queryset = PayDebt.objects.all()
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            if not parse_date(start_date):
+                raise ValidationError({"start_date": "Invalid date format. Use YYYY-MM-DD."})
+            queryset = queryset.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            if not parse_date(end_date):
+                raise ValidationError({"end_date": "Invalid date format. Use YYYY-MM-DD."})
+            queryset = queryset.filter(created_at__date__lte=end_date)
+
+        return queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date', openapi.IN_QUERY,
+                description="Start date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'end_date', openapi.IN_QUERY,
+                description="End date for filtering (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            ),
+            openapi.Parameter(
+                'search',
+                openapi.IN_QUERY,
+                description="Search by expense columns: id, client's first name,last name and phone number .",
+                type=openapi.TYPE_STRING
+            ),
+        ],
+        responses={200: PayDebtGetSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+
+class PayedDebtRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = PayDebt.objects.all()
+    permission_classes = [IsCEO | IsFactoryAdmin]
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return PayDebtGetSerializer
+        return PayDebtPostSerializer
+
+
 
 # class SaleListCreateView(ListCreateAPIView):
 #     serializer_class = SaleSerializer
@@ -394,32 +471,32 @@ class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 #
 #         return self.queryset
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'start_date', openapi.IN_QUERY,
-                description="Start date for filtering (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
-            ),
-            openapi.Parameter(
-                'end_date', openapi.IN_QUERY,
-                description="End date for filtering (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
-            ),
-            openapi.Parameter(
-                'search',
-                openapi.IN_QUERY,
-                description="Search by expense columns: id, client's first name,last name and phone number .",
-                type=openapi.TYPE_STRING
-            ),
-        ],
-        responses={200: SaleSerializer(many=True)}
-    )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        serializer.save(creator=self.request.user)
+    # @swagger_auto_schema(
+    #     manual_parameters=[
+    #         openapi.Parameter(
+    #             'start_date', openapi.IN_QUERY,
+    #             description="Start date for filtering (YYYY-MM-DD)",
+    #             type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+    #         ),
+    #         openapi.Parameter(
+    #             'end_date', openapi.IN_QUERY,
+    #             description="End date for filtering (YYYY-MM-DD)",
+    #             type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+    #         ),
+    #         openapi.Parameter(
+    #             'search',
+    #             openapi.IN_QUERY,
+    #             description="Search by expense columns: id, client's first name,last name and phone number .",
+    #             type=openapi.TYPE_STRING
+    #         ),
+    #     ],
+    #     responses={200: SaleSerializer(many=True)}
+    # )
+    # def get(self, request, *args, **kwargs):
+    #     return super().get(request, *args, **kwargs)
+    #
+    # def perform_create(self, serializer):
+    #     serializer.save(creator=self.request.user)
 
 
 
@@ -429,7 +506,7 @@ class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 #     permission_classes = [IsFactoryAdmin | IsCEO]
 
 
-
+# Salary Payment Views
 class SalaryPaymentListCreateView(ListCreateAPIView):
     queryset = SalaryPayment.objects.all()
     permission_classes = [IsFactoryAdmin | IsCEO]
@@ -497,6 +574,7 @@ class SalaryPaymentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         return SalaryPaymentGetSerializer
 
 
+# Sale Views
 class SaleListCreateView(ListCreateAPIView):
     queryset = Sale.objects.all()
 
@@ -732,74 +810,3 @@ class FactorySummaryAPIView(APIView):
             'incomes': TransactionHistorySerializer(incomes_list, many=True).data,
             'outcomes': TransactionHistorySerializer(outcomes_list, many=True).data,
         })
-
-
-class DebtorsListView(ListAPIView):
-    queryset = Client.objects.filter(debt__gt=0)
-    serializer_class = ClientSerializer
-
-
-class PayDebtView(APIView):
-    permission_classes = [IsFactoryAdmin | IsCEO]
-    @swagger_auto_schema(
-        request_body=PayDebtSerializer,
-        responses={
-            201: openapi.Response(
-
-                description="Successfully created",
-
-                examples={"application/json": {"message": "Success"}}
-
-            ),
-
-            400: openapi.Response("Bad request")
-
-        }
-    )
-
-    def post(self, request, pk):
-        client = get_object_or_404(Client, pk=pk)
-
-        serializer = PayDebtSerializer(data=request.data, context={'client': client,'request':request})
-
-        if serializer.is_valid():
-            serializer.save(creator=self.request.user)
-
-            return Response(serializer.data, status=HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-
-
-
-class PayedDebtListView(ListAPIView):
-    queryset = PayDebt.objects.all()
-    serializer_class = PayDebtSerializer
-    permission_classes = [IsCEO | IsFactoryAdmin]
-
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'start_date', openapi.IN_QUERY,
-                description="Start date for filtering (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
-            ),
-            openapi.Parameter(
-                'end_date', openapi.IN_QUERY,
-                description="End date for filtering (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
-            ),
-        ],
-        responses={200: PayDebtSerializer(many=True)}
-    )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
-
-class PayedDebtRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    queryset = PayDebt.objects.all()
-    serializer_class = PayDebtSerializer
-    permission_classes = [IsCEO | IsFactoryAdmin]
-
-    def get_serializer_context(self):
-        pay_debt = self.get_object()
-        return {'client': pay_debt.client}

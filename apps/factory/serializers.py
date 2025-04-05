@@ -366,36 +366,23 @@ class IncomeSummarySerializer(ModelSerializer):
         fields = ['id', 'description', 'reason','amount', 'date']
 
 
-class PayDebtSerializer(ModelSerializer):
+# Pay Debts Serializer
+class PayDebtPostSerializer(ModelSerializer):
     class Meta:
         model = PayDebt
-        fields = ['id', 'amount', 'currency_type', 'description', 'date']
-
+        fields = ['id', 'client', 'amount', 'currency_type', 'description', 'date']
 
     def create(self, validated_data):
-
-        validated_data['client'] = self.context['client']
-        # client = self.context.get('client')
-        # request=self.context.get('request')
-        #
-        # if request is None:
-        #     raise ValidationError("So‘rov obyekti topilmadi!")
-        #
-        # Income.objects.create(
-        #     reason=f"Mijoz({client.first_name} {client.last_name}) qarzini to‘lash",
-        #     description=validated_data['description'],
-        #     amount=validated_data['amount'],
-        #     currency_type=validated_data['currency_type'],
-        #     section="factory",
-        #     user=request.user
-        # )
-
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-
-        client = self.context.get('client', instance.client)
-
-        validated_data['client'] = client
-
         return super().update(instance, validated_data)
+
+
+class PayDebtGetSerializer(ModelSerializer):
+    client = ClientSerializer()
+    class Meta:
+        model = PayDebt
+        fields = ['id', 'client', 'amount', 'currency_type', 'description', 'date']
+
+

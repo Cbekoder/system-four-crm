@@ -257,10 +257,12 @@ class RawMaterialHistory(BaseModel):
 
 # Client Models
 class Client(BasePerson):
+    landing = None
+    balance = None
+
     class Meta:
         verbose_name = "Mijoz "
         verbose_name_plural = "Mijozlar "
-
         ordering = ['-created_at']
 
     def __str__(self):
@@ -280,43 +282,32 @@ class PayDebt(BaseModel):
         ordering = ['-date']
 
     def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                prev = PayDebt.objects.get(pk=self.pk)
 
-        if self.pk:
-            prev = PayDebt.objects.get(pk=self.pk)
-            prev_amount = prev.amount
-            prev_amount = convert_currency(prev.currency_type, prev.client.currency_type, prev_amount)
-            self.client.debt += prev_amount
+                Client.objects.filter(id=prev.client.id).update(
+                    debt=F("debt") + convert_currency(prev.currency_type, prev.client.currency_type, prev.amount))
 
-            User.objects.filter(id=prev.creator.id).update(
-                balance=F('balance') - convert_currency(prev.currency_type, prev.creator.currency_type,
-                                                        prev.amount))
-        print(self.amount)
+                User.objects.filter(id=prev.creator.id).update(
+                    balance=F('balance') - convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
 
-        amount = convert_currency(self.currency_type, self.client.currency_type, self.amount)
-        print("amount1",amount)
-        print("debt1",self.client.debt )
-        if amount > self.client.debt:
-            raise ValidationError(f"To‘lov miqdori mijoz qarzidan ko‘p bo‘lishi mumkin emas!")
+            super().save(*args, **kwargs)
 
-        self.client.debt -= amount
-        print("debt2",self.client.debt)
+            Client.objects.filter(id=self.client.id).update(
+                debt=F("debt") - convert_currency(self.currency_type, self.client.currency_type, self.amount)
+            )
 
-        self.client.save(update_fields=['debt'])
-
-        super().save(*args, **kwargs)
-
-        User.objects.filter(id=self.creator.id).update(
-            balance=F('balance') + amount)
+            User.objects.filter(id=self.creator.id).update(
+                balance=F('balance') + convert_currency(self.currency_type, self.creator.currency_type, self.amount))
 
     def delete(self, *args, **kwargs):
 
-        amount = convert_currency(self.currency_type, self.client.currency_type, self.amount)
+        Client.objects.filter(id=self.client.id).update(
+            debt=F("debt") + convert_currency(self.currency_type, self.client.currency_type, self.amount))
 
         User.objects.filter(id=self.creator.id).update(
-            balance=F('balance') - amount)
-        self.client.debt += amount
-
-        self.client.save(update_fields=['debt'])
+            balance=F('balance') - convert_currency(self.currency_type, self.creator.currency_type, self.amount))
 
         super().delete(*args, **kwargs)
 

@@ -32,13 +32,9 @@ urlpatterns = [
     path('clients/', ClientListCreateView.as_view()),
     path('clients/<int:pk>/', ClientRetrieveUpdateDestroyView.as_view()),
 
-    path('clients/debtors/', DebtorsListView.as_view(), name='debtors-list'),
-
-    path('clients/<int:pk>/pay-debt/', PayDebtView.as_view(), name='pay-debt'),
-
-    path('payed-debts/', PayedDebtListView.as_view(), name='payed-debts-list'),
-
-    path('payed-debts/<int:pk>', PayedDebtRetrieveUpdateDestroyView.as_view(), name='payed-debts-list'),
+    # Urls for Clients Paying debts
+    path('payed-debts/', PayDebtListCreateView.as_view(), name='payed-debts-list'),
+    path('payed-debts/<int:pk>', PayedDebtRetrieveUpdateDestroyView.as_view(), name='payed-debts-about'),
 
     #Urls for Sales
     path('sales/', SaleListCreateView.as_view(), name='sale-list-create'),
