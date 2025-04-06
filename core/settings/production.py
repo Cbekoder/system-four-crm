@@ -8,6 +8,7 @@ STATIC_ROOT = BASE_DIR / "static"
 # Database\
 
 if env.bool("USE_POSTGRES", False):
+# if env.bool("USE_POSTGRES", False):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",

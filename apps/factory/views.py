@@ -325,12 +325,13 @@ class ClientListCreateView(ListCreateAPIView):
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
-        has_debt = self.request.query_params.get('has_debt', 'false')
+        has_debt = self.request.query_params.get('has_debt')
 
-        if has_debt.lower() == 'true':
-            self.queryset = self.queryset.filter(debt__gt=0)
-        elif has_debt.lower() == 'false':
-            self.queryset = self.queryset.filter(debt__lte=0)
+        if has_debt:
+            if has_debt.lower() == 'true':
+                self.queryset = self.queryset.filter(debt__gt=0)
+            elif has_debt.lower() == 'false':
+                self.queryset = self.queryset.filter(debt__lte=0)
 
         if start_date:
             if not parse_date(start_date):

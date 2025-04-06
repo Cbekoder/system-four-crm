@@ -208,43 +208,48 @@ class SaleSerializer(ModelSerializer):
             for item_data in sale_items_data:
                 SaleItem.objects.create(sale=sale, **item_data)
 
+            sale.desave(pre=False)
+
             return sale
 
 
     def update(self, instance, validated_data):
-        sale_items_data = validated_data.pop('sale_items', [])
+        with transaction.atomic():
+            sale_items_data = validated_data.pop('sale_items', [])
 
+            if validated_data.get('client') and validated_data.get('client') != instance.client:
+                raise ValidationError({"error": "Client can't be updated"})
 
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+            # instance.desave(pre=True)
 
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
 
-        existing_items = {item.basket_id: item for item in instance.sale_items.all()}
+            existing_items = {item.basket_id: item for item in instance.sale_items.all()}
 
+            new_basket_ids = []
 
-        new_basket_ids = []
+            for item_data in sale_items_data:
+                basket_id = item_data['basket'].id if isinstance(item_data['basket'], Basket) else item_data['basket']
+                new_basket_ids.append(basket_id)
 
-        for item_data in sale_items_data:
-            basket_id = item_data['basket'].id if isinstance(item_data['basket'], Basket) else item_data['basket']
-            new_basket_ids.append(basket_id)
+                if basket_id in existing_items:
+                    # Mavjud bo‘lsa, yangilaymiz
+                    item = existing_items[basket_id]
+                    item.quantity = item_data['quantity']
+                    item.amount = item_data['amount']
+                    item.save()
+                else:
+                    SaleItem.objects.create(sale=instance, **item_data)
 
-            if basket_id in existing_items:
-                # Mavjud bo‘lsa, yangilaymiz
-                item = existing_items[basket_id]
-                item.quantity = item_data['quantity']
-                item.amount = item_data['amount']
-                item.save()
-            else:
+            for basket_id, item in existing_items.items():
+                if basket_id not in new_basket_ids:
+                    item.delete()
 
-                SaleItem.objects.create(sale=instance, **item_data)
+            # instance.desave(pre=False)
 
-
-        for basket_id, item in existing_items.items():
-            if basket_id not in new_basket_ids:
-                item.delete()
-
-        return instance
+            return instance
 
 
 class SaleGetSerializer(ModelSerializer):
@@ -260,6 +265,7 @@ class SaleGetSerializer(ModelSerializer):
     def get_client(self, obj):
         if obj.client:
             return {
+                "id": obj.client.id,
                 "first_name": obj.client.first_name,
                 "last_name": obj.client.last_name,
                 "debt": obj.client.debt

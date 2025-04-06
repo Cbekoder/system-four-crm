@@ -39,8 +39,8 @@ urlpatterns = [
     #Urls for Sales
     path('sales/', SaleListCreateView.as_view(), name='sale-list-create'),
     path('sales/<int:pk>/', SaleRetrieveUpdateDestroyView.as_view(), name='sale-detail'),
-    path('sale-items/', SaleItemListCreateView.as_view(), name='saleitem-list-create'),
-    path('sale-items/<int:pk>/', SaleItemRetrieveUpdateDestroyView.as_view(), name='saleitem-detail'),
+    # path('sale-items/', SaleItemListCreateView.as_view(), name='saleitem-list-create'),
+    # path('sale-items/<int:pk>/', SaleItemRetrieveUpdateDestroyView.as_view(), name='saleitem-detail'),
 
 
     #Urls for Expenses
