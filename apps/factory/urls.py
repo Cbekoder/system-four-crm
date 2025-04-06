@@ -34,7 +34,7 @@ urlpatterns = [
 
     # Urls for Clients Paying debts
     path('payed-debts/', PayDebtListCreateView.as_view(), name='payed-debts-list'),
-    path('payed-debts/<int:pk>', PayedDebtRetrieveUpdateDestroyView.as_view(), name='payed-debts-about'),
+    path('payed-debts/<int:pk>/', PayedDebtRetrieveUpdateDestroyView.as_view(), name='payed-debts-about'),
 
     #Urls for Sales
     path('sales/', SaleListCreateView.as_view(), name='sale-list-create'),

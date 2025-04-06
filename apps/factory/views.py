@@ -1,5 +1,5 @@
 from datetime import timedelta
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import *
@@ -320,7 +320,7 @@ class ClientListCreateView(ListCreateAPIView):
     queryset = Client.objects.all()
     permission_classes = [IsFactoryAdmin | IsCEO]
     filter_backends = [DjangoFilterBackend,  SearchFilter]
-    search_fields = ['client__first_name', 'client__last_name', 'client__phone_number']
+    search_fields = ['first_name', 'last_name', 'phone_number']
 
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
@@ -348,26 +348,23 @@ class ClientListCreateView(ListCreateAPIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
-                'start_date', openapi.IN_QUERY,
+                'start_date',
+                openapi.IN_QUERY,
                 description="Start date for filtering (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
             ),
             openapi.Parameter(
-                'end_date', openapi.IN_QUERY,
+                'end_date',
+                openapi.IN_QUERY,
                 description="End date for filtering (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
             ),
             openapi.Parameter(
-                'has_debt', openapi.IN_QUERY,
+                'has_debt',
+                openapi.IN_QUERY,
                 description="Filter clients with debt (true) or without debt (false), defaults to true",
                 type=openapi.TYPE_BOOLEAN
-            ),
-            openapi.Parameter(
-                'search',
-                openapi.IN_QUERY,
-                description="Search by expense columns: id, client's first name,last name and phone number .",
-                type=openapi.TYPE_STRING
-            ),
+            )
         ],
         responses={200: ClientSerializer(many=True)}
     )
