@@ -333,6 +333,7 @@ class ContractIncome(BaseModel):
             ContractRecord.objects.filter(id=self.contract.id).update(
                 remaining=F('remaining') -
                           convert_currency(self.currency_type, self.contract.currency_type, self.amount))
+
             User.objects.filter(id=self.creator.id).update(
                 balance=F("balance") - convert_currency(self.currency_type, self.creator.currency_type, self.amount)
             )
