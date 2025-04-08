@@ -86,11 +86,8 @@ class UserDailyWork(BaseModel):
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():
-            related_basket_counts = UserBasketCount.objects.filter(user_daily_work=self.id)
-
-            for basket_count in related_basket_counts:
+            for basket_count in UserBasketCount.objects.filter(user_daily_work=self.id):
                 basket_count.delete()
-
             super().delete(*args, **kwargs)
 
 
@@ -112,18 +109,13 @@ class UserBasketCount(models.Model):
                 prev = UserBasketCount.objects.get(pk=self.pk)
 
                 Basket.objects.filter(id=prev.basket.id).update(quantity=F('quantity') - prev.quantity)
-                # prev.basket.quantity = F('quantity') - prev.quantity
-                # prev.basket.save(update_fields=['quantity'])
-                # prev.basket.refresh_from_db()
 
                 UserDailyWork.objects.filter(id=prev.user_daily_work.id).update(
                     amount=F('amount') - float(prev.quantity * prev.basket.per_worker_fee))
 
-
                 Worker.objects.filter(id=prev.user_daily_work.worker.id).update(
                     balance=F('balance') - convert_currency("UZS", prev.user_daily_work.worker.currency_type,
                                                             float(prev.quantity * prev.basket.per_worker_fee)))
-
                 if prev.basket.raw_material:
                     RawMaterial.objects.filter(id=prev.basket.raw_material.id).update(
                         weight=F('weight') + (prev.basket.weight / 1000) * prev.quantity)
@@ -140,7 +132,6 @@ class UserBasketCount(models.Model):
                 balance=F('balance') + convert_currency("UZS", self.user_daily_work.worker.currency_type,
                                                         float(self.quantity * self.basket.per_worker_fee)))
 
-
             UserDailyWork.objects.filter(id=self.user_daily_work.id).update(
                 amount=F('amount') + float(self.quantity * self.basket.per_worker_fee))
 
@@ -155,19 +146,13 @@ class UserBasketCount(models.Model):
     def delete(self, *args, **kwargs):
         with transaction.atomic():
             Basket.objects.filter(id=self.basket.id).update(quantity=F('quantity') - self.quantity)
-            # self.basket.quantity = F('quantity') - self.quantity
-            # self.basket.save(update_fields=['quantity'])
 
             Worker.objects.filter(id=self.user_daily_work.worker.id).update(
                 balance=F('balance') - convert_currency("UZS", self.user_daily_work.worker.currency_type,
                                                         float(self.quantity * self.basket.per_worker_fee)))
-            # self.user_daily_work.worker.balance = F('balance') - self.quantity * self.basket.per_worker_fee
-            # self.user_daily_work.worker.save(update_fields=['balance'])
 
             UserDailyWork.objects.filter(id=self.user_daily_work.id).update(
                 amount=F('amount') - float(self.quantity * self.basket.per_worker_fee))
-            # self.user_daily_work.amount = F('amount') - (self.quantity * self.basket.per_worker_fee)
-            # self.user_daily_work.save(update_fields=['amount'])
 
             if self.basket.raw_material:
                 RawMaterial.objects.filter(id=self.basket.id).update(
@@ -176,10 +161,6 @@ class UserBasketCount(models.Model):
                 last_raw = RawMaterial.objects.last()
                 RawMaterial.objects.filter(id=last_raw.id).update(
                     weight=F('weight') + (last_raw.weight / 1000) * self.quantity)
-            # raw_material = RawMaterial.objects.all().first()
-            #
-            # raw_material.weight += ((self.basket.weight) / 1000) * self.quantity
-            # raw_material.save(update_fields=['weight'])
 
             super().delete(*args, **kwargs)
 

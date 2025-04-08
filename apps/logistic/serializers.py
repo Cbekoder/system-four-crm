@@ -2,7 +2,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import (ModelSerializer, DateTimeField, PrimaryKeyRelatedField, SerializerMethodField,
-                                        ListField, CharField)
+                                        ListField, CharField, FloatField)
 from django.utils import timezone
 
 from .models import (
@@ -290,7 +290,8 @@ class ContractRecordDetailSerializer(ModelSerializer):
 
 
 class ContractRecordCreateSerializer(ModelSerializer):
-    contractor = PrimaryKeyRelatedField(queryset=Contractor.objects.all(), allow_null=True)
+    contractor = PrimaryKeyRelatedField(queryset=Contractor.objects.all(), required=True, allow_null=False)
+    amount = FloatField(required=True, allow_null=False)
     cars = ContractCarsCreateSerailizer(many=True)
 
     class Meta:

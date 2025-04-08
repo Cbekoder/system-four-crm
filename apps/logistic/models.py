@@ -1,8 +1,12 @@
+from datetime import timedelta
+
 from django.db import models, transaction
 from django.db.models import F
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.common.models import BaseModel, BasePerson, CURRENCY_TYPE, TRANSFER_TYPE
+from apps.common.services.logging import Telegram
 from apps.common.utils import convert_currency
 from apps.users.models import User
 
@@ -31,8 +35,25 @@ class Driver(BasePerson):
         verbose_name = "Haydovchi "
         verbose_name_plural = "Haydovchilar "
 
+    def full_name(self):
+        return f"{self.first_name} {self.middle_name} {self.last_name}" if self.middle_name else f"{self.first_name} {self.last_name}"
+
     def __str__(self):
         return self.full_name
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            pass
+        else:
+            message = (
+                f"👤 Янги ҳайдовчи яратилди:\n"
+                f"🔸 Ф.И.О: {self.full_name}\n"
+                f"📅 Туғилган сана: {self.birth_date}\n"
+                f"🏠 Манзили: {self.address}"
+                f"📞 Телефон рақами: {self.phone_number}\n"
+            )
+            Telegram.send_log(message, app_button=True)
+        super().save(*args, **kwargs)
 
 
 # Tenant model
@@ -85,6 +106,19 @@ class Car(BaseModel):
         verbose_name_plural = "Mashinalar "
 
     def save(self, *args, **kwargs):
+        if self.pk:
+            pass
+        else:
+            message = (
+                f"🚗 Янги машина яратилди:\n"
+                f"🔸 Бренд: {self.brand}\n"
+                f"🔸 Модель: {self.model}\n"
+                f"🔢 Давлат рақами: {self.state_number}\n"
+                f"📅 Йили: {self.year}\n"
+                f"🎨 Ранги: {self.color}\n"
+                f"📄 Тех паспорт рақами: {self.tech_passport}"
+            )
+            Telegram.send_log(message, app_button=True)
         if self.tenant:
             if not self.pk:
                 Tenant.objects.filter(id=self.tenant.id).update(trucks_count=F("trucks_count") + 1)
@@ -122,7 +156,23 @@ class Trailer(BaseModel):
         return self.state_number
 
     def save(self, *args, **kwargs):
-
+        if self.pk:
+            pass
+        else:
+            message = (
+                f"🚛 Янги трейлер яратилди:\n"
+                f"🔸 Модел: {self.model or 'Белгиланмаган'}\n"
+                f"📍 Давлат рақами: {self.state_number}\n"
+                f"🔧 Трейлер тури: {self.trailer_type or 'Белгиланмаган'}\n"
+                f"📏 Ўлчамлари: {self.dimensions or 'Белгиланмаган'}\n"
+                f"⚖️ Юк кўтариш: {self.capacity if self.capacity is not None else 'Белгиланмаган'} тонна\n"
+                f"🔢 Оқлар сони: {self.axle_count or 'Белгиланмаган'}\n"
+                f"📅 Йили: {self.year or 'Белгиланмаган'}\n"
+                f"🎨 Ранги: {self.color or 'Белгиланмаган'}\n"
+                f"📜 Тех паспорт: {self.tech_passport or 'Белгиланмаган'}\n"
+                f"🚗 Автомобил: {self.car if self.car else 'Бирiktirilmagan'}"
+            )
+            Telegram.send_log(message, app_button=True)
         super().save(*args, **kwargs)
 
 
@@ -232,6 +282,18 @@ class TIRRecord(BaseModel):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            if self.pk:
+                pass
+            else:
+                message = (
+                    f"📄 Янги TIR ёзуви яратилди:\n"
+                    f"🔢 TIR рақами: {self.tir.serial_number}\n"
+                    f"📅 Олиш санаси: {self.tir_get_date}\n"
+                    f"📅 Муддати: {self.tir_deadline}\n"
+                    f"🚚 Машина рақами: {self.waybill.car.state_number if self.waybill and self.waybill.car else 'N/A'}\n"
+                    f"🗓️ Йўл қоғози санаси: {self.waybill.departure_date if self.waybill else 'N/A'}\n"
+                )
+                Telegram.send_log(message, app_button=True)
             if self.creator.role == "CEO":
                 self.status = 'verified'
 
@@ -270,21 +332,40 @@ class ContractRecord(BaseModel):
     def save(self, *args, **kwargs):
         with transaction.atomic():
             if self.pk:
-                pass
+                prev = ContractRecord.objects.get(pk=self.pk)
+                Contractor.objects.filter(id=prev.contractor.id).update(
+                    landing=F("landing") - prev.remaining
+                )
+            else:
+                message = (
+                    f"📜 Янги шартнома яратилди:\n"
+                    f"🔸 Шартнома рақами: {self.contract_number}\n"
+                    f"📅 Шартнома санаси: {self.date}\n"
+                    f"📋 Фактура рақами: {self.invoice_number or 'Белгиланмаган'}\n"
+                    f"👤 Контрагент: {self.contractor.name if self.contractor else 'Noma’lum'}\n"
+                    f"💰 Сумма: {self.amount} {self.currency_type}\n"
+                    f"📊 Қолдиқ: {self.remaining} {self.currency_type}\n"
+                    f"📌 Статус: {dict(CONTRACT_STATUS).get(self.status, self.status)}"
+                )
+                Telegram.send_log(message, app_button=True)
 
-            if self.contractor is None:
-                raise ValueError("Contractor majburiy ravishda kiritilishi kerak.")
+            today = timezone.now().date()
+            days_diff = (today - self.date).days
 
-            if self.creator.role == "CEO":
-                self.status = 'verified'
+            if self.remaining == 0:
+                self.status = 'accepted'
+            elif days_diff <= 3:
+                self.status = 'new'
+            elif 4 <= days_diff <= 7:
+                self.status = 'waiting'
+            elif days_diff > 7:
+                self.status = 'warning'
 
             super().save(*args, **kwargs)
 
-            self.contractor.landing += self.amount
-            self.contractor.save(update_fields=["landing"])
-
-            # if self.tenant:
-            #     self.tenant.debt += self.amount
+            Contractor.objects.filter(id=self.contractor.id).update(
+                landing=F("landing") + self.remaining
+            )
 
 
 class ContractCars(BaseModel):

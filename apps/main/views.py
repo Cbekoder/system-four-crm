@@ -461,7 +461,6 @@ class BankAccountsRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 class AccountHistoryListCreateView(ListCreateAPIView):
-    queryset = AccountHistory.objects.all()
     permission_classes = [IsCEO]
 
     @swagger_auto_schema(
