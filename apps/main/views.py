@@ -525,6 +525,7 @@ class AccountHistoryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 class DailyRemainderView(ListAPIView):
     serializer_class = DailyRemainderSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         start_date = self.request.query_params.get('start_date')
@@ -538,7 +539,7 @@ class DailyRemainderView(ListAPIView):
                 queryset = queryset.filter(created_at__date__lte=end_date)
         else:
             queryset = queryset[:30]
-      
+        queryset = queryset.distinct('created_at__date').order_by('created_at__date')
         return queryset
 
     @swagger_auto_schema(
