@@ -47,7 +47,7 @@ class Driver(BasePerson):
         else:
             message = (
                 f"👤 Янги ҳайдовчи яратилди:\n"
-                f"🔸 Ф.И.О: {self.full_name}\n"
+                f"🔸 Ф.И.О: {self.first_name} {self.last_name}\n"
                 f"📅 Туғилган сана: {self.birth_date}\n"
                 f"🏠 Манзили: {self.address}"
                 f"📞 Телефон рақами: {self.phone_number}\n"
@@ -95,7 +95,7 @@ class Car(BaseModel):
     state_number = models.CharField(max_length=20, unique=True)
     year = models.CharField(max_length=4)
     color = models.CharField(max_length=20, null=True, blank=True)
-    tech_passport = models.CharField(max_length=20, unique=True)
+    tech_passport = models.CharField(max_length=20, unique=True, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True, blank=True)
     creator = None
