@@ -217,6 +217,49 @@ class MoneyCirculation(BaseModel):
 
             super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            converted_amount = self.amount
+            if self.acquaintance.currency_type != self.currency_type:
+                converted_amount = convert_currency(self.currency_type, self.acquaintance.currency_type, self.amount)
+
+            if self.type == "get":
+                User.objects.filter(id=self.creator.id).update(
+                    balance=F('balance') - convert_currency(self.currency_type, self.creator.currency_type, self.amount)
+                )
+                if self.acquaintance.landing > 0:
+                    if self.acquaintance.landing >= converted_amount:
+                        self.acquaintance.landing += converted_amount
+                    else:
+                        extra_debt_reversed = converted_amount - self.acquaintance.landing
+                        self.acquaintance.landing = 0
+                        self.acquaintance.debt -= extra_debt_reversed
+                else:
+                    self.acquaintance.debt -= converted_amount
+
+            elif self.type == "give":
+                User.objects.filter(id=self.creator.id).update(
+                    balance=F('balance') + convert_currency(self.currency_type, self.creator.currency_type, self.amount)
+                )
+                if self.acquaintance.debt > 0:
+                    if self.acquaintance.debt >= converted_amount:
+                        self.acquaintance.debt += converted_amount
+                    else:
+                        extra_landing_reversed = converted_amount - self.acquaintance.debt
+                        self.acquaintance.debt = 0
+                        self.acquaintance.landing -= extra_landing_reversed
+                else:
+                    self.acquaintance.landing -= converted_amount
+
+            self.acquaintance.landing = round(self.acquaintance.landing, 2)
+            self.acquaintance.debt = round(self.acquaintance.debt, 2)
+            self.acquaintance.save()
+
+            message = f"🗑 Пул олди-берди ўчирилди\n🏷 {self.description}\n👤 {self.acquaintance.full_name}\n➖ {self.amount} {self.currency_type}"
+            Telegram.send_log(message, app_button=True)
+
+            super().delete(*args, **kwargs)
+
     def __str__(self):
         return self.acquaintance.full_name if self.acquaintance else str(self.id)
 
