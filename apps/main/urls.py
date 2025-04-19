@@ -18,6 +18,8 @@ urlpatterns = [
     path('circulation/give/', GiveMoneyListCreateView.as_view(), name='give-money-list-create'),
     path('circulation/get/', GetMoneyListCreateView.as_view(), name='get-money-list-create'),
     path('circulation/<int:pk>/', MoneyCirculationsRetrieveUpdateDestroyView.as_view(), name='circulation-retrieve-update-destroy'),
+    path('circulation/give/<int:pk>/', MoneyCirculationsRetrieveUpdateDestroyView.as_view(), name='circulation-retrieve-update-destroy'),
+    path('circulation/get/<int:pk>/', MoneyCirculationsRetrieveUpdateDestroyView.as_view(), name='circulation-retrieve-update-destroy'),
 
     path('expenses/', GeneralExpenseListCreateView.as_view(), name='general-expenses-list'),
     path('expenses/<int:pk>/', GeneralExpenseRetrieveUpdateDestroyView.as_view(), name='general-expenses-list'),
