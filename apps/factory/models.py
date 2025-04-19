@@ -502,7 +502,7 @@ class SalaryPayment(BaseModel):
 
     def delete(self, *args, **kwargs):
         Worker.objects.filter(id=self.worker.id).update(
-            balance=F('balance') - convert_currency(self.currency_type, self.worker.currency_type, self.amount))
+            balance=F('balance') + convert_currency(self.currency_type, self.worker.currency_type, self.amount))
 
         User.objects.filter(id=self.creator.id).update(
             balance=F('balance') + convert_currency(self.currency_type, self.creator.currency_type, self.amount))
