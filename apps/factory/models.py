@@ -47,6 +47,12 @@ class RawMaterial(BaseModel):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            message = f"🏭 Янги хомашё қўшилди 🆕\n🏷️ {self.name} \n⚖️ {self.weight} \n📞 {self.description}"
+            Telegram.send_log(message, app_button=True)
+        super().save(*args, **kwargs)
+
 
 # Basket Model
 class Basket(BaseModel):
@@ -66,6 +72,12 @@ class Basket(BaseModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            message = f"🏭 Янги сават қўшилди 🆕\n🏷️ {self.name} \n⚖️ {self.weight} \n📐 {self.size} \n💰 {self.price} \n📦 {self.quantity} \n👷‍♂️💲 {self.per_worker_fee} \n📞"
+            Telegram.send_log(message, app_button=True)
+        super().save(*args, **kwargs)
 
 
 # User Daily Work Model
@@ -181,6 +193,12 @@ class Supplier(BaseModel):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            message = f"🏭 Янги таъминотчи қўшилди 🆕\n🏷️ {self.name} \n📞 {self.phone_number} \n📞 {self.extra_phone_number} \n📞 {self.description}"
+            Telegram.send_log(message, app_button=True)
+        super().save(*args, **kwargs)
+
 
 # Raw Material History
 class RawMaterialHistory(BaseModel):
@@ -210,6 +228,9 @@ class RawMaterialHistory(BaseModel):
                 User.objects.filter(id=prev.creator.id).update(
                     balance=F('balance') + convert_currency(prev.currency_type, prev.creator.currency_type,
                                                             prev.amount))
+            else:
+                message = f"🏭 Янги хомашё таъминоти қўшилди 🆕\n🏷️ {self.raw_material.name} \n⚖️ {self.weight} \n💰 {self.amount} \n📞 {self.description}"
+                Telegram.send_log(message, app_button=True)
 
             super().save(*args, **kwargs)
 
@@ -249,6 +270,12 @@ class Client(BasePerson):
     def __str__(self):
         return self.full_name
 
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            message = f"🏭 Янги мижоз қўшилди 🆕\n🏷️ {self.full_name} \n📞 {self.phone_number} \n📞 {self.extra_phone_number} \n📞 {self.description}"
+            Telegram.send_log(message, app_button=True)
+        super().save(*args, **kwargs)
+
 
 class PayDebt(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
@@ -272,6 +299,9 @@ class PayDebt(BaseModel):
 
                 User.objects.filter(id=prev.creator.id).update(
                     balance=F('balance') - convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
+            else:
+                message = f"🏭 Мижоз қарзини тўлади 🆕\n🏷️ {self.client.full_name} \n💰 {self.amount} {self.currency_type}"
+                Telegram.send_log(message, app_button=True)
 
             super().save(*args, **kwargs)
 
@@ -457,6 +487,10 @@ class SalaryPayment(BaseModel):
 
             User.objects.filter(id=prev.creator.id).update(
                 balance=F('balance') + convert_currency(prev.currency_type, prev.creator.currency_type, prev.amount))
+
+        else:
+            message = f"🏭 Янги ишчи маоши қўшилди 🆕\n👨🏼‍🏭 {self.worker.full_name} \n💰 {self.amount} {self.currency_type}\n👤 {self.creator.get_full_name()}"
+            Telegram.send_log(message, app_button=True)
 
         super().save(*args, **kwargs)
 

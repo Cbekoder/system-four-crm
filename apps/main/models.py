@@ -1,3 +1,5 @@
+from pyexpat.errors import messages
+
 from django.core.cache import cache
 from django.db import models, transaction
 from django.db.models import F
@@ -136,13 +138,50 @@ class MoneyCirculation(BaseModel):
         if not self.acquaintance:
             raise ValidationError("Acquaintance is required")
         with transaction.atomic():
+            if self.pk:
+                prev = MoneyCirculation.objects.get(id=self.pk)
+                prev_converted_amount = prev.amount
+                if prev.acquaintance.currency_type != prev.currency_type:
+                    prev_converted_amount = convert_currency(prev.currency_type, prev.acquaintance.currency_type,
+                                                             prev.amount)
+
+                if prev.type == "get":
+                    User.objects.filter(id=prev.creator.id).update(
+                        balance=F('balance') - convert_currency(prev.currency_type, prev.creator.currency_type,
+                                                                prev.amount)
+                    )
+                    if prev.acquaintance.landing > 0:
+                        if prev.acquaintance.landing >= prev_converted_amount:
+                            prev.acquaintance.landing += prev_converted_amount
+                        else:
+                            extra_debt_reversed = prev_converted_amount - prev.acquaintance.landing
+                            prev.acquaintance.landing = 0
+                            prev.acquaintance.debt -= extra_debt_reversed
+                    else:
+                        prev.acquaintance.debt -= prev_converted_amount
+
+                elif prev.type == "give":
+                    User.objects.filter(id=prev.creator.id).update(
+                        balance=F('balance') + convert_currency(prev.currency_type, prev.creator.currency_type,
+                                                                prev.amount)
+                    )
+                    if prev.acquaintance.debt > 0:
+                        if prev.acquaintance.debt >= prev_converted_amount:
+                            prev.acquaintance.debt += prev_converted_amount
+                        else:
+                            extra_landing_reversed = prev_converted_amount - prev.acquaintance.debt
+                            prev.acquaintance.debt = 0
+                            prev.acquaintance.landing -= extra_landing_reversed
+                    else:
+                        prev.acquaintance.landing -= prev_converted_amount
+                prev.acquaintance.save()
+            else:
+                message = f"💸 Пул олди-берди\n🏷 {self.description}\n👤 {self.acquaintance.full_name}\n➕ {self.amount} {self.currency_type}"
+                Telegram.send_log(message, app_button=True)
+
             converted_amount = self.amount
-            if self.acquaintance.currency_type == self.currency_type:
-                valid_currencies = ("USD", "UZS")
-                if self.acquaintance.currency_type in valid_currencies and self.currency_type in valid_currencies:
-                    converted_amount = convert_currency(self.currency_type, self.acquaintance.currency_type, self.amount)
-                else:
-                    raise ValidationError("Invalid currency type")
+            if self.acquaintance.currency_type != self.currency_type:
+                converted_amount = convert_currency(self.currency_type, self.acquaintance.currency_type, self.amount)
             if self.type == 'get':
                 if self.acquaintance.landing > 0:
                     if self.acquaintance.landing >= converted_amount:
@@ -153,6 +192,9 @@ class MoneyCirculation(BaseModel):
                         self.acquaintance.debt += extra_debt
                 else:
                     self.acquaintance.debt += converted_amount
+                User.objects.filter(id=self.creator.id).update(
+                    balance=F('balance') + convert_currency(self.currency_type, self.creator.currency_type, self.amount)
+                )
             elif self.type == 'give':
                 if self.acquaintance.debt > 0:
                     if self.acquaintance.debt >= converted_amount:
@@ -163,6 +205,9 @@ class MoneyCirculation(BaseModel):
                         self.acquaintance.landing += extra_landing
                 else:
                     self.acquaintance.landing += converted_amount
+                User.objects.filter(id=self.creator.id).update(
+                    balance=F('balance') - convert_currency(self.currency_type, self.creator.currency_type, self.amount)
+                )
             self.acquaintance.landing = round(self.acquaintance.landing, 2)
             self.acquaintance.debt = round(self.acquaintance.debt, 2)
             self.acquaintance.save()

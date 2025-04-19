@@ -123,6 +123,8 @@ class UserDailyWorkCreateSerializer(ModelSerializer):
                         )
             instance.user_basket_counts = UserBasketCount.objects.filter(user_daily_work=instance)
 
+            # message = f"🏭 Ишчиларнинг кунлик иши \n\n👨🏼‍🏭 {self.worker.full_name} \n💰 {self.amount} {self.currency_type}\n👤 {self.creator.get_full_name()}"
+
             return instance
 
 
